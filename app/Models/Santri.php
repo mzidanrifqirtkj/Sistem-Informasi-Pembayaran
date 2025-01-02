@@ -25,10 +25,11 @@ class Santri extends Model
         'pendidikan_formal',
         'pendidikan_non_formal',
         'foto',
+        'foto_kk',
         'tanggal_masuk',
         'is_ustadz',
         'user_id',
-        'paket_pembayaran_id',
+        'kategori_santri_id',
         'nama_ayah',
         'no_hp_ayah',
         'pekerjaan_ayah',
@@ -55,9 +56,16 @@ class Santri extends Model
         return $this->belongsTo(User::class, 'user_id', 'id_user');
     }
 
-    public function paket_pembayaran()
+    public function tambahanPembayaran()
     {
-        return $this->belongsTo(PaketPembayaran::class, 'paket_pembayaran_id', 'id_paket_pembayaran');
+        return $this->belongsToMany(TambahanPembayaran::class, 'santri_tambahan_pembayarans', 'id_santri', 'id_tambahan_pembayaran')
+                    ->withPivot('id_santri', 'id_tambahan_pembayaran') // Jika Anda ingin menyertakan data di pivot
+                    ->withTimestamps(); // Jika Anda ingin menyertakan kolom timestamps (created_at, updated_at)
+    }
+
+    public function kategori_santri()
+    {
+        return $this->belongsTo(KategoriSantri::class, 'kategori_santri_id', 'id_kategori_santri');
     }
 
     public function pembayaran()
@@ -74,8 +82,4 @@ class Santri extends Model
     {
         return $this->hasMany(Nilai::class);
     }
-
-
-
-
 }

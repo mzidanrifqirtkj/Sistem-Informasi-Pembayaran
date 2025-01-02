@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\KategoriSantri;
 use App\Models\PaketPembayaran;
 use App\Models\Santri;
 use App\Models\User;
@@ -40,7 +41,7 @@ class SantriFactory extends Factory
             'is_ustadz' => $this->faker->boolean,
 
             'user_id' => User::factory(),
-            'paket_pembayaran_id' => PaketPembayaran::inRandomOrder()->first()->id_paket_pembayaran,
+            'kategori_santri_id' => KategoriSantri::inRandomOrder()->first()->id_kategori_santri,
 
             'nama_ayah' => $this->faker->name,
             'no_hp_ayah' => $this->faker->phoneNumber,

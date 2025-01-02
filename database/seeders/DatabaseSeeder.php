@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\PaketPembayaran;
+use App\Models\KategoriSantri;
 use App\Models\Pembayaran;
 use App\Models\Santri;
+use App\Models\SantriTambahanPembayaran;
+use App\Models\TambahanPembayaran;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -17,18 +19,16 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             PendidikanSeeder::class,
-            PembayaranSeeder::class,
+            BasePembayaranSeeder::class,
         ]);
-        Santri::factory(10)->recycle([
-            PaketPembayaran::all(),
+        Santri::factory(100)->recycle([
+            KategoriSantri::all(),
             User::all(),
         ])->create();
 
-
-
-
-
-
-
+        SantriTambahanPembayaran::factory(90)->recycle([
+            Santri::all(),
+            TambahanPembayaran::all(),
+        ])->create();
     }
 }

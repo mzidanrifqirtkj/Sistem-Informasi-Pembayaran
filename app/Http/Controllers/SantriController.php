@@ -8,8 +8,8 @@ use Illuminate\Http\Request;
 class SantriController extends Controller
 {
     public function showSantri(){
-        $santris = Santri::with(['user', 'paket_pembayaran'])->get();
-
+        // $santris = Santri::with(['user', 'kategori_santri'])->get();
+        $santris = Santri::orderBy('user_id', 'asc')->with(['user', 'kategori_santri'])->get();
         return view('data_santri', compact('santris'));
     }
 }

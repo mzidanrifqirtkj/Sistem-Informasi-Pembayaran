@@ -7,4 +7,4 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/santri-data', [SantriController::class, 'showSantri']);
+Route::get('/data-santri', [SantriController::class, 'showSantri']);

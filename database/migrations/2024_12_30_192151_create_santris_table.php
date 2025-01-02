@@ -27,14 +27,15 @@ return new class extends Migration
             $table->string('pendidikan_formal');
             $table->string('pendidikan_non_formal');
             $table->string('foto')->nullable();
+            $table->string('foto_kk')->nullable();
             $table->date('tanggal_masuk');
             //data lain santri
             $table->boolean('is_ustadz')->default(false);
-            $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('paket_pembayaran_id');
+            $table->unsignedBigInteger('user_id')->unique();
+            $table->unsignedBigInteger('kategori_santri_id');
 
             $table->foreign('user_id')->references('id_user')->on('users')->onDelete('cascade');
-            $table->foreign('paket_pembayaran_id')->references('id_paket_pembayaran')->on('paket_pembayarans')->onDelete('cascade');
+            $table->foreign('kategori_santri_id')->references('id_kategori_santri')->on('kategori_santris')->onDelete('cascade');
             //data ayah
             $table->string('nama_ayah');
             $table->string('no_hp_ayah');

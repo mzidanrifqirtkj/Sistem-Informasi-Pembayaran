@@ -15,8 +15,8 @@
                 <th>Alamat</th>
                 <th>No HP</th>
                 <th>Asal Sekolah</th>
-                <th>Paket Pembayaran</th>
                 <th>Akun</th>
+                <th>Kategori</th>
                 <th>Nama Ayah</th>
                 {{-- <th>NIK Ayah</th> --}}
                 <th>Nama Ibu</th>
@@ -33,8 +33,8 @@
                     <td>{{ $santri->alamat }}</td>
                     <td>{{ $santri->no_hp }}</td>
                     <td>{{ $santri->pendidikan_formal }}</td>
-                    <td>{{ $santri->paket_pembayaran->detail_pembayaran }}</td>
                     <td>{{ $santri->user->email }}</td>
+                    <td>{{ $santri->kategori_santri->nama_kategori }}</td>
                     <td>{{ $santri->nama_ayah ?? 'Tidak Ada' }}</td>
                     {{-- <td>{{ $santri->nik_ayah ?? 'Tidak Ada' }}</td> --}}
                     <td>{{ $santri->nama_ibu ?? 'Tidak Ada' }}</td>
