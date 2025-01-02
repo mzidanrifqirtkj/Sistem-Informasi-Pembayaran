@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Santri</title>
+</head>
+<body>
+    <h1>Data Santri</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>NIS</th>
+                <th>Nama Santri</th>
+                <th>Alamat</th>
+                <th>No HP</th>
+                <th>Asal Sekolah</th>
+                <th>Paket Pembayaran</th>
+                <th>Akun</th>
+                <th>Nama Ayah</th>
+                {{-- <th>NIK Ayah</th> --}}
+                <th>Nama Ibu</th>
+                {{-- <th>NIK Ibu</th> --}}
+                <th>No HP Ayah</th>
+                <th>No HP Ibu</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($santris as $santri)
+                <tr>
+                    <td>{{ $santri->nis }}</td>
+                    <td>{{ $santri->nama_santri }}</td>
+                    <td>{{ $santri->alamat }}</td>
+                    <td>{{ $santri->no_hp }}</td>
+                    <td>{{ $santri->pendidikan_formal }}</td>
+                    <td>{{ $santri->paket_pembayaran->detail_pembayaran }}</td>
+                    <td>{{ $santri->user->email }}</td>
+                    <td>{{ $santri->nama_ayah ?? 'Tidak Ada' }}</td>
+                    {{-- <td>{{ $santri->nik_ayah ?? 'Tidak Ada' }}</td> --}}
+                    <td>{{ $santri->nama_ibu ?? 'Tidak Ada' }}</td>
+                    {{-- <td>{{ $santri->nik_ibu ?? 'Tidak Ada' }}</td> --}}
+                    <td>{{ $santri->no_hp_ayah ?? 'Tidak Ada' }}</td>
+                    <td>{{ $santri->no_hp_ibu ?? 'Tidak Ada' }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+</body>
+</html>
