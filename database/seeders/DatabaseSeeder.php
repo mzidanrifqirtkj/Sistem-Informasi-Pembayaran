@@ -20,15 +20,17 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PendidikanSeeder::class,
             BasePembayaranSeeder::class,
+            UserSeeder::class,
         ]);
-        Santri::factory(100)->recycle([
-            KategoriSantri::all(),
-            User::all(),
-        ])->create();
 
-        SantriTambahanPembayaran::factory(90)->recycle([
-            Santri::all(),
-            TambahanPembayaran::all(),
-        ])->create();
+        // Santri::factory(100)->recycle([
+        //     KategoriSantri::all(),
+        //     User::all(),
+        // ])->create();
+
+        // SantriTambahanPembayaran::factory(90)->recycle([
+        //     Santri::all(),
+        //     TambahanPembayaran::all(),
+        // ])->create();
     }
 }

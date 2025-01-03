@@ -47,7 +47,7 @@ class SantriFactory extends Factory
             'no_hp_ayah' => $this->faker->phoneNumber,
             'pekerjaan_ayah' => $this->faker->jobTitle,
             'tempat_lahir_ayah' => $this->faker->city,
-            'tahun_lahir_ayah' => $this->faker->date(),
+            'tanggal_lahir_ayah' => $this->faker->date(),
             'alamat_ayah' => $this->faker->address,
 
             'nama_ibu' => $this->faker->name,
@@ -55,15 +55,15 @@ class SantriFactory extends Factory
             'pekerjaan_ibu' => $this->faker->jobTitle,
             'alamat_ibu' => $this->faker->address,
             'tempat_lahir_ibu' => $this->faker->city,
-            'tahun_lahir_ibu' => $this->faker->date(),
+            'tanggal_lahir_ibu' => $this->faker->date(),
 
             'nama_wali' => $this->faker->name,
             'no_hp_wali' => $this->faker->phoneNumber,
             'pekerjaan_wali' => $this->faker->jobTitle,
             'alamat_wali' => $this->faker->address,
             'tempat_lahir_wali' => $this->faker->city,
-            'tahun_lahir_wali' => $this->faker->date(),
-
+            'tanggal_lahir_wali' => $this->faker->date(),
+            'status' => $this->faker->randomElement(['Aktif', 'Nonaktif']),
         ];
     }
 }

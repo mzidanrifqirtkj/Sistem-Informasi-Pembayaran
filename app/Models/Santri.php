@@ -21,7 +21,7 @@ class Santri extends Model
         'tempat_lahir',
         'no_hp',
         'alamat',
-        'gologan_darah',
+        'golongan_darah',
         'pendidikan_formal',
         'pendidikan_non_formal',
         'foto',
@@ -34,20 +34,21 @@ class Santri extends Model
         'no_hp_ayah',
         'pekerjaan_ayah',
         'tempat_lahir_ayah',
-        'tahun_lahir_ayah',
+        'tanggal_lahir_ayah',
         'alamat_ayah',
         'nama_ibu',
         'no_hp_ibu',
         'pekerjaan_ibu',
         'alamat_ibu',
         'tempat_lahir_ibu',
-        'tahun_lahir_ibu',
+        'tanggal_lahir_ibu',
         'nama_wali',
         'no_hp_wali',
         'pekerjaan_wali',
         'alamat_wali',
         'tempat_lahir_wali',
-        'tahun_lahir_wali',
+        'tanggal_lahir_wali',
+        'status'
     ];
 
 

@@ -41,7 +41,7 @@ return new class extends Migration
             $table->string('no_hp_ayah');
             $table->string('pekerjaan_ayah');
             $table->string('tempat_lahir_ayah');
-            $table->date('tahun_lahir_ayah');
+            $table->date('tanggal_lahir_ayah');
             $table->string('alamat_ayah');
             //data ibu
             $table->string('nama_ibu');
@@ -49,15 +49,16 @@ return new class extends Migration
             $table->string('pekerjaan_ibu');
             $table->string('alamat_ibu');
             $table->string('tempat_lahir_ibu');
-            $table->date('tahun_lahir_ibu');
+            $table->date('tanggal_lahir_ibu');
             //data wali
             $table->string('nama_wali')->nullable();
             $table->string('no_hp_wali')->nullable();
             $table->string('pekerjaan_wali')->nullable();
             $table->string('alamat_wali')->nullable();
             $table->string('tempat_lahir_wali')->nullable();
-            $table->date('tahun_lahir_wali')->nullable();
-
+            $table->date('tanggal_lahir_wali')->nullable();
+            //status
+            $table->enum('status', ['Aktif', 'Nonaktif'])->default('Aktif');
             $table->timestamps();
         });
     }
