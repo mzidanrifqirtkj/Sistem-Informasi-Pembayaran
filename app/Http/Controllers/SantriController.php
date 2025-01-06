@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\SantriImport;
+use App\Models\SantriTambahanPembayaran;
 
 class SantriController extends Controller
 {
@@ -25,7 +26,8 @@ class SantriController extends Controller
      */
     public function index()
     {
-        $santris = Santri::all();
+        $santris = Santri::orderBy('user_id', 'asc')->with(['user', 'kategori_santri'])->get();
+        // $santris = Santri::all();
         return view('santri.index', compact('santris'));
     }
 
@@ -116,6 +118,7 @@ class SantriController extends Controller
      */
     public function show(Santri $santri)
     {
+        $santri->load('tambahanPembayarans');
         return view('santri.show', compact('santri'));
     }
 

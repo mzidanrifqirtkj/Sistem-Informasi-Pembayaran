@@ -15,30 +15,37 @@ class BasePembayaranSeeder extends Seeder
     public function run(): void
     {
         TambahanPembayaran::create([
-            'nama_item' => 'HP',
-            'nominal' => 10000,
-        ]);
-        TambahanPembayaran::create([
             'nama_item' => 'Laptop',
             'nominal' => 20000,
+            'jumlah' => 1,
         ]);
         TambahanPembayaran::create([
             'nama_item' => 'Motor',
-            'nominal' => 30000,
+            'nominal' => 15000,
+            'jumlah' => 1,
+        ]);
+        TambahanPembayaran::create([
+            'nama_item' => 'Elektronik Lain',
+            'nominal' => 5000,
+            'jumlah' => 3,
         ]);
 
 
         KategoriSantri::create([
             'nama_kategori' => 'Reguler',
-            'nominal_syahriyah' => 50000,
+            'nominal_syahriyah' => 250000,
         ]);
         KategoriSantri::create([
             'nama_kategori' => 'Fauqo',
-            'nominal_syahriyah' => 40000,
+            'nominal_syahriyah' => 165000,
         ]);
         KategoriSantri::create([
             'nama_kategori' => 'Dzuriyah',
-            'nominal_syahriyah' => 30000,
+            'nominal_syahriyah' => 200000,
+        ]);
+        KategoriSantri::create([
+            'nama_kategori' => 'Cuti',
+            'nominal_syahriyah' => 125000,
         ]);
 
     }

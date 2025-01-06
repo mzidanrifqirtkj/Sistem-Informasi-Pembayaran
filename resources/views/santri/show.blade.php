@@ -19,11 +19,12 @@
                 <th>Foto</th>
                 <th>Kategori</th>
                 <th>Nama Ayah</th>
-                {{-- <th>NIK Ayah</th> --}}
+                <th>NIK Ayah</th>
                 <th>Nama Ibu</th>
-                {{-- <th>NIK Ibu</th> --}}
+                <th>NIK Ibu</th>
                 <th>No HP Ayah</th>
                 <th>No HP Ibu</th>
+                <th>Tambahan Pembayaran</th>
             </tr>
         </thead>
         <tbody>
@@ -43,11 +44,22 @@
                     </td>
                     <td>{{ $santri->kategori_santri->nama_kategori }}</td>
                     <td>{{ $santri->nama_ayah ?? 'Tidak Ada' }}</td>
-                    {{-- <td>{{ $santri->nik_ayah ?? 'Tidak Ada' }}</td> --}}
+                    <td>{{ $santri->nik_ayah ?? 'Tidak Ada' }}</td>
                     <td>{{ $santri->nama_ibu ?? 'Tidak Ada' }}</td>
-                    {{-- <td>{{ $santri->nik_ibu ?? 'Tidak Ada' }}</td> --}}
+                    <td>{{ $santri->nik_ibu ?? 'Tidak Ada' }}</td>
                     <td>{{ $santri->no_hp_ayah ?? 'Tidak Ada' }}</td>
                     <td>{{ $santri->no_hp_ibu ?? 'Tidak Ada' }}</td>
+                    <td>
+                        @if ($santri->tambahanPembayarans)
+                            @foreach ($santri->tambahanPembayarans as $tambahan )
+                                <p>{{ $tambahan->nama_item }}</p>
+                                <p>{{ $tambahan->nominal }}</p>
+                                <p>{{ $tambahan->jumlah }}</p>
+                            @endforeach
+                        @else
+                            <p>Tidak ada tambahan biaya</p>
+                        @endif
+                    </td>
                 </tr>
         </tbody>
     </table>
