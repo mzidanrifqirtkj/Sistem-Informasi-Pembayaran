@@ -16,4 +16,15 @@ class SantriTambahanPembayaran extends Model
         'santri_id',
         'tambahan_pembayaran_id',
     ];
+
+    public function santri()
+    {
+        return $this->belongsTo(Santri::class, 'santri_id', 'id_santri');
+    }
+
+    public function tambahanPembayaran()
+    {
+        return $this->belongsTo(TambahanPembayaran::class, 'tambahan_pembayaran_id', 'id');
+    }
+
 }

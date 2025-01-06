@@ -17,20 +17,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([
-            PendidikanSeeder::class,
-            BasePembayaranSeeder::class,
-            UserSeeder::class,
-        ]);
+        // $this->call([
+        //     PendidikanSeeder::class,
+        //     BasePembayaranSeeder::class,
+        //     UserSeeder::class,
+        // ]);
 
-        // Santri::factory(100)->recycle([
-        //     KategoriSantri::all(),
-        //     User::all(),
-        // ])->create();
-
-        // SantriTambahanPembayaran::factory(90)->recycle([
-        //     Santri::all(),
-        //     TambahanPembayaran::all(),
-        // ])->create();
+        SantriTambahanPembayaran::factory(7)->recycle([
+            Santri::all(),
+            TambahanPembayaran::all(),
+        ])->create();
     }
 }

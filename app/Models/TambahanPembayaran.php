@@ -15,12 +15,19 @@ class TambahanPembayaran extends Model
     protected $fillable = [
         'nama_item',
         'nominal',
+        'jumlah'
     ];
+
+    public function santriTambahanPembayarans()
+    {
+        return $this->hasMany(SantriTambahanPembayaran::class, 'tambahan_pembayaran_id', 'id_tambahan_pembayaran');
+    }
 
     public function santris()
     {
-        return $this->belongsToMany(Santri::class, 'santri_tambahan_pembayarans', 'id_tambahan_pembayaran', 'id_santri')
-                    ->withPivot('id_tambahan_pembayaran', 'id_santri') // Jika Anda ingin menyertakan data di pivot
-                    ->withTimestamps(); // Jika Anda ingin menyertakan kolom timestamps (created_at, updated_at)
+        return $this->belongsToMany(Santri::class, 'santri_tambahan_pembayaran', 'tambahan_pembayaran_id', 'santri_id')
+                    ->withTimestamps();
     }
+
+
 }

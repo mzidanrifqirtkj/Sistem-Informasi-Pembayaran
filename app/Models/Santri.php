@@ -48,7 +48,8 @@ class Santri extends Model
         'alamat_wali',
         'tempat_lahir_wali',
         'tanggal_lahir_wali',
-        'status'
+        'status',
+        'tabungan'
     ];
 
 
@@ -57,12 +58,21 @@ class Santri extends Model
         return $this->belongsTo(User::class, 'user_id', 'id_user');
     }
 
-    public function tambahanPembayaran()
+    public function santriTambahanPembayarans()
     {
-        return $this->belongsToMany(TambahanPembayaran::class, 'santri_tambahan_pembayarans', 'id_santri', 'id_tambahan_pembayaran')
-                    ->withPivot('id_santri', 'id_tambahan_pembayaran') // Jika Anda ingin menyertakan data di pivot
-                    ->withTimestamps(); // Jika Anda ingin menyertakan kolom timestamps (created_at, updated_at)
+        return $this->hasMany(SantriTambahanPembayaran::class, 'santri_id', 'id_santri');
     }
+
+    public function tambahanPembayarans()
+    {
+        return $this->belongsToMany(
+            TambahanPembayaran::class,          // Model relasi
+            'santri_tambahan_pembayarans',       // Tabel pivot
+            'santri_id',                        // Foreign key di tabel pivot
+            'tambahan_pembayaran_id'            // Relasi ke id di model TambahanPembayaran
+        )->withTimestamps();                    // Opsional: Jika pivot memiliki timestamps
+    }
+
 
     public function kategori_santri()
     {
