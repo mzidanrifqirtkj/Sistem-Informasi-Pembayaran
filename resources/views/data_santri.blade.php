@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Santri</title>
 </head>
+
 <body>
     <h1>Data Santri</h1>
     <table border="1">
@@ -26,7 +28,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($santris as $santri)
+            @foreach ($santris as $santri)
                 <tr>
                     <td>{{ $santri->nis }}</td>
                     <td>{{ $santri->nama_santri }}</td>
@@ -46,4 +48,5 @@
         </tbody>
     </table>
 </body>
+
 </html>

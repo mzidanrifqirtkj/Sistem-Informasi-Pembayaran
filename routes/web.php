@@ -1,6 +1,8 @@
 <?php
 
-use App\Http\Controllers\SantriController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\SantriController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
