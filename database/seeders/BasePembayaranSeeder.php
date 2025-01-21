@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\BiayaTerjadwal;
 use App\Models\KategoriSantri;
 use App\Models\TambahanPembayaran;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class BasePembayaranSeeder extends Seeder
@@ -17,17 +17,14 @@ class BasePembayaranSeeder extends Seeder
         TambahanPembayaran::create([
             'nama_item' => 'Laptop',
             'nominal' => 20000,
-            'jumlah' => 1,
         ]);
         TambahanPembayaran::create([
             'nama_item' => 'Motor',
             'nominal' => 15000,
-            'jumlah' => 1,
         ]);
         TambahanPembayaran::create([
             'nama_item' => 'Elektronik Lain',
             'nominal' => 5000,
-            'jumlah' => 3,
         ]);
 
 
@@ -46,6 +43,38 @@ class BasePembayaranSeeder extends Seeder
         KategoriSantri::create([
             'nama_kategori' => 'Cuti',
             'nominal_syahriyah' => 125000,
+        ]);
+
+        // Buat data biaya terjadwal
+        BiayaTerjadwal::create([
+            'periode' => 'tahunan',
+            'nama_biaya' => 'Pendaftaran Ulang',
+            'nominal' => 300000,
+        ]);
+        BiayaTerjadwal::create([
+            'periode' => 'tahunan',
+            'nama_biaya' => 'Haflah',
+            'nominal' => 400000,
+        ]);
+        BiayaTerjadwal::create([
+            'periode' => 'tahunan',
+            'nama_biaya' => 'Ziaroh',
+            'nominal' => 500000,
+        ]);
+        BiayaTerjadwal::create([
+            'periode' => 'sekali',
+            'nama_biaya' => 'Pendaftaran Santri Baru',
+            'nominal' => 2150000,
+        ]);
+        BiayaTerjadwal::create([
+            'periode' => 'tahunan',
+            'nama_biaya' => 'Imtihan 1',
+            'nominal' => 50000,
+        ]);
+        BiayaTerjadwal::create([
+            'periode' => 'tahunan',
+            'nama_biaya' => 'Imtihan 2',
+            'nominal' => 50000,
         ]);
 
     }

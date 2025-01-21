@@ -21,6 +21,7 @@ class SantriTambahanPembayaranFactory extends Factory
         return [
             'santri_id' => Santri::inRandomOrder()->first()->id_santri,
             'tambahan_pembayaran_id' => TambahanPembayaran::inRandomOrder()->first()->id_tambahan_pembayaran,
+            'jumlah' => $this->faker->numberBetween(1, 3),
         ];
     }
 }
