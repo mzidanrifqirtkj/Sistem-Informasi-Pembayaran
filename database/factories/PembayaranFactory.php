@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Pembayaran;
-use App\Models\Tagihan;
 use App\Models\TagihanBulanan;
 use App\Models\TagihanTerjadwal;
 use App\Models\User;

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Kelas;
+use App\Models\MataPelajaran;
 use App\Models\TahunAjar;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -49,5 +50,30 @@ class PendidikanSeeder extends Seeder
             'nama_kelas' => 'Ihya',
         ]);
 
+
+        MataPelajaran::create([
+            'nama_mapel' => 'Jurumiyyah',
+        ]);
+        MataPelajaran::create([
+            'nama_mapel' => 'Imrity',
+        ]);
+        MataPelajaran::create([
+            'nama_mapel' => 'Alfiyyah 1',
+        ]);
+        MataPelajaran::create([
+            'nama_mapel' => 'Alfiyyah 2',
+        ]);
+        MataPelajaran::create([
+            'nama_mapel' => 'Bukhori 1',
+        ]);
+        MataPelajaran::create([
+            'nama_mapel' => 'Bukhori 2',
+        ]);
+        MataPelajaran::create([
+            'nama_mapel' => 'Ihya 1',
+        ]);
+        MataPelajaran::create([
+            'nama_mapel' => 'Ihya 2',
+        ]);
     }
 }

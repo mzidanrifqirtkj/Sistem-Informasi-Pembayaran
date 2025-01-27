@@ -2,27 +2,15 @@
 @section('title_page','Riwayat Pembayaran Syahriah')
 @section('content')
 
-@if (Session::has('alert'))
-<div class="alert alert-warning alert-dismissible fade show" role="alert">
-    {{ Session('alert') }}
-    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-    </button>
-</div>
-@endif
-
 <div class="row">
     <div class="col-md-4">
         <a href="{{ route('admin.pembayaran.index') }}" class="btn btn-primary">Bayar Tagihan</a><br><br>
-    </div>
-    <div class="col-md-4">
-        {{-- <a href="{{ route('admin.tagihan_bulanan.createBulkBulanan') }}" class="btn btn-primary">Generate Tagihan Syahriah</a><br><br> --}}
     </div>
     <div class="col-md-4 mb-3">
         <form action="#" class="flex-sm">
             <div class="input-group">
                 <select class="form-control select2" name="year" id="year">
-                    @for ($year = (int) date('Y'); 1900 <= $year; $year--)
+                    @for ($year = (int) date('Y'); 2020 <= $year; $year--)
                         <option value="{{ $year }}" @if ($year==$now) selected @endif>
                         {{ $year }}
                         </option>

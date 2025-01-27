@@ -10,8 +10,8 @@ class KategoriSantriController extends Controller
 {
     public function index()
     {
-        $kategori_santris = KategoriSantri::orderBy('nama_kategori', 'asc')->get();
-        return view('kategori-santri.index', compact('kategori_santris'));
+        $kategoriSantri = KategoriSantri::orderBy('nama_kategori', 'asc')->get();
+        return view('kategori-santri.index', compact('kategoriSantri'));
     }
     public function create()
     {

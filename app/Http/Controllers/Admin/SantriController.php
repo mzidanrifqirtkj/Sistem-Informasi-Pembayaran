@@ -12,38 +12,54 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use Yajra\DataTables\Facades\DataTables;
 
 class SantriController extends Controller
 {
+
+    // public function index(Request $request)
+    // {
+    //     // Jika permintaan adalah AJAX
+    //     if ($request->ajax()) {
+    //         // Ambil data santri dari database
+    //         $santris = Santri::select('id_santri', 'nis', 'nama_santri', 'alamat', 'no_hp');
+
+    //         // Gunakan Yajra DataTables untuk mengelola data dan menambah kolom aksi
+    //         return DataTables::of($santris)
+    //             ->addColumn('action', function ($row) {
+    //                 // Menambahkan tombol edit dan delete pada setiap baris
+    //                 return '
+    //                     <a href="' . route('admin.santri.edit', $row->id_santri) . '" class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a>
+    //                     <a href="javascript:void(0)" class="btn btn-sm btn-danger" onclick="deleteData(' . $row->id_santri . ')" data-toggle="modal" data-target="#deleteSantriModal"><i class="fas fa-trash"></i></a>
+    //                 ';
+    //             })
+    //             ->rawColumns(['action']) // Menandai kolom 'action' agar bisa menggunakan HTML
+    //             ->make(true);
+    //     }
+
+    //     // Jika bukan AJAX request, tampilkan halaman utama dengan data
+    //     return view('santri.index');
+    // }
+
     public function index(Request $request)
     {
         $santris = Santri::select('*')
             ->addSelect(['total_aktif' => Santri::selectRaw('COUNT(*)')
             ->where('status', 'aktif')])
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->paginate(5);
         // $santris       = Santri::latest()->paginate(10);
         $keyword    = $request->keyword;
         if ($keyword)
-            $data   = Santri::where('name', 'LIKE', "%$keyword%")
-                ->orWhere('address', 'LIKE', "%$keyword%")
-                ->orWhere('phone', 'LIKE', "%$keyword%")
-                ->latest()
-                ->paginate(10);
+            $santris   = Santri::where('nama_santri', 'LIKE', "%$keyword%")
+            ->orWhere('alamat', 'LIKE', "%$keyword%")
+            ->orWhere('no_hp', 'LIKE', "%$keyword%")
+            ->latest()
+        ->paginate(5);
 
-        // $santris = Santri::orderBy('user_id', 'asc')->with(['user', 'kategori_santri'])->get();
+        // $santris = Santri::orderBy('user_id', 'asc')->with(['user', 'kategoriSantri'])->get();
         return view('santri.index', compact('santris'));
     }
-
-    // /**
-    //  * Display a listing of the resource.
-    //  */
-    // public function index()
-    // {
-    //     $santris = Santri::orderBy('user_id', 'asc')->with(['user', 'kategori_santri'])->get();
-    //     // $santris = Santri::all();
-    //     return view('santri.index', compact('santris'));
-    // }
 
     /**
      * Menampilkan halaman impor data santri.
@@ -128,7 +144,7 @@ class SantriController extends Controller
 
         Santri::create($validated);
         // ketika baru di create, buat tagihan pendaftaran
-        
+
         return redirect()->route('admin.santri.index')->with('alert', 'Santri created successfully.');
     }
 
@@ -137,7 +153,7 @@ class SantriController extends Controller
      */
     public function show(Santri $santri)
     {
-        $santri->load('tambahanPembayarans', 'user', 'kategori_santri');
+        $santri->load('tambahanBulanans', 'user', 'kategoriSantri');
         return view('santri.show', compact('santri'));
     }
 

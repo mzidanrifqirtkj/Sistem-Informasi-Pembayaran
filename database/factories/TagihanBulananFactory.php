@@ -30,7 +30,7 @@ class TagihanBulananFactory extends Factory
         }
 
         // Pilih secara acak apakah tagihan ini bulanan atau tahunan
-        $nominal = $santri->kategori_santri->nominal_syahriyah;
+        $nominal = $santri->kategoriSantri->nominal_syahriyah;
         $bulan =  ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         $randomMonth = $bulan[array_rand($bulan)];
 
@@ -40,8 +40,8 @@ class TagihanBulananFactory extends Factory
             'bulan' => $randomMonth
         ];
 
-        // Tambahan pembayaran
-        foreach ($santri->tambahanPembayarans as $tambahan) {
+        // Tambahan Bulanan
+        foreach ($santri->tambahanBulanans as $tambahan) {
             $rincian['tambahan'] = [
                 'nama_item' => $tambahan->nama_item,
                 'nominal' => $tambahan->nominal,
