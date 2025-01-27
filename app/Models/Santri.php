@@ -65,24 +65,33 @@ class Santri extends Model
 
     public function tambahanPembayarans()
     {
-        return $this->belongsToMany(
-            TambahanPembayaran::class,          // Model relasi
-            'santri_tambahan_pembayarans',       // Tabel pivot
-            'santri_id',                        // Foreign key di tabel pivot
-            'tambahan_pembayaran_id'            // Relasi ke id di model TambahanPembayaran
-        )->withTimestamps();                    // Opsional: Jika pivot memiliki timestamps
+        return $this->belongsToMany(TambahanPembayaran::class, 'santri_tambahan_pembayarans', 'santri_id', 'tambahan_pembayaran_id')->withPivot(['jumlah'])->withTimestamps();
     }
-
 
     public function kategori_santri()
     {
         return $this->belongsTo(KategoriSantri::class, 'kategori_santri_id', 'id_kategori_santri');
     }
 
-    public function pembayaran()
+    // public function tagihanBulanan()
+    // {
+    //     return $this->hasMany(TagihanBulanan::class, 'id_tagihan_bulanan', 'tagihan_bulanan_id');
+    // }
+    public function tagihanBulanan()
     {
-        return $this->hasMany(Pembayaran::class);
+        return $this->hasMany(TagihanBulanan::class, 'santri_id', 'id_santri');
     }
+
+
+    public function tagihanTerjadwal()
+    {
+        return $this->hasMany(TagihanTerjadwal::class, 'santri_id', 'id_santri');
+    }
+
+    // public function pembayaran()
+    // {
+    //     return $this->hasMany(Pembayaran::class);
+    // }
 
     public function absensi()
     {

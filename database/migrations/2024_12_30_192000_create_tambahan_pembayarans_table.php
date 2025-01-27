@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id('id_tambahan_pembayaran');
             $table->string('nama_item');
             $table->integer('nominal');
-            $table->integer('jumlah');
             $table->timestamps();
         });
     }

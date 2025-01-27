@@ -10,16 +10,16 @@ return new class extends Migration
         Schema::create('pembayarans', function (Blueprint $table) {
             $table->id('id_pembayaran');
             $table->unsignedBigInteger('tagihan_bulanan_id')->nullable();
-            $table->unsignedBigInteger('tagihan_tahunan_id')->nullable();
-            $table->unsignedBigInteger('santri_id');
-
-            $table->foreign('tagihan_bulanan_id')->references('id_tagihan_bulanan')->on('tagihan_bulanans')->onDelete('set null');
-            $table->foreign('tagihan_tahunan_id')->references('id_tagihan_tahunan')->on('tagihan_tahunans')->onDelete('set null');
-            $table->foreign('santri_id')->references('id_santri')->on('santris')->onDelete('cascade');
-
-            $table->date('tanggal_pembayaran');
-            $table->integer('jumlah_dibayar');
+            $table->unsignedBigInteger('tagihan_terjadwal_id')->nullable();
+            $table->double('nominal_pembayaran');
+            $table->dateTime('tanggal_pembayaran');
+            $table->unsignedBigInteger('created_by_id');
             $table->timestamps();
+
+            // $table->foreign('santri_id')->references('id_santri')->on('santris');
+            $table->foreign('tagihan_bulanan_id')->references('id_tagihan_bulanan')->on('tagihan_bulanans')->onDelete('cascade');
+            $table->foreign('tagihan_terjadwal_id')->references('id_tagihan_terjadwal')->on('tagihan_terjadwals')->onDelete('cascade');
+            $table->foreign('created_by_id')->references('id_user')->on('users')->onDelete('cascade');
         });
     }
 

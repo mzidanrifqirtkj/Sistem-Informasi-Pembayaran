@@ -15,6 +15,7 @@ class SantriTambahanPembayaran extends Model
     protected $fillable = [
         'santri_id',
         'tambahan_pembayaran_id',
+        'jumlah',
     ];
 
     public function santri()

@@ -19,7 +19,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'nis',
         'email',
         'email_verified_at',
         'password',
@@ -28,7 +28,7 @@ class User extends Authenticatable
 
     public function santri()
     {
-        return $this->hasOne(Santri::class);
+        return $this->hasOne(Santri::class, 'user_id', 'id_user');
     }
 
     /**
