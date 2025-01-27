@@ -32,11 +32,12 @@ class RolePermissionSeeder extends Seeder
         $roleAdmin->givePermissionTo('edit-user');
         $roleAdmin->givePermissionTo('delete-user');
         $roleAdmin->givePermissionTo('view-user');
-
-        $roleAdmin = Role::findByName('santri');
         $roleAdmin->givePermissionTo('add-absensi');
         $roleAdmin->givePermissionTo('edit-absensi');
         $roleAdmin->givePermissionTo('delete-absensi');
+        $roleAdmin->givePermissionTo('view-absensi');
+
+        $roleAdmin = Role::findByName('santri');
         $roleAdmin->givePermissionTo('view-absensi');
     }
 }
