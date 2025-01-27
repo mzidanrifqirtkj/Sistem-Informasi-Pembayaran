@@ -27,11 +27,11 @@ class DatabaseSeeder extends Seeder
     {
 
 
-        // $this->call([
-        //     PendidikanSeeder::class,
-        //     BasePembayaranSeeder::class,
-        //     // UserSeeder::class,
-        // ]);
+        $this->call([
+            PendidikanSeeder::class,
+            BasePembayaranSeeder::class,
+            // UserSeeder::class,
+        ]);
 
 
         // Santri::factory(10)->recycle([
@@ -41,10 +41,10 @@ class DatabaseSeeder extends Seeder
 
         //import data santri, lalu buat data santri tambahan pembayaran
 
-        SantriTambahanPembayaran::factory(3)->recycle([
-            Santri::all(),
-            TambahanPembayaran::all(),
-        ])->create();
+        // SantriTambahanPembayaran::factory(3)->recycle([
+        //     Santri::all(),
+        //     TambahanPembayaran::all(),
+        // ])->create();
 
         // $santris = Santri::all();
         // $tambahanPembayarans = TambahanPembayaran::all();

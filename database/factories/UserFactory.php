@@ -19,7 +19,7 @@ class UserFactory extends Factory
         return [
             'nis' => $this->faker->unique()->numerify('####'),
             'email' => $this->faker->unique()->safeEmail,
-            'role' => $this->faker->randomElement(['admin', 'user']),
+            // 'role' => $this->faker->randomElement(['admin', 'user']),
             'email_verified_at' => $this->faker->dateTimeThisYear(),
             'password' => bcrypt('password'),
             'remember_token' => \Illuminate\Support\Str::random(10),

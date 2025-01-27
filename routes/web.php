@@ -13,7 +13,6 @@ use App\Http\Controllers\Admin\UserController;
 use App\Models\BiayaTahunan;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ProfileController;
 
 Route::get('/', function () {
     return view('home');
@@ -85,17 +84,6 @@ Route::put('biaya-terjadwal/{id}', [BiayaTerjadwalController::class, 'update'])-
 Route::delete('biaya-terjadwal/{id}', [BiayaTerjadwalController::class, 'destroy'])->name('admin.biaya_terjadwal.destroy');
 
 // Route::resource('santri', SantriController::class);
-//zidan
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified', 'role:admin|santri'])->name('dashboard');
-
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
 Route::get('tulisan', function () {
     return view('tulisan');
 })->middleware(['auth', 'verified', 'role:santri|admin']);
