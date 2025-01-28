@@ -148,6 +148,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
 Route::get('tulisan', function () {
     return view('tulisan');
-})->middleware(['auth', 'verified', 'role:santri|admin']);
+})->middleware(['auth', 'verified', 'role:santri']);
 
 require __DIR__ . '/auth.php';
