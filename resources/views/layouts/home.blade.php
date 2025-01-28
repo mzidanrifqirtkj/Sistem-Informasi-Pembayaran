@@ -28,7 +28,8 @@
     <!-- CSS Libraries -->
     <link rel="stylesheet" href="{{ asset('assets/modules/select2/dist/css/select2.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/modules/datatables/datatables.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/modules/datatables/DataTables-1.10.16/css/dataTables.bootstrap4.min.css') }}">
+    <link rel="stylesheet"
+        href="{{ asset('assets/modules/datatables/DataTables-1.10.16/css/dataTables.bootstrap4.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/modules/datatables/Select-1.2.4/css/select.bootstrap4.min.css') }}">
 
     <!-- Template CSS -->
@@ -60,100 +61,49 @@
             <nav class="navbar navbar-expand-lg main-navbar">
                 <form class="form-inline mr-auto">
                     <ul class="navbar-nav mr-3">
-                        <li><a href="#" data-toggle="sidebar" class="nav-link nav-link-lg"><i class="fas fa-bars"></i></a></li>
+                        <li><a href="#" data-toggle="sidebar" class="nav-link nav-link-lg"><i
+                                    class="fas fa-bars"></i></a></li>
                     </ul>
                 </form>
-                <ul class="navbar-nav navbar-right">
-                    <li class="dropdown">
-                        {{-- <a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
-                            @if (Auth::user()->santri_id == null || Auth::user()->santris->photo == null)
-                            <img alt="image" src="{{ asset('assets/img/avatar/avatar-1.png') }}" class="rounded-circle mr-1">
-                        @else
-                        <img alt="image" src="{{ asset('storage/photo/' . Auth::user()->santris->photo) }}" class="rounded-circle mr-1"
-                            style="position: relative;width: 30px;height: 30px;overflow: hidden;">
-                        @endif
-                        <div class="d-sm-none d-lg-inline-block">{{ Auth::user()->santris->name }}</div>
-                        </a> --}}
+                @include('layouts.header')
+            </nav>
 
-                        <a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
-                            <img alt="image" src="{{ asset('assets/img/avatar/avatar-1.png') }}" class="rounded-circle mr-1">
-                            <div class="d-sm-none d-lg-inline-block">Admin Pondok</div>
-                        </a>
+            @include('layouts.sidebar')
 
-                        {{-- <div class="dropdown-menu dropdown-menu-right">
-                            <a href="{{ route('santri.show', Auth::user()->santris->id) }}" class="dropdown-item has-icon">
-                        <i class="fas fa-user"></i> Profil
-                        </a>
-
-                        <div class="dropdown-divider"></div>
-
-                        <a class="dropdown-item has-icon text-danger" href="{{ route('logout') }}#"
-                            onclick="event.preventDefault();
-                                                document.getElementById('logout-form').submit();">
-                            <i class="fas fa-sign-out-alt"></i> {{ __('Logout') }}
-                        </a>
-
-                        <form id="logout-form" action="{{ route('logout') }}#" method="POST" class="d-none">
-                            @csrf
-                        </form>
-        </div> --}}
-        <div class="dropdown-menu dropdown-menu-right">
-            <a href="#" class="dropdown-item has-icon">
-                <i class="fas fa-user"></i> Profil
-            </a>
-
-            <div class="dropdown-divider"></div>
-
-            <a class="dropdown-item has-icon text-danger" href="#"
-                onclick="event.preventDefault();
-                                                document.getElementById().submit();">
-                <i class="fas fa-sign-out-alt"></i>
-            </a>
-
-            <form id="logout-form" action="#" method="POST" class="d-none">
-                @csrf
-            </form>
-        </div>
-        </li>
-        </ul>
-        </nav>
-
-        @include('layouts.sidebar')
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <section class="section">
-                <div class="section-header">
-                    <h1>@yield('title_page')</h1>
-                </div>
-                @if (Session::has('alert'))
-                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                        {{ Session('alert') }}
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+            <!-- Main Content -->
+            <div class="main-content">
+                <section class="section">
+                    <div class="section-header">
+                        <h1>@yield('title_page')</h1>
                     </div>
-                @elseif (Session::has('error'))
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        {{ Session('error') }}
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                @endif
+                    @if (Session::has('alert'))
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            {{ Session('alert') }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    @elseif (Session::has('error'))
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ Session('error') }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    @endif
 
-                <div class="section-body">
-                    <div class="card">
-                        <div class="p-3">
+                    <div class="section-body">
+                        <div class="card">
+                            <div class="p-3">
 
-                            @yield('content')
+                                @yield('content')
+                            </div>
                         </div>
                     </div>
-                </div>
-            </section>
-        </div>
-        <!-- End Main Content -->
+                </section>
+            </div>
+            <!-- End Main Content -->
 
 
 
-        @include('layouts.footer')
+            @include('layouts.footer')
