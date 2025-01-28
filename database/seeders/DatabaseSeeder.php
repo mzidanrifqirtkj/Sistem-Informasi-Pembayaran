@@ -2,18 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\BiayaBulanan;
-use App\Models\BiayaTahunan;
-use App\Models\BiayaTerjadwal;
-use App\Models\JenisPembayaran;
 use App\Models\KategoriSantri;
-use App\Models\Pembayaran;
 use App\Models\Santri;
-use App\Models\SantriTambahanPembayaran;
-use App\Models\Tagihan;
-use App\Models\TagihanBulanan;
-use App\Models\TagihanTerjadwal;
-use App\Models\TambahanPembayaran;
+use App\Models\SantriTambahanBulanan;
+use App\Models\TambahanBulanan;
 use App\Models\User;
 use Exception;
 use Illuminate\Database\Seeder;
@@ -30,20 +22,18 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PendidikanSeeder::class,
             BasePembayaranSeeder::class,
-            // UserSeeder::class,
+            // UserSeeder::class, // jika ingin membuat dummy user
         ]);
 
-
+        // jika ingin membuat dummy santri
         // Santri::factory(10)->recycle([
         //     KategoriSantri::all(),
         //     User::all()
         // ])->create();
 
-        //import data santri, lalu buat data santri tambahan pembayaran
-
-        // SantriTambahanPembayaran::factory(3)->recycle([
+        // SantriTambahanBulanan::factory(3)->recycle([
         //     Santri::all(),
-        //     TambahanPembayaran::all(),
+        //     TambahanBulanan::all(),
         // ])->create();
 
         // $santris = Santri::all();

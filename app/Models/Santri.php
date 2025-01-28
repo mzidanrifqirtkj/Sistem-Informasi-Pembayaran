@@ -58,25 +58,21 @@ class Santri extends Model
         return $this->belongsTo(User::class, 'user_id', 'id_user');
     }
 
-    public function santriTambahanPembayarans()
+    public function santriTambahanBulanans()
     {
-        return $this->hasMany(SantriTambahanPembayaran::class, 'santri_id', 'id_santri');
+        return $this->hasMany(SantriTambahanBulanan::class, 'santri_id', 'id_santri');
     }
 
-    public function tambahanPembayarans()
+    public function tambahanBulanans()
     {
-        return $this->belongsToMany(TambahanPembayaran::class, 'santri_tambahan_pembayarans', 'santri_id', 'tambahan_pembayaran_id')->withPivot(['jumlah'])->withTimestamps();
+        return $this->belongsToMany(TambahanBulanan::class, 'santri_tambahan_bulanans', 'santri_id', 'tambahan_bulanan_id')->withPivot(['jumlah'])->withTimestamps();
     }
 
-    public function kategori_santri()
+    public function kategoriSantri()
     {
         return $this->belongsTo(KategoriSantri::class, 'kategori_santri_id', 'id_kategori_santri');
     }
 
-    // public function tagihanBulanan()
-    // {
-    //     return $this->hasMany(TagihanBulanan::class, 'id_tagihan_bulanan', 'tagihan_bulanan_id');
-    // }
     public function tagihanBulanan()
     {
         return $this->hasMany(TagihanBulanan::class, 'santri_id', 'id_santri');
@@ -88,18 +84,19 @@ class Santri extends Model
         return $this->hasMany(TagihanTerjadwal::class, 'santri_id', 'id_santri');
     }
 
-    // public function pembayaran()
-    // {
-    //     return $this->hasMany(Pembayaran::class);
-    // }
 
     public function absensi()
     {
         return $this->hasMany(Absensi::class);
     }
 
-    public function nilai()
+    public function penilaianSantri()
     {
-        return $this->hasMany(Nilai::class);
+        return $this->hasMany(PenilaianSantri::class, 'santri_id', 'id_santri');
+    }
+
+    public function penugasan()
+    {
+        return $this->hasMany(PenugasanUstadz::class, 'ustadz_id', 'id_santri');
     }
 }

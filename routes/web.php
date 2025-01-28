@@ -5,12 +5,18 @@ use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\SantriController;
 use App\Http\Controllers\Admin\KategoriSantriController;
 use App\Http\Controllers\Admin\BiayaTerjadwalController;
+use App\Http\Controllers\Admin\KelasController;
+use App\Http\Controllers\Admin\MataPelajaranController;
 use App\Http\Controllers\Admin\TagihanBulananController;
 use App\Http\Controllers\Admin\TagihanController;
 use App\Http\Controllers\Admin\TagihanTerjadwalController;
 use App\Http\Controllers\Admin\PembayaranController;
+use App\Http\Controllers\Admin\PenugasanUstadzController;
+use App\Http\Controllers\Admin\TahunAjarController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\TambahanBulananController;
 use App\Models\BiayaTahunan;
+use App\Models\PenugasanUstadz;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
@@ -20,7 +26,6 @@ Route::get('/', function () {
 
 Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 Route::get('profile', [ProfileController::class, 'index'])->name('admin.profile');
-
 
 Route::get('santri', [SantriController::class, 'index'])->name('admin.santri.index');
 Route::get('santri/create', [SantriController::class, 'create'])->name('admin.santri.create');
@@ -42,6 +47,7 @@ Route::put('user/{id}', [UserController::class, 'update'])->name('admin.user.upd
 Route::delete('user/{id}', [UserController::class, 'destroy'])->name('admin.user.destroy');
 Route::get('user', [UserController::class, 'index'])->name('admin.user.index');
 
+Route::get('kategori-santri', [KategoriSantriController::class, 'index'])->name('admin.kategori.index');
 Route::get('kategori-santri/create', [KategoriSantriController::class, 'create'])->name('admin.kategori.create');
 Route::post('kategori-santri', [KategoriSantriController::class, 'store'])->name('admin.kategori.store');
 Route::get('kategori-santri/{id}/edit', [KategoriSantriController::class, 'edit'])->name('admin.kategori.edit');
@@ -57,6 +63,17 @@ Route::get('tagihan-terjadwal/{id}/edit', [TagihanTerjadwalController::class, 'e
 Route::put('tagihan-terjadwal/{id}', [TagihanTerjadwalController::class, 'update'])->name('admin.tagihan_terjadwal.update');
 Route::delete('tagihan-terjadwal/{id}', [TagihanTerjadwalController::class, 'destroy'])->name('admin.tagihan_terjadwal.destroy');
 
+
+Route::get('tambahan-bulanan', [TambahanBulananController::class, 'index'])->name('admin.tambahan_bulanan.index');
+Route::get('tambahan-bulanan/create', [TambahanBulananController::class, 'create'])->name('admin.tambahan_bulanan.create');
+Route::post('tambahan-bulanan', [TambahanBulananController::class, 'store'])->name('admin.tambahan_bulanan.store');
+Route::get('tambahan-bulanan/{id}/edit', [TambahanBulananController::class, 'edit'])->name('admin.tambahan_bulanan.edit');
+Route::put('tambahan-bulanan/{item}', [TambahanBulananController::class, 'update'])->name('admin.tambahan_bulanan.update');
+Route::delete('tambahan-bulanan/{id}', [TambahanBulananController::class, 'destroy'])->name('admin.tambahan_bulanan.destroy');
+
+Route::get('tambahan-bulanan/item-santri', [TambahanBulananController::class, 'itemSantri'])->name('admin.tambahan_bulanan.item_santri');
+Route::get('tambahan-bulanan/item-santri/{santri}', [TambahanBulananController::class, 'editItemSantri'])->name('admin.tambahan_bulanan.item_santri.edit');
+Route::put('tambahan-bulanan/item-santri/{item}', [TambahanBulananController::class, 'updateItemSantri'])->name('admin.tambahan_bulanan.item_santri.update');
 
 Route::get('tagihan-bulanan', [TagihanBulananController::class, 'index'])->name('admin.tagihan_bulanan.index');
 Route::get('tagihan-bulanan/create', [TagihanBulananController::class, 'create'])->name('admin.tagihan_bulanan.create');
@@ -83,10 +100,50 @@ Route::get('biaya-terjadwal/{id}/edit', [BiayaTerjadwalController::class, 'edit'
 Route::put('biaya-terjadwal/{id}', [BiayaTerjadwalController::class, 'update'])->name('admin.biaya_terjadwal.update');
 Route::delete('biaya-terjadwal/{id}', [BiayaTerjadwalController::class, 'destroy'])->name('admin.biaya_terjadwal.destroy');
 
-// Route::resource('santri', SantriController::class);
+// Route::resource('kelas', KelasController::class);
+Route::get('kelas', [KelasController::class, 'index'])->name('admin.kelas.index');
+Route::get('kelas/create', [KelasController::class, 'create'])->name('admin.kelas.create');
+Route::post('kelas', [KelasController::class, 'store'])->name('admin.kelas.store');
+Route::get('kelas/{kelas}/edit', [KelasController::class, 'edit'])->name('admin.kelas.edit');
+Route::put('kelas/{kelas}', [KelasController::class, 'update'])->name('admin.kelas.update');
+Route::delete('kelas/{id}', [KelasController::class, 'destroy'])->name('admin.kelas.destroy');
+
+Route::get('tahun-ajar', [TahunAjarController::class, 'index'])->name('admin.tahun_ajar.index');
+Route::get('tahun-ajar/create', [TahunAjarController::class, 'create'])->name('admin.tahun_ajar.create');
+Route::post('tahun-ajar', [TahunAjarController::class, 'store'])->name('admin.tahun_ajar.store');
+Route::get('tahun-ajar/{tahunAjar}/edit', [TahunAjarController::class, 'edit'])->name('admin.tahun_ajar.edit');
+Route::put('tahun-ajar/{tahunAjar}', [TahunAjarController::class, 'update'])->name('admin.tahun_ajar.update');
+Route::delete('tahun-ajar/{tahunAjar}', [TahunAjarController::class, 'destroy'])->name('admin.tahun_ajar.destroy');
+
+Route::get('mapel', [MataPelajaranController::class, 'index'])->name('admin.mapel.index');
+Route::get('mapel/create', [MataPelajaranController::class, 'create'])->name('admin.mapel.create');
+Route::post('mapel', [MataPelajaranController::class, 'store'])->name('admin.mapel.store');
+Route::get('mapel/{mataPelajaran}/edit', [MataPelajaranController::class, 'edit'])->name('admin.mapel.edit');
+Route::put('mapel/{mataPelajaran}', [MataPelajaranController::class, 'update'])->name('admin.mapel.update');
+Route::delete('mapel/{mataPelajaran}', [MataPelajaranController::class, 'destroy'])->name('admin.mapel.destroy');
+
+Route::get('ustadz', [PenugasanUstadzController::class, 'getUstadzs'])->name('admin.ustadz.get');
+Route::get('ustadz/add', [PenugasanUstadzController::class, 'addUstadz'])->name('admin.ustadz.add');
+Route::post('ustadz/add', [PenugasanUstadzController::class, 'storeUstadz'])->name('admin.ustadz.store');
+
+Route::get('ustadz/penugasan', [PenugasanUstadzController::class, 'getPenugasan'])->name('admin.ustadz.penugasan.index');
+Route::get('ustadz/penugasan/create', [PenugasanUstadzController::class, 'createPenugasan'])->name('admin.ustadz.penugasan.create');
+Route::post('ustadz/penugasan', [PenugasanUstadzController::class, 'storePenugasan'])->name('admin.ustadz.penugasan.store');
+// Route::get('ustadz/penugasan/{id}', [PenugasanUstadzController::class, 'showPenugasan'])->name('admin.ustadz.penugasan.show');
+
+Route::get('ustadz/penugasan/create-mapel-kelas', [PenugasanUstadzController::class, 'createMapelKelas'])->name('admin.ustadz.penugasan.createMapelKelas');
+Route::post('ustadz/penugasan/create-mapel-kelas', [PenugasanUstadzController::class, 'storeMapelKelas'])->name('admin.ustadz.penugasan.storeMapelKelas');
+
+
+Route::get('/penugasan/get-pelajaran', [PenugasanUstadzController::class, 'getPelajaran'])->name('penugasan.getPelajaran');
+Route::get('ustadz/penugasan/get-kelas', [PenugasanUstadzController::class, 'getKelas'])->name('penugasan.getKelas');
+
+Route::get('ustadz/penugasan/{id}/edit', [PenugasanUstadzController::class, 'editPenugasan'])->name('admin.ustadz.penugasan.edit');
+Route::put('ustadz/penugasan/{id}', [PenugasanUstadzController::class, 'updatePenugasan'])->name('admin.ustadz.penugasan.update');
+Route::delete('ustadz/penugasan/{id}', [PenugasanUstadzController::class, 'destroyPenugasan'])->name('admin.ustadz.penugasan.destroy');
+
 Route::get('tulisan', function () {
     return view('tulisan');
 })->middleware(['auth', 'verified', 'role:santri|admin']);
 
 require __DIR__ . '/auth.php';
-

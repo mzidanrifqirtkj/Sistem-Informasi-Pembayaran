@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\BiayaTerjadwal;
 use App\Models\KategoriSantri;
-use App\Models\TambahanPembayaran;
+use App\Models\TambahanBulanan;
 use Illuminate\Database\Seeder;
 
 class BasePembayaranSeeder extends Seeder
@@ -14,15 +14,15 @@ class BasePembayaranSeeder extends Seeder
      */
     public function run(): void
     {
-        TambahanPembayaran::create([
+        TambahanBulanan::create([
             'nama_item' => 'Laptop',
             'nominal' => 20000,
         ]);
-        TambahanPembayaran::create([
+        TambahanBulanan::create([
             'nama_item' => 'Motor',
             'nominal' => 15000,
         ]);
-        TambahanPembayaran::create([
+        TambahanBulanan::create([
             'nama_item' => 'Elektronik Lain',
             'nominal' => 5000,
         ]);
@@ -35,10 +35,6 @@ class BasePembayaranSeeder extends Seeder
         KategoriSantri::create([
             'nama_kategori' => 'Fauqo',
             'nominal_syahriyah' => 165000,
-        ]);
-        KategoriSantri::create([
-            'nama_kategori' => 'Dzuriyah',
-            'nominal_syahriyah' => 200000,
         ]);
         KategoriSantri::create([
             'nama_kategori' => 'Cuti',

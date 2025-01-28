@@ -17,16 +17,7 @@ class Pembayaran extends Model
         'tanggal_pembayaran',
         'created_by_id',
     ];
-    // public function tagihanTerjadwal()
-    // {
-    //     return $this->belongsTo(TagihanTerjadwal::class, 'id_tagihan_terjadwal', 'tagihan_terjadwal_id');
-    // }
-
-    // public function tagihanBulanan()
-    // {
-    //     return $this->belongsTo(TagihanBulanan::class, 'id_tagihan_bulanan', 'tagihan_bulanan_id');
-    // }
-
+    
     public function tagihanBulanan()
     {
         return $this->belongsTo(TagihanBulanan::class, 'tagihan_bulanan_id', 'id_tagihan_bulanan');

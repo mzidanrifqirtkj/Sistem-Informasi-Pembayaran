@@ -56,7 +56,7 @@ class TagihanBulananController extends Controller
 
             // dd($existingTagihan);
 
-            Santri::with(['kategori_santri', 'tambahanPembayarans'])->chunk(100, function ($santris) use ($bulan, $tahun, $existingTagihan) {
+            Santri::with(['kategoriSantri', 'tambahanBulanans'])->chunk(100, function ($santris) use ($bulan, $tahun, $existingTagihan) {
                 foreach ($santris as $santri) {
 
                     $idSantri = $santri->id_santri;
@@ -66,7 +66,7 @@ class TagihanBulananController extends Controller
 
                         $rincian = [
                             'syahriyah' => [
-                                'nominal' => $santri->kategori_santri->nominal_syahriyah ?? 0,
+                                'nominal' => $santri->kategoriSantri->nominal_syahriyah ?? 0,
                             ],
                             'tambahan' => [],
                         ];
@@ -75,7 +75,7 @@ class TagihanBulananController extends Controller
                         $nominal = $rincian['syahriyah']['nominal'];
 
                         // Tambahkan rincian tambahan pembayaran
-                        foreach ($santri->tambahanPembayarans as $tambahan) {
+                        foreach ($santri->tambahanBulanans as $tambahan) {
                             if (!isset($tambahan->pivot->jumlah) || !isset($tambahan->nominal)) {
                                 continue;
                             }
@@ -120,7 +120,7 @@ class TagihanBulananController extends Controller
     public function create()
     {
         $now  = (int) date('Y');
-        $santris = Santri::with(['kategori_santri', 'tambahanPembayarans'])->get();
+        $santris = Santri::with(['kategoriSantri', 'tambahanBulanans'])->get();
         return view('tagihan-bulanan.create', compact('santris', 'now'));
     }
 
@@ -136,7 +136,7 @@ class TagihanBulananController extends Controller
         ]);
         try {
             $santri = Santri::where('id_santri', $request->santri_id)
-                ->with(['kategori_santri', 'tambahanPembayarans'])
+                ->with(['kategoriSantri', 'tambahanBulanans'])
                 ->first();
 
             $isExistTagihan = TagihanBulanan::where('santri_id', $request->santri_id)
@@ -150,12 +150,12 @@ class TagihanBulananController extends Controller
             }
 
             $rincian['syahriyah'] = [
-                'kategori' => 'syahriyah ' . $santri->kategori_santri->nama_kategori,
-                'nominal' => $santri->kategori_santri->nominal_syahriyah,
+                'kategori' => 'syahriyah ' . $santri->kategoriSantri->nama_kategori,
+                'nominal' => $santri->kategoriSantri->nominal_syahriyah,
             ];
             // menambahkan nominal syahriyah dan tambahan pembayaran dan membuat rincian
-            $nominal = $santri->kategori_santri->nominal_syahriyah;
-            foreach ($santri->tambahanPembayarans as $tambahan) {
+            $nominal = $santri->kategoriSantri->nominal_syahriyah;
+            foreach ($santri->tambahanBulanans as $tambahan) {
                 if (!isset($tambahan->pivot->jumlah) || !isset($tambahan->nominal)) {
                     continue;
                 }

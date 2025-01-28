@@ -19,7 +19,7 @@
     <title>@yield('title_page')</title>
 
     <!-- Favicon -->
-    <link rel="favicon icon" href="{{ asset('assets/img/ponpes.ico') }}" type="image/x-icon">
+    <link rel="favicon icon" href="{{ asset('assets/img/logo.ico') }}" type="image/x-icon">
 
     <!-- General CSS Files -->
     <link rel="stylesheet" href="{{ asset('assets/modules/bootstrap/css/bootstrap.min.css') }}">
@@ -35,6 +35,15 @@
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/components.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/ponpes-style.css') }}">
+    <!-- DataTables CSS -->
+    {{-- <link href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css" rel="stylesheet">
+
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script> --}}
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.js"></script>
+
 
     <!-- CSS Custom -->
     <style>
@@ -59,11 +68,11 @@
                         {{-- <a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
                             @if (Auth::user()->santri_id == null || Auth::user()->santris->photo == null)
                             <img alt="image" src="{{ asset('assets/img/avatar/avatar-1.png') }}" class="rounded-circle mr-1">
-                            @else
-                            <img alt="image" src="{{ asset('storage/photo/' . Auth::user()->santris->photo) }}" class="rounded-circle mr-1"
+                        @else
+                        <img alt="image" src="{{ asset('storage/photo/' . Auth::user()->santris->photo) }}" class="rounded-circle mr-1"
                             style="position: relative;width: 30px;height: 30px;overflow: hidden;">
-                            @endif
-                            <div class="d-sm-none d-lg-inline-block">{{ Auth::user()->santris->name }}</div>
+                        @endif
+                        <div class="d-sm-none d-lg-inline-block">{{ Auth::user()->santris->name }}</div>
                         </a> --}}
 
                         <a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
@@ -73,81 +82,78 @@
 
                         {{-- <div class="dropdown-menu dropdown-menu-right">
                             <a href="{{ route('santri.show', Auth::user()->santris->id) }}" class="dropdown-item has-icon">
-                                <i class="fas fa-user"></i> Profil
-                            </a>
+                        <i class="fas fa-user"></i> Profil
+                        </a>
 
-                            <div class="dropdown-divider"></div>
+                        <div class="dropdown-divider"></div>
 
-                            <a class="dropdown-item has-icon text-danger" href="{{ route('logout') }}#"
-                                onclick="event.preventDefault();
+                        <a class="dropdown-item has-icon text-danger" href="{{ route('logout') }}#"
+                            onclick="event.preventDefault();
                                                 document.getElementById('logout-form').submit();">
-                                <i class="fas fa-sign-out-alt"></i> {{ __('Logout') }}
-                            </a>
+                            <i class="fas fa-sign-out-alt"></i> {{ __('Logout') }}
+                        </a>
 
-                            <form id="logout-form" action="{{ route('logout') }}#" method="POST" class="d-none">
-                                @csrf
-                            </form>
-                        </div> --}}
-                        <div class="dropdown-menu dropdown-menu-right">
-                            <a href="#" class="dropdown-item has-icon">
-                                <i class="fas fa-user"></i> Profil
-                            </a>
+                        <form id="logout-form" action="{{ route('logout') }}#" method="POST" class="d-none">
+                            @csrf
+                        </form>
+        </div> --}}
+        <div class="dropdown-menu dropdown-menu-right">
+            <a href="#" class="dropdown-item has-icon">
+                <i class="fas fa-user"></i> Profil
+            </a>
 
-                            <div class="dropdown-divider"></div>
+            <div class="dropdown-divider"></div>
 
-                            <a class="dropdown-item has-icon text-danger" href="#"
-                                onclick="event.preventDefault();
+            <a class="dropdown-item has-icon text-danger" href="#"
+                onclick="event.preventDefault();
                                                 document.getElementById().submit();">
-                                <i class="fas fa-sign-out-alt"></i>
-                            </a>
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
 
-                            <form id="logout-form" action="#" method="POST" class="d-none">
-                                @csrf
-                            </form>
-                        </div>
-                    </li>
-                </ul>
-            </nav>
+            <form id="logout-form" action="#" method="POST" class="d-none">
+                @csrf
+            </form>
+        </div>
+        </li>
+        </ul>
+        </nav>
 
-            @include('layouts.sidebar')
+        @include('layouts.sidebar')
 
-            <!-- Main Content -->
-            <div class="main-content">
-                <section class="section">
-                    <div class="section-header">
-                        <h1>@yield('title_page')</h1>
+        <!-- Main Content -->
+        <div class="main-content">
+            <section class="section">
+                <div class="section-header">
+                    <h1>@yield('title_page')</h1>
+                </div>
+                @if (Session::has('alert'))
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        {{ Session('alert') }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
+                @elseif (Session::has('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {{ Session('error') }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                @endif
 
-                    <div class="section-body">
-                        <div class="card">
-                            <div class="p-3">
-                                @if (session('alert'))
-                                    <div class="alert alert-success">
-                                        {{ session('alert') }}
-                                    </div>
-                                @endif
+                <div class="section-body">
+                    <div class="card">
+                        <div class="p-3">
 
-                                @if (session('error'))
-                                    @if ($errors->any())
-                                        <div class="alert alert-danger">
-                                            <ul>
-                                                @foreach ($errors->all() as $error)
-                                                    <li>{{ $error }}</li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
-                                    @endif
-                                    <div class="alert alert-danger">
-                                        {{ session('error') }}
-                                    </div>
-                                @endif
-                                @yield('content')
-                            </div>
+                            @yield('content')
                         </div>
                     </div>
-                </section>
-            </div>
-            <!-- End Main Content -->
+                </div>
+            </section>
+        </div>
+        <!-- End Main Content -->
 
 
-            @include('layouts.footer')
+
+        @include('layouts.footer')

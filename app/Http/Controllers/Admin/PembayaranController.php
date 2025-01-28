@@ -28,7 +28,7 @@ class PembayaranController extends Controller
     public function index()
     {
         // $dataPembayarans = Pembayaran::with(['tagihanBulanan', 'tagihanTahunan']);
-        $santris = Santri::with('kategori_santri')->get();
+        $santris = Santri::with('kategoriSantri')->get();
         return view('pembayaran.index', compact('santris'));
     }
     public function riwayat()
@@ -50,7 +50,7 @@ class PembayaranController extends Controller
     public function show($santriId)
     {
 
-        $santri = Santri::with('kategori_santri',  'tagihanBulanan', 'tagihanTerjadwal.biayaTerjadwal')->findOrFail($santriId);
+        $santri = Santri::with('kategoriSantri',  'tagihanBulanan', 'tagihanTerjadwal.biayaTerjadwal')->findOrFail($santriId);
         return view('pembayaran.show', compact('santri'));
     }
 
@@ -133,6 +133,17 @@ class PembayaranController extends Controller
             return redirect()->back()->with('alert', 'Pembayaran berhasil.');
         } catch (\Exception $e) {
             return back()->withErrors(['message' => $e->getMessage()]);
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $pembayaran = Pembayaran::findOrFail($id);
+            $pembayaran->delete();
+            return redirect()->route('admin.pembayaran.index')->with('alert', 'Pembayaran berhasil dihapus.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 }

@@ -12,5 +12,6 @@ class TahunAjar extends Model
 
     protected $fillable = [
         'tahun_ajar',
+        'semester',
     ];
 }

@@ -5,16 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class SantriTambahanPembayaran extends Model
+class SantriTambahanBulanan extends Model
 {
     use HasFactory;
-    protected $table = 'santri_tambahan_pembayarans';
-    protected $primaryKey = 'id_santri_tambahan_pembayaran';
+    protected $table = 'santri_tambahan_bulanans';
+    protected $primaryKey = 'id_santri_tambahan_bulanan';
     public $timestamps = false;
 
     protected $fillable = [
         'santri_id',
-        'tambahan_pembayaran_id',
+        'tambahan_bulanan_id',
         'jumlah',
     ];
 
@@ -23,9 +23,9 @@ class SantriTambahanPembayaran extends Model
         return $this->belongsTo(Santri::class, 'santri_id', 'id_santri');
     }
 
-    public function tambahanPembayaran()
+    public function tambahanBulanan()
     {
-        return $this->belongsTo(TambahanPembayaran::class, 'tambahan_pembayaran_id', 'id');
+        return $this->belongsTo(TambahanBulanan::class, 'tambahan_bulanan_id', 'id_tambahan_bulanan');
     }
 
 }
