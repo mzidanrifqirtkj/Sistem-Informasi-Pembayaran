@@ -12,7 +12,9 @@
 
         <a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
             <img alt="image" src="{{ asset('assets/img/avatar/avatar-1.png') }}" class="rounded-circle mr-1">
-            <div class="d-sm-none d-lg-inline-block">Admin Pondok</div>
+            <div class="d-sm-none d-lg-inline-block">
+                {{ auth()->user()->santri->nama_santri ?? 'Santri' }}
+            </div>
         </a>
 
         {{-- <div class="dropdown-menu dropdown-menu-right">
@@ -33,7 +35,7 @@
         </form>
 </div> --}}
         <div class="dropdown-menu dropdown-menu-right">
-            <a href="#" class="dropdown-item has-icon">
+            <a href="{{ route('santri.profile.edit') }}" class="dropdown-item has-icon">
                 <i class="fas fa-user"></i> Profil
             </a>
 

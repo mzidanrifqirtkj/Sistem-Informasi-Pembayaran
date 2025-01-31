@@ -3,6 +3,7 @@
 use App\Http\Controllers\Santri\BiayaTerjadwalController;
 use App\Http\Controllers\Santri\DashboardController as SantriDashboardController;
 use App\Http\Controllers\Santri\PembayaranController;
+use App\Http\Controllers\Santri\ProfileController;
 use App\Http\Controllers\Santri\SantriController;
 use App\Http\Controllers\Santri\TagihanBulananController;
 use App\Http\Controllers\Santri\TagihanTerjadwalController;
@@ -24,5 +25,10 @@ Route::middleware(['auth', 'role:santri'])->prefix('santri')->group(function () 
 
     Route::get('santri/{santri}', [SantriController::class, 'show'])->name('santri.santri.show');
 
-    Route::get('biaya-terjadwal', [BiayaTerjadwalController::class, 'index'])->name('santri.biaya_terjadwal.index');
+    Route::get('biaya-terjadwal', [BiayaTerjadwalController::class, 'index'])->name('santri.
+    biaya_terjadwal.index');
+
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('santri.profile.edit');
+
+    Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])->name('santri.profile.updatePassword');
 });
