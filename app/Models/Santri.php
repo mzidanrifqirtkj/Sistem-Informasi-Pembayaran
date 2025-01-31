@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Traits\HasRoles;
 
 class Santri extends Model
 {
     use HasFactory;
+    protected $guard = 'santri';
     protected $table = 'santris';
     protected $primaryKey = 'id_santri';
     public $timestamps = false;
@@ -52,6 +54,11 @@ class Santri extends Model
         'tabungan'
     ];
 
+    // Verifikasi password untuk Santri berdasarkan user
+    public function verifyPassword($password)
+    {
+        return $this->user->password === bcrypt($password);
+    }
 
     public function user()
     {

@@ -1,6 +1,7 @@
 <?php
 
-use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Santri\DashboardController as SantriDashboardController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\SantriController;
 use App\Http\Controllers\Admin\KategoriSantriController;
@@ -24,9 +25,8 @@ Route::get('/', function () {
     return view('auth.login');
 })->name('home');
 
-Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
-
-    Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
+    Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('profile', [ProfileController::class, 'index'])->name('admin.profile');
 
     Route::get('santri', [SantriController::class, 'index'])->name('admin.santri.index');
@@ -148,6 +148,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
 Route::get('tulisan', function () {
     return view('tulisan');
-})->middleware(['auth', 'verified', 'role:santri']);
+})->middleware(['auth', 'verified', 'role:santri|admin']);
 
 require __DIR__ . '/auth.php';
+require __DIR__ . '/santri.php';

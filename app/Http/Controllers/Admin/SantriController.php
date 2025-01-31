@@ -44,18 +44,20 @@ class SantriController extends Controller
     public function index(Request $request)
     {
         $santris = Santri::select('*')
-            ->addSelect(['total_aktif' => Santri::selectRaw('COUNT(*)')
-            ->where('status', 'aktif')])
+            ->addSelect([
+                'total_aktif' => Santri::selectRaw('COUNT(*)')
+                    ->where('status', 'aktif')
+            ])
             ->orderBy('created_at', 'desc')
             ->paginate(5);
         // $santris       = Santri::latest()->paginate(10);
-        $keyword    = $request->keyword;
+        $keyword = $request->keyword;
         if ($keyword)
-            $santris   = Santri::where('nama_santri', 'LIKE', "%$keyword%")
-            ->orWhere('alamat', 'LIKE', "%$keyword%")
-            ->orWhere('no_hp', 'LIKE', "%$keyword%")
-            ->latest()
-        ->paginate(5);
+            $santris = Santri::where('nama_santri', 'LIKE', "%$keyword%")
+                ->orWhere('alamat', 'LIKE', "%$keyword%")
+                ->orWhere('no_hp', 'LIKE', "%$keyword%")
+                ->latest()
+                ->paginate(5);
 
         // $santris = Santri::orderBy('user_id', 'asc')->with(['user', 'kategoriSantri'])->get();
         return view('santri.index', compact('santris'));
@@ -81,7 +83,6 @@ class SantriController extends Controller
         try {
             Excel::import(new SantriImport, $request->file('file'));
             return redirect()->route('admin.santri.index')->with('alert', 'Data santri berhasil diimpor.');
-            // return redirect('admin.santri.index')->with('alert', 'Data santri berhasil diimpor.');
         } catch (\Exception $e) {
             return redirect()->route('admin.santri.index')->with('error', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
         }
@@ -175,8 +176,8 @@ class SantriController extends Controller
         try {
             $validated = $request->validate([
                 'nama_santri' => 'required|max:100',
-                'nis' => 'required|integer|unique:santris,nis,'  . $santri->id_santri . ',id_santri',
-                'nik' => 'required|string|unique:santris,nik,'  . $santri->id_santri . ',id_santri',
+                'nis' => 'required|integer|unique:santris,nis,' . $santri->id_santri . ',id_santri',
+                'nik' => 'required|string|unique:santris,nik,' . $santri->id_santri . ',id_santri',
                 'no_kk' => 'required|string',
                 'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
                 'tanggal_lahir' => 'required|date',
@@ -190,7 +191,7 @@ class SantriController extends Controller
                 'foto_kk' => 'nullable|image',
                 'tanggal_masuk' => 'required|date',
                 'is_ustadz' => 'required|boolean',
-                'user_id' => 'required|exists:users,id_user|unique:santris,user_id,'  . $santri->id_santri . ',id_santri',
+                'user_id' => 'required|exists:users,id_user|unique:santris,user_id,' . $santri->id_santri . ',id_santri',
                 'kategori_santri_id' => 'nullable|exists:kategori_santris,id_kategori_santri',
                 'nama_ayah' => 'required|string',
                 'no_hp_ayah' => 'required|string',

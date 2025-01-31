@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use Hash;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -27,7 +28,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'emailOrNIS' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -41,16 +42,59 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $credentials = $this->only('emailOrNIS', 'password');
+
+        // Cari user berdasarkan email, nis
+        $user = $this->findUser($credentials);
+
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
-            ]);
+                'emailOrNIS' => trans('auth.failed'),
+            ])->status(422);
         }
+
+        if (!$user->hasAnyRole(['admin', 'santri'])) {
+            RateLimiter::hit($this->throttleKey());
+            session()->flash('status', 'Error: Akun tidak komplit');
+            session()->flash('status_type', 'error');
+            return;
+        }
+
+        Auth::login($user, $this->boolean('remember'));
 
         RateLimiter::clear($this->throttleKey());
     }
+
+    /**
+     * Find the user based on the provided credentials.
+     *
+     * @param array $credentials
+     * @return \App\Models\User|null
+     */
+    protected function findUser(array $credentials)
+    {
+        $identifier = $credentials['emailOrNIS'] ?? null;
+
+        if (!$identifier) {
+            return null;
+        }
+
+        // Jika format email valid
+        if (filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
+            return \App\Models\User::where('email', $identifier)->first();
+        }
+
+        // Jika format NIS (hanya angka, panjang 6 digit)
+        if (preg_match('/^\d{6}$/', $identifier)) {
+            $santri = \App\Models\Santri::where('nis', $identifier)->first();
+            return $santri ? \App\Models\User::find($santri->user_id) : null;
+        }
+
+        return null;
+    }
+
 
     /**
      * Ensure the login request is not rate limited.
@@ -59,7 +103,7 @@ class LoginRequest extends FormRequest
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 
@@ -68,7 +112,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            'emailOrNIS' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -80,6 +124,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('emailOrNIS')) . '|' . $this->ip());
     }
 }
