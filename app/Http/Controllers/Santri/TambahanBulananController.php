@@ -10,7 +10,11 @@ class TambahanBulananController extends Controller
 {
     public function itemSantri()
     {
-        $santris = Santri::with(['tambahanBulanans', 'kategoriSantri'])->get();
+        $santri = auth()->user()->santri;
+
+        $santris = Santri::with(['tambahanBulanans', 'kategoriSantri'])
+            ->where('id_santri', $santri->id_santri)
+            ->get();
         return view('santris.tambahan-bulanan.item-santri', compact('santris'));
     }
 }

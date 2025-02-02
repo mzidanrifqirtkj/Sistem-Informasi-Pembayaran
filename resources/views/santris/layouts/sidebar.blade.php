@@ -13,6 +13,11 @@
                     <i class="fas fa-home"></i><span>Home</span>
                 </a>
             </li>
+            {{-- <li class="{{ request()->routeIs('santri.santri*') ? 'active' : '' }}">
+                <a href="{{ route('santri.santri.show') }}" class="nav-link">
+                    <i class="fas fa-users"></i><span>Data Santri</span>
+                </a>
+            </li> --}}
             <li class="menu-header">Keuangan</li>
             <li class="dropdown {{ request()->routeIs('santri.tambahan_bulanan*') ? 'active' : '' }}">
                 <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i
@@ -41,9 +46,6 @@
                 <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i
                         class="fas fa-file-invoice"></i> <span>Pembayaran</span></a>
                 <ul class="dropdown-menu">
-                    <li class="{{ request()->routeIs('santri.pembayaran.index') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('santri.pembayaran.index') }}">Pembayaran Tagihan</a>
-                    </li>
                     <li class="{{ request()->routeIs('santri.pembayaran.riwayat') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('santri.pembayaran.riwayat') }}">Riwayat Pembayaran</a>
                     </li>

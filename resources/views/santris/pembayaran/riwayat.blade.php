@@ -1,15 +1,13 @@
 @extends('santris.layouts.home')
-@section('title_page', 'Riwayat Tagihan Syahriah')
+@section('title_page', 'Riwayat Pembayaran Syahriah')
 @section('content')
-
-
 
     <div class="row">
         <div class="col-md-4 mb-3">
             <form action="#" class="flex-sm">
                 <div class="input-group">
                     <select class="form-control select2" name="year" id="year">
-                        @for ($year = (int) date('Y'); 1900 <= $year; $year--)
+                        @for ($year = (int) date('Y'); 2020 <= $year; $year--)
                             <option value="{{ $year }}" @if ($year == $now) selected @endif>
                                 {{ $year }}
                             </option>
@@ -54,8 +52,6 @@
                 @forelse ($santris as $santri)
                     <tr align="center">
                         <td>
-                            {{-- <a href="{{ route('santri.santri.show', $santri) }}"
-                                target="_blank"></a> --}}
                             {{ $santri->nama_santri }}
                         </td>
                         @php
@@ -74,14 +70,17 @@
                                 'Nov',
                                 'Dec',
                             ];
-                            // Ambil daftar bulan yang sudah ada di tagihan
-                            $bulanTagihan = $santri->tagihanBulanan->pluck('bulan')->toArray();
+                            // Ambil daftar bulan yang sudah ada di tagihan dan statusnya lunas
+                            $bulanTagihanLunas = $santri->tagihanBulanan
+                                ->where('status', 'lunas') // Filter hanya tagihan dengan status lunas
+                                ->pluck('bulan')
+                                ->toArray();
                         @endphp
                         @foreach ($months as $month)
                             <td>
                                 <div class="custom-control custom-checkbox" style="display: flex">
                                     <input type="checkbox" class="custom-control-input" id="cbx-{{ $loop->index }}"
-                                        disabled @if (in_array($month, $bulanTagihan)) checked @endif>
+                                        disabled @if (in_array($month, $bulanTagihanLunas)) checked @endif>
                                     <label class="custom-control-label" for="cbx-{{ $loop->index }}"></label>
                                 </div>
                             </td>
@@ -107,7 +106,7 @@
     <div class="container">
         <div class="row mb-3">
             <div class="col-md-8">
-                <h4>Riwayat Tagihan</h4>
+                <h4>Riwayat Pembayaran</h4>
             </div>
             <div class="col-md-4">
                 <form action="#" class="flex-sm">
@@ -129,29 +128,39 @@
             <table class="table table-hover table-bordered">
                 <thead>
                     <tr align="center">
-                        {{-- <th width="5%">No</th> --}}
+                        <th width="5%">No</th>
                         <th>Nama</th>
+                        <th>Tagihan</th>
                         <th>Bulan</th>
                         <th>Tahun</th>
                         <th>Nominal</th>
-                        <th>Rincian</th>
+                        <th>Tgl. Bayar</th>
                         <th width="13%">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($dataTagihans as $result)
+                    @forelse ($dataPembayarans as $result)
                         <tr>
-                            {{-- <td>{{ $syahriah + $dataTagihans->firstitem() }}</td> --}}
+                            <td>{{ $loop->iteration }}</td>
+
+                            {{-- $result->tagihanBulanan->santri->nama_santri ?? '-' --}}
                             <td>
-                                {{-- <a href="{{ route('santri.santri.show', $result->santri) }}"
-                                    target="blank"></a> --}}
-                                {{ $result->santri->nama_santri }}
+                                {{ $result->tagihanBulanan->santri->nama_santri ?? $result->tagihanTerjadwal->santri->nama_santri }}
                             </td>
-                            <td>{{ $result->bulan }}</td>
-                            <td>{{ $result->tahun }}</td>
-                            <td>{{ $result->nominal }}</td>
-                            <td>{{ json_encode($result->rincian) }}</td>
+                            <td>{{ $result->tagihanTerjadwal->biayaTerjadwal->nama_biaya ?? 'Syahriyah  ' }}</td>
+                            <td>{{ $result->tagihanBulanan->bulan ?? '-' }}</td>
+                            <td>{{ $result->tagihanBulanan->tahun ?? $result->tagihanTerjadwal->tahun }}</td>
+                            <td>{{ $result->nominal_pembayaran }}</td>
+                            <td>{{ $result->tanggal_pembayaran }}</td>
                             {{-- <td>{{ $result->date }}</td> --}}
+                            <td align="center">
+                                {{-- <a href="{{ route('santri.pembayaran.edit', $result->id_tagihan_bulanan) }}" type="button" class="btn btn-sm btn-warning"><i class="fas fa-print"></i></a> --}}
+                                {{-- @if (auth()->user()->role == 'Administrator') --}}
+                                <a href="javascript:void(0)" id="btn-delete" class="btn btn-sm btn-danger"
+                                    onclick="deleteData('{{ $result->id_tagihan_bulanan }}')" data-toggle="modal"
+                                    data-target="#deleteSyahriahModal"><i class="fas fa-trash"></i></a>
+                                {{-- @endif --}}
+                            </td>
                         </tr>
                     @empty
                         <tr>
@@ -167,7 +176,7 @@
                 syahriah telah terbuat.</span>
         </div>
         <div class="mt-3 float-right">
-            {{-- {{ $dataTagihans->links('pagination::bootstrap-5') }}  --}}
+            {{-- {{ $dataPembayarans->links('pagination::bootstrap-5') }}  --}}
         </div>
     </div>
 
@@ -199,46 +208,3 @@
         </div>
     </div>
 @endsection
-
-{{-- <table class="table table-hover table-bordered">
-    <thead>
-        <tr align="center">
-            <th colspan="14">{{ $now }}</th>
-        </tr>
-        <tr align="center">
-            <th class="w-25">Nama Santri</th>
-            <th>Jan</th>
-            <th>Feb</th>
-            <th>Mar</th>
-            <th>Apr</th>
-            <th>May</th>
-            <th>Jun</th>
-            <th>Jul</th>
-            <th>Aug</th>
-            <th>Sep</th>
-            <th>Oct</th>
-            <th>Nov</th>
-            <th>Dec</th>
-        </tr>
-    </thead>
-    <tbody>
-        @forelse ($santris as $santri)
-            <tr align="center">
-                <td><a href="{{ route('santri.santri.show', $santri) }}" target="blank">{{ $santri->nama_santri }}</a></td>
-                @foreach (['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as $month)
-                    <td>
-                        <div class="custom-control custom-checkbox" style="display: flex">
-                            <input type="checkbox" class="custom-control-input" id="cbx-{{ $santri->id_santri }}-{{ $month }}" disabled
-                                @if ($santri->tagihanBulanan->contains(fn($tagihan) => $tagihan->bulan == $month)) checked @endif >
-                            <label class="custom-control-label" for="cbx-{{ $santri->id_santri }}-{{ $month }}"></label>
-                        </div>
-                    </td>
-                @endforeach
-            </tr>
-        @empty
-            <tr>
-                <td colspan="14">Tidak ada data.</td>
-            </tr>
-        @endforelse
-    </tbody>
-</table> --}}

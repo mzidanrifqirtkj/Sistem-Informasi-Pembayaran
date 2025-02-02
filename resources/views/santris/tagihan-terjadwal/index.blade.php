@@ -29,17 +29,23 @@
                     <th>Tahun</th>
                     <th>Nominal</th>
                     <th>Rincian</th>
-                    <th width="13%">Action</th>
+                    {{-- <th width="13%">Action</th> --}}
                 </tr>
             </thead>
             <tbody>
                 @forelse ($tagihanTerjadwals as $result => $tagihan)
                     <tr>
                         <td>{{ $loop->iteration }}</td>
-                        <td><a href="{{ route('santri.santri.show', $tagihan->santri) }}"
-                                target="blank">{{ $tagihan->santri->nama_santri }}</a></td>
-                        <td><a href="{{ route('santri.biaya_terjadwal.index') }}"
-                                target="blank">{{ $tagihan->biayaTerjadwal->nama_biaya }}</a></td>
+                        <td>
+                            {{-- <a href="{{ route('santri.santri.show', $tagihan->santri) }}"
+                                target="blank"></a> --}}
+                            {{ $tagihan->santri->nama_santri }}
+                        </td>
+                        <td>
+                            {{-- <a href="{{ route('santri.biaya_terjadwal.index') }}"
+                                target="blank"></a> --}}
+                            {{ $tagihan->biayaTerjadwal->nama_biaya }}
+                        </td>
                         <td>{{ $tagihan->tahun }}</td>
                         <td>Rp {{ number_format($tagihan->nominal, 0, ',', '.') }}</td>
                         <td>

@@ -10,8 +10,14 @@ class TagihanTerjadwalController extends Controller
 {
     public function index()
     {
-        $tagihanTerjadwals = TagihanTerjadwal::with(['santri', 'biayaTerjadwal'])->paginate(10);
-        // dd($tagihanTerjadwals);
+        $santri = auth()->user()->santri; // Ambil data santri yang terkait dengan user
+        if (!$santri) {
+            abort(404, 'Santri tidak ditemukan untuk user ini');
+        }
+
+        $tagihanTerjadwals = TagihanTerjadwal::with(['santri', 'biayaTerjadwal'])
+            ->where('santri_id', $santri->id_santri) // Filter berdasarkan santri yang login
+            ->paginate(10);
         return view('santris.tagihan-terjadwal.index', compact('tagihanTerjadwals'));
     }
 }

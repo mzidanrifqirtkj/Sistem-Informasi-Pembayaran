@@ -52,10 +52,10 @@ class SantriImport implements ToModel, WithHeadingRow
             $user->assignRole('santri');
             $user->save();
 
-            $default_kategori_satri = KategoriSantri::where('nama_kategori', 'Reguler')->first();
+            $default_kategori_santri = KategoriSantri::where('nama_kategori', 'Reguler')->first();
 
             $isUstadz = !empty($row['is_ustadz']) ? $row['is_ustadz'] : false;
-            $kategoriSantriId = !empty($row['kategori_santri_id']) ? $row['kategori_santri_id'] : $default_kategori_satri->id_kategori_santri;
+            $kategoriSantriId = !empty($row['kategori_santri_id']) ? $row['kategori_santri_id'] : $default_kategori_santri->id_kategori_santri;
 
             $santri = Santri::create([
                 'nama_santri' => $row['nama_lengkap'],

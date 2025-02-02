@@ -10,16 +10,17 @@ class TagihanBulananController extends Controller
 {
     public function index()
     {
-        // $tagihanBulanans = TagihanBulanan::all();
+        $santri = auth()->user()->santri;
         $now = now()->year;
-        // $santris = Santri::with('tagihanBulanan')->paginate(5);
         $santris = \App\Models\Santri::with([
             'tagihanBulanan' => function ($query) use ($now) {
                 $query->where('tahun', $now);
             }
-        ])->paginate(10);
-        // dd($santris);
-        $dataTagihans = TagihanBulanan::with(['santri'])->get();
+        ])->where('id_santri', $santri->id_santri)->paginate(10);
+
+        $dataTagihans = TagihanBulanan::with(['santri'])
+            ->where('santri_id', $santri->id_santri)
+            ->get();
 
         return view('santris.tagihan-bulanan.index', compact('dataTagihans', 'santris', 'now'));
     }
