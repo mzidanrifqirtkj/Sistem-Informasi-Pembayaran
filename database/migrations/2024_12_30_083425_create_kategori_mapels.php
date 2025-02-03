@@ -11,10 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tahun_ajars', function (Blueprint $table) {
-            $table->id('id_tahun_ajar');
-            $table->string('tahun_ajar')->unique();
-            $table->enum('status', ['aktif', 'tidak_aktif'])->default('tidak_aktif');
+        Schema::create('kategori_mapels', function (Blueprint $table) {
+            $table->id('id_kategori_mapel');
+            $table->string('nama_kategori_mapel');
             $table->timestamps();
         });
     }
@@ -24,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tahun_ajars');
+        Schema::dropIfExists('kategori_mapels');
     }
 };

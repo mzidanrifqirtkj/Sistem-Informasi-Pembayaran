@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Imports\UserImport;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Laravel\Pail\ValueObjects\Origin\Console;
 use Maatwebsite\Excel\Facades\Excel;
 
 class UserController extends Controller
@@ -15,8 +16,35 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::with('santri')->paginate(10);
-        return view('user.index', compact('users'));
+        // $users = User::with('santri')->paginate(10);
+        return view('user.index');
+    }
+
+    /**
+     * Get user data via DataTables.
+     */
+    public function getUser()
+    {
+        try {
+
+            $users = User::with('santri')->select('id_user', 'nis', 'email', 'password', 'role', 'created_at');
+            return datatables()->of($users)
+                ->addIndexColumn()
+                ->addColumn('santri', function ($row) {
+                    return '<a href="' . route('admin.santri.show', $row->santri) . '">' . $row->santri->nama_santri . '</a>';
+                })
+                ->addColumn('action', function ($row) {
+                    return '<a href="' . route('admin.user.edit', $row->id_user) . '" class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a>
+                        <button class="btn btn-sm btn-danger" onclick="deleteData(' . $row->id_user . ')"><i class="fas fa-trash"></i></button>';
+                })
+                ->rawColumns(['santri', 'action'])
+                ->make(true);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => true,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function importForm()

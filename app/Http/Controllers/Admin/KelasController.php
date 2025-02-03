@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kelas;
+use App\Models\MataPelajaran;
+use App\Models\PenugasanUstadz;
+use App\Models\TahunAjar;
 use Illuminate\Http\Request;
 
 class KelasController extends Controller
@@ -89,4 +92,35 @@ class KelasController extends Controller
             return redirect()->route('admin.kelas.index')->with('error', 'Kelas gagal dihapus');
         }
     }
+
+    // public function createMapelKelas()
+    // {
+    //     $kelas = Kelas::all();
+    //     $tahunAjar = TahunAjar::all();
+    //     $mapel = MataPelajaran::all();
+
+    //     return view('kelas.create-mapel', compact('kelas', 'tahunAjar', 'mapel'));
+    // }
+
+    // public function storeMapelKelas(Request $request)
+    // {
+    //     $request->validate([
+    //         'id_kelas' => 'required',
+    //         'id_tahun_ajar' => 'required',
+    //         'id_mapel.*' => 'required', // Array pelajaran
+    //     ]);
+
+    //     foreach ($request->id_mapel as $mapel) {
+    //         PenugasanUstadz::updateOrCreate(
+    //             [
+    //                 'kelas_id' => $request->id_kelas,
+    //                 'tahun_ajar_id' => $request->id_tahun_ajar,
+    //                 'mapel_id' => $mapel
+    //             ],
+    //             [] // Update tidak perlu data tambahan
+    //         );
+    //     }
+
+    //     return back()->with('success', 'Pelajaran berhasil ditambahkan ke kelas!');
+    // }
 }

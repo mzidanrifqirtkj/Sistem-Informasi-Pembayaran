@@ -4,12 +4,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kelas;
+use App\Models\MapelKelas;
 use App\Models\MataPelajaran;
-use App\Models\PenugasanUstadz;
+use App\Models\QoriKelas;
 use App\Models\Santri;
 use App\Models\TahunAjar;
+use App\Models\WaliKelas;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
+
+use function Illuminate\Log\log;
 
 class PenugasanUstadzController extends Controller
 {
@@ -34,212 +39,290 @@ class PenugasanUstadzController extends Controller
             $santri = Santri::findOrFail($request->santri_id);
             $santri->is_ustadz = 1;
             $santri->save();
-            return redirect()->route('admin.ustadz.index')->with('alert', 'Ustadz berhasil ditambahkan');
+            return redirect()->route('admin.ustadz.get')->with('alert', 'Ustadz berhasil ditambahkan');
         } catch (\Exception $e) {
-            return redirect()->route('admin.ustadz.index')->with('error', 'Terjadi kesalahan ' . $e->getMessage());
+            return redirect()->route('admin.ustadz.get')->with('error', 'Terjadi kesalahan ' . $e->getMessage());
         }
     }
 
-    // public function show(Santri $santri)
-    // {
-    //     //
-    // }
-
-    // public function edit(Santri $santri)
-    // {
-    //     return view('ustadz.edit', compact('santri'));
-    // }
-
-    // public function update(Request $request, Santri $santri)
-    // {
-    //     try {
-    //         $request->validate([
-    //             'nama_santri' => 'required|string|max:255',
-    //             'is_ustadz' => 'required|boolean',
-    //         ]);
-
-    //         $santri->update($request->all());
-    //         return redirect()->route('admin.ustadz.index')->with('alert', 'Ustadz berhasil diubah');
-    //     } catch (\Exception $e) {
-    //         return redirect()->route('admin.ustadz.index')->with('error', 'Terjadi kesalahan');
-    //     }
-    // }
-
-    // public function destroy(Santri $santri)
-    // {
-    //     try {
-    //         $santri->delete();
-    //         return redirect()->route('admin.ustadz.index')->with('alert', 'Ustadz berhasil dihapus');
-    //     } catch (\Exception $e) {
-    //         return redirect()->route('admin.ustadz.index')->with('error', 'Terjadi kesalahan');
-    //     }
-    // }
-
-    // public function penugasan()
-    // {
-    //     $ustadzs = Santri::where('is_ustadz', 1)->orderBy('nama_santri', 'asc')->get();
-    //     return view('ustadz.penugasan', compact('ustadzs'));
-    // }
-    // public function getPenugasan()
-    // {
-    //     $penugasans = PenugasanUstadz::with(['ustadz', 'mataPelajaran', 'kelas'])->get();
-
-    //     return view('ustadz.penugasan.index', compact('penugasans'));
-    // }
-
-    public function getPenugasan(Request $request)
+    // Menampilkan halaman index dengan dropdown tahun ajar
+    public function index()
     {
-        $penugasan = PenugasanUstadz::with(['kelas', 'tahunAjar', 'ustadz', 'mataPelajaran'])
-            ->where('tahun_ajar_id', $request->tahun_ajar_id)
-            ->where('kelas_id', $request->kelas_id)
-            ->get();
-
-        // return datatables()->of($penugasan)
-        //     ->addIndexColumn()
-        //     ->addColumn('mata_pelajaran', function($row) {
-        //         return $row->nama_mapel; // Dari model Penugasan
-        //     })
-        //     ->addColumn('guru', function($row) {
-        //         $guruOptions = Santri::where('is_ustadz', true)->get();
-        //         $select = '<select class="form-control change-guru" data-id="'.$row->id_penugasan.'">';
-        //         foreach ($guruOptions as $guru) {
-        //             $selected = $guru->id_santri == $row->ustadz_id ? 'selected' : '';
-        //             $select .= "<option value='{$guru->id_santri}' {$selected}>{$guru->nama}</option>";
-        //         }
-        //         $select .= '</select>';
-        //         return $select;
-        //     })
-        //     ->addColumn('aksi', function($row) {
-        //         return '<button class="btn btn-danger btn-sm delete-penugasan" data-id="'.$row->id_penugasan.'">Hapus</button>';
-        //     })
-        //     ->rawColumns(['guru', 'aksi'])
-        //     ->make(true);
-    }
-
-    /**
-     * Menampilkan form untuk menambahkan penugasan baru.
-     */
-    public function createPenugasan()
-    {
-        $ustadzs = Santri::where('is_ustadz', 1)->get();
-        $mataPelajarans = MataPelajaran::all();
-        $kelas = Kelas::all();
+        // Ambil semua tahun ajar
         $tahunAjar = TahunAjar::all();
+        // Ambil tahun ajar default (status = aktif)
+        $defaultTahun = TahunAjar::where('status', 'aktif')->first();
 
-        return view('ustadz.penugasan.create', compact('ustadzs', 'mataPelajarans', 'kelas', 'tahunAjar'));
+        return view('ustadz.penugasan.index', compact('tahunAjar', 'defaultTahun'));
     }
-    public function getPelajaran(Request $request)
+    public function getWaliKelas(Request $request)
     {
-        $ustadzs = Santri::where('is_ustadz', 1)->get();
         $idTahunAjar = $request->id_tahun_ajar;
-        $idKelas = $request->id_kelas;
 
-        $pelajaran = MataPelajaran::select('id_mapel', 'nama_mapel')
-            ->whereHas('penugasanUstadz', function ($query) use ($idTahunAjar, $idKelas) {
-                $query->where('kelas_id', $idKelas)->where('tahun_ajar_id', $idTahunAjar);
-            })->get();
+        // Buat query awal dengan eager load relasi
+        $query = WaliKelas::with(['kelas', 'ustadz'])
+        ->where('tahun_ajar_id', $idTahunAjar);
 
-        return DataTables::of($pelajaran)
-            ->addColumn('guru', function ($row) use ($ustadzs) {
-                // Buat dropdown untuk memilih guru
-                $guruOptions = '';
-                foreach ($ustadzs as $guru) {
-                    $guruOptions .= '<option value="' . $guru->id_santri . '">' . $guru->nama_santri . '</option>';
+        return \Yajra\DataTables\Facades\DataTables::of($query)
+            ->filter(function ($query) use ($request) {
+                // Cek apakah terdapat query search
+                if ($search = $request->input('search.value')) {
+                    // Gabungkan pencarian untuk nama kelas dan nama ustadz
+                    $query->where(function ($q) use ($search) {
+                        $q->whereHas('kelas', function ($q2) use ($search) {
+                            $q2->where('nama_kelas', 'like', "%{$search}%");
+                        })
+                            ->orWhereHas('ustadz', function ($q3) use ($search) {
+                                $q3->where('nama_santri', 'like', "%{$search}%");
+                            });
+                    });
                 }
-
-                return '<select class="form-control guru-dropdown" data-id="' . $row->id_mapel . '">
-                                <option value="">Pilih Guru</option>
-                                ' . $guruOptions . '
-                            </select>';
             })
-            ->rawColumns(['guru']) // Allow HTML in the 'guru' column
+            ->addIndexColumn()
+            ->addColumn('nama_kelas', function ($row) {
+                return $row->kelas->nama_kelas ?? '-';
+            })
+            ->addColumn('nama_ustadz', function ($row) {
+                return $row->ustadz->nama_santri ?? '-';
+            })
+            ->rawColumns(['nama_kelas', 'nama_ustadz'])
             ->make(true);
     }
 
-    /**
-     * Menyimpan data penugasan baru.
-     */
-    public function storePenugasan(Request $request)
+    public function getQori(Request $request)
     {
-        $request->validate([
-            'ustadz_id' => 'required|exists:santris,id',
-            'mata_pelajaran_id' => 'required|exists:mata_pelajarans,id',
-            'kelas_id' => 'nullable|exists:kelas,id',
-        ]);
+        $idTahunAjar = $request->id_tahun_ajar;
 
-        PenugasanUstadz::create($request->all());
+        $query = \App\Models\QoriKelas::with([
+            'mapelKelas.mataPelajaran',
+            'mapelKelas.kelas',
+            'ustadz'
+        ])
+            ->whereHas('mapelKelas', function ($q) use ($idTahunAjar) {
+                $q->where('tahun_ajar_id', $idTahunAjar);
+            });
 
-        return redirect()->route('admin.ustadz.get')->with('success', 'PenugasanUstadz berhasil ditambahkan.');
+        return DataTables::of($query)
+            ->filter(function ($query) use ($request) {
+                if ($search = $request->input('search.value')) {
+                    $query->where(function ($q) use ($search) {
+                        // Cari pada relasi mapelKelas -> kelas
+                        $q->whereHas('mapelKelas.kelas', function ($q2) use ($search) {
+                            $q2->where('nama_kelas', 'like', "%{$search}%");
+                        })
+                            // Cari pada relasi mapelKelas -> mataPelajaran
+                            ->orWhereHas('mapelKelas.mataPelajaran', function ($q3) use ($search) {
+                                $q3->where('nama_mapel', 'like', "%{$search}%");
+                            })
+                            // Cari pada relasi ustadz
+                            ->orWhereHas('ustadz', function ($q4) use ($search) {
+                                $q4->where('nama_santri', 'like', "%{$search}%");
+                            });
+                    });
+                }
+            })
+            ->addIndexColumn()
+            ->addColumn('nama_mapel', function ($row) {
+                return $row->mapelKelas->mataPelajaran->nama_mapel ?? '-';
+            })
+            ->addColumn('nama_kelas', function ($row) {
+                return $row->mapelKelas->kelas->nama_kelas ?? '-';
+            })
+            ->addColumn('nama_ustadz', function ($row) {
+                return $row->ustadz->nama_santri ?? '-';
+            })
+            ->rawColumns(['nama_mapel', 'nama_kelas', 'nama_ustadz'])
+            ->make(true);
     }
 
-    /**
-     * Menampilkan form untuk mengedit penugasan.
-     */
-    // public function editPenugasan($id)
-    // {
-    //     $penugasan = PenugasanUstadz::findOrFail($id);
-    //     $ustadzs = Santri::where('is_ustadz', 1)->get();
-    //     $mataPelajarans = MataPelajaran::all();
 
-    //     return view('ustadz.penugasan.edit', compact('penugasan', 'ustadzs', 'mataPelajarans'));
-    // }
-
-    // /**
-    //  * Memperbarui data penugasan.
-    //  */
-    // public function updatePenugasan(Request $request, $id)
-    // {
-    //     $request->validate([
-    //         'ustadz_id' => 'required|exists:santris,id',
-    //         'mata_pelajaran_id' => 'required|exists:mata_pelajarans,id',
-    //         'kelas_id' => 'nullable|exists:kelas,id',
-    //     ]);
-
-    //     $penugasan = PenugasanUstadz::findOrFail($id);
-    //     $penugasan->update($request->all());
-
-    //     return redirect()->route('admin.ustadz.getPenugasan')->with('success', 'Penugasan ustadz berhasil diperbarui.');
-    // }
-
-    // /**
-    //  * Menghapus data penugasan.
-    //  */
-    // public function destroyPenugasan($id)
-    // {
-    //     $penugasan = PenugasanUstadz::findOrFail($id);
-    //     $penugasan->delete();
-
-    //     return redirect()->route('admin.ustadz.getPenugasan')->with('success', 'Penugasan ustadz berhasil dihapus.');
-    // }
-
-    public function createMapelKelas()
+    public function createQori()
     {
+        $ustadzs = Santri::where('is_ustadz', true)->get();
         $kelas = Kelas::all();
         $tahunAjar = TahunAjar::all();
-        $mapel = MataPelajaran::all();
 
-        return view('ustadz.penugasan.create-mapel-kelas', compact('kelas', 'tahunAjar', 'mapel'));
+        return view('ustadz.penugasan.create-qori', compact('ustadzs', 'kelas', 'tahunAjar'));
     }
 
-    public function storeMapelKelas(Request $request)
+    public function getPelajaran(Request $request)
     {
-        $request->validate([
-            'id_kelas' => 'required',
-            'id_tahun_ajar' => 'required',
-            'id_mapel.*' => 'required', // Array pelajaran
-        ]);
+        $idTahunAjar = $request->id_tahun_ajar;
+        $idKelas     = $request->id_kelas;
 
-        foreach ($request->id_mapel as $mapel) {
-            PenugasanUstadz::updateOrCreate(
+        // Ambil daftar ustadz (santri dengan is_ustadz true)
+        $ustadzs = Santri::where('is_ustadz', true)->get();
+
+        // Ambil data MapelKelas berdasarkan kelas dan tahun ajar, beserta relasi mataPelajaran dan qoriKelas.ustadz
+        $pelajaran = MapelKelas::where('kelas_id', $idKelas)
+            ->where('tahun_ajar_id', $idTahunAjar)
+            ->with('mataPelajaran', 'qoriKelas.ustadz')
+            ->get();
+
+        return DataTables::of($pelajaran)
+            ->addColumn('mapel_kelas_id', function ($row) {
+                Log::debug("data mapel kelas dari datatables : " . print_r($row, true));
+                return $row->id_mapel_kelas; // Gunakan id MapelKelas sebagai identifikasi
+            })
+            ->addColumn('ustadz_dropdown', function ($row) use ($ustadzs) {
+                // Dapatkan ustadz yang sudah ditugaskan (jika ada) dari relasi qoriKelas
+                $selectedUstadzId = null;
+                $qori = $row->qoriKelas->first();
+                if ($qori && $qori->ustadz) {
+                    $selectedUstadzId = $qori->ustadz->id_santri;
+                }
+
+                // Bangun opsi-opsi untuk dropdown
+                $options = '<option value="">Pilih Ustadz</option>';
+                foreach ($ustadzs as $ustadz) {
+                    $selected = ($selectedUstadzId == $ustadz->id_santri) ? 'selected' : '';
+                    $options .= '<option value="' . $ustadz->id_santri . '" ' . $selected . '>' . $ustadz->nama_santri . '</option>';
+                }
+
+            // Bungkus opsi dalam elemen select, sertakan data-mapel-kelas-id untuk keperluan identifikasi
+            return "<select class='form-control ustadz-dropdown' data-mapel-kelas-id='{$row->id_mapel_kelas}'> $options  </select>";
+            })
+            ->rawColumns(['ustadz_dropdown'])
+            ->toJson();
+    }
+
+    public function storeQori(Request $request)
+    {
+        $penugasanData = $request->input('penugasan');
+        //cek apakah ustadz null atau tidak, jika null maka delete
+
+        // Simpan data penugasan
+        $errors = [];
+        foreach ($penugasanData as $data) {
+            $mapelKelasId = $data['mapel_kelas_id'];
+            $ustadzId = isset($data['ustadz_id']) ? trim($data['ustadz_id']) : null;
+
+            if($ustadzId === '' || $ustadzId === null){
+                $deleted = QoriKelas::where('mapel_kelas_id', $mapelKelasId)->delete();
+                Log::debug("Deleted qori kelas for mapel_kelas_id {$mapelKelasId}. Deleted: {$deleted}");
+                continue;
+            }
+
+            //cek existing qori di mapelkelas lain
+            $existing = QoriKelas::where('ustadz_id', $ustadzId)
+                ->where('mapel_kelas_id', '!=', $mapelKelasId)
+                ->first();
+            if($existing){
+                $errors[] = "Ustadz dengan ID {$ustadzId} sudah menjadi qori untuk mata pelajaran lain.";
+                continue;
+            }
+
+            QoriKelas::updateOrCreate(
                 [
-                    'kelas_id' => $request->id_kelas,
-                    'tahun_ajar_id' => $request->id_tahun_ajar,
-                    'mapel_id' => $mapel
+                    'mapel_kelas_id' => $mapelKelasId
                 ],
-                [] // Update tidak perlu data tambahan
+                [
+                    'ustadz_id' => $ustadzId
+                ]
             );
         }
 
-        return back()->with('success', 'Pelajaran berhasil ditambahkan ke kelas!');
+        if (!empty($errors)) {
+            return response()->json([
+                'error'    => true,
+                'messages' => $errors
+            ], 400);
+        }
+        
+        return response()->json(['message' => 'Penugasan berhasil disimpan!']);
     }
+
+    public function createMustahiq()
+    {
+        $ustadzs = Santri::where('is_ustadz', true)->get();
+        $tahunAjar = TahunAjar::all();
+
+        return view('ustadz.penugasan.create-mustahiq', compact('ustadzs', 'tahunAjar'));
+    }
+    public function getKelas(Request $request)
+    {
+        try {
+            $idTahunAjar = $request->id_tahun_ajar;
+
+            $query = Kelas::with(['waliKelas' => function ($query) use ($idTahunAjar) {
+                $query->where('tahun_ajar_id', $idTahunAjar);
+            }, 'waliKelas.ustadz']);
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('ustadz_dropdown', function ($row) {
+                    // Ambil semua data santri yang merupakan ustadz
+                    $ustadzs = Santri::where('is_ustadz', true)->get();
+                    // Jika wali kelas sudah ada, ambil id ustadz-nya, jika tidak null
+                    $selectedUstadzId = $row->waliKelas ? $row->waliKelas->ustadz_id : null;
+                    $options = '<option value="">Pilih Ustadz</option>';
+
+                foreach ($ustadzs as $ustadz) {
+                    $selected = ($selectedUstadzId == $ustadz->id_santri) ? 'selected' : '';
+                    $options .= "<option value='{$ustadz->id_santri}' {$selected}>{$ustadz->nama_santri}</option>";
+                }
+
+                    return "<select class='form-control ustadz-dropdown' data-kelas-id='{$row->id_kelas}'>$options</select>";
+                })
+                ->rawColumns(['ustadz_dropdown'])
+                ->make(true);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error'   => true,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function storeMustahiq(Request $request)
+    {
+        $idTahunAjar = $request->id_tahun_ajar;
+        $penugasanData = $request->penugasan; // Array berisi data: ['kelas_id' => ..., 'ustadz_id' => ...]
+        $errors = [];
+        foreach ($penugasanData as $data) {
+            $kelasId = $data['kelas_id'];
+            $ustadzId = isset($data['ustadz_id']) ? trim($data['ustadz_id']) : null;
+
+            if ($ustadzId === '' || $ustadzId === null) {
+                $deleted = WaliKelas::where('kelas_id', $kelasId)
+                    ->where('tahun_ajar_id', $idTahunAjar)
+                    ->delete();
+                Log::debug("Deleted wali kelas for kelas_id {$kelasId} in tahun_ajar {$idTahunAjar}. Deleted: {$deleted}");
+                continue;
+            }
+            // Cek apakah ustadz sudah menjadi wali untuk kelas lain di tahun ajaran ini
+            $existing = WaliKelas::where('ustadz_id', $ustadzId)
+                ->where('tahun_ajar_id', $idTahunAjar)
+                ->where('kelas_id', '!=', $kelasId)
+                ->first();
+
+            if ($existing) {
+                // Tambahkan pesan error jika ditemukan duplikasi
+                $errors[] = "Ustadz dengan ID {$ustadzId} sudah menjadi wali untuk kelas lain di tahun ajaran ini.";
+                continue; // Lewati proses updateOrCreate untuk data ini
+            }
+
+            // updateOrCreate: jika sudah ada wali untuk kelas & tahun tersebut, update ustadz-nya; jika tidak, buat baru
+            WaliKelas::updateOrCreate(
+                [
+                    'kelas_id'      => $kelasId,
+                    'tahun_ajar_id' => $idTahunAjar,
+                ],
+                [
+                    'ustadz_id'     => $ustadzId,
+                ]
+            );
+        }
+
+        if (!empty($errors)) {
+            return response()->json([
+                'error'    => true,
+                'messages' => $errors
+            ], 400);
+        }
+
+        return response()->json(['message' => 'Penugasan Wali Kelas berhasil disimpan!']);
+    }
+
+
+
 }

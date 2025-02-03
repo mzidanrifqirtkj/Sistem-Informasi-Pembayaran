@@ -86,7 +86,7 @@
     <span class="ml-3">Data Keseluruhan: <span class="text-primary font-weight-bold">{{ DB::table('santris')->count() }}</span> Santri</span>
 </div>
 <div class="mt-3 float-right">
-    {{ $santris->links() }}
+    {{ $santris->links('pagination::bootstrap-5') }}
 </div>
 
 <br><br><br>

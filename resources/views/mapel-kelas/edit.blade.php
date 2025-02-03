@@ -1,18 +1,18 @@
 @extends('layouts.home')
-@section('title_page','Data Kelas')
+@section('title_page','Data Mapel')
 @section('content')
 
-<form action="{{ route('admin.kelas.update', $kelas) }}" method="post">
+<form action="{{ route('admin.mapel.update', $mataPelajaran) }}" method="post">
     @csrf
     @method('PUT')
     <div class="container">
         <div class="row">
             <div class="col-sm">
                 <div class="form-group">
-                    <label for="nama_kelas">{{ __('Nama Kelas') }}</label>
-                    <input id="nama_kelas" type="nama_kelas" class="form-control @error('nama_kelas') is-invalid @enderror" name="nama_kelas" value="{{ old('nama_kelas', $kelas->nama_kelas) }}" required autocomplete="nama_kelas" autofocus>
+                    <label for="nama_mapel">{{ __('Nama Mata Pelajaran') }}</label>
+                    <input id="nama_mapel" type="nama_mapel" class="form-control @error('nama_mapel') is-invalid @enderror" name="nama_mapel" value="{{ old('nama_mapel', $mataPelajaran->nama_mapel) }}" required autocomplete="nama_mapel">
 
-                    @error('nama_kelas')
+                    @error('nama_mapel')
                         <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
                         </span>
@@ -24,7 +24,7 @@
             <div class="col-sm">
                 <div class="form-group">
                     <button class="btn btn-primary">Edit</button>
-                    <a href="{{ route('admin.kelas.index') }}" class="btn btn-secondary">Kembali</a>
+                    <a href="{{ route('admin.mapel.index') }}" class="btn btn-secondary">Kembali</a>
                 </div>
             </div>
         </div>

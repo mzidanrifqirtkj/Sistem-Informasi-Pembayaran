@@ -1,7 +1,7 @@
 <footer class="main-footer">
     <div class="footer-left">
         Copyright &copy; {{ date('Y') }}
-        <div class="bullet"></div> Allumqniyyah | Made by <a href="https://github.com/wahdie" target="_blank">PSBSB LQ</a></a>
+        <div class="bullet"></div> Alluqmaniyyah | Made by <a href="https://github.com/wahdie" target="_blank">PSBSB LQ</a></a>
     </div>
     <div class="footer-right">
         Laravel v{{ Illuminate\Foundation\Application::VERSION }} (PHP v{{ PHP_VERSION }})
@@ -19,12 +19,13 @@
             searching: true, // Menambahkan fitur pencarian
             lengthChange: false, // Menonaktifkan perubahan jumlah data per halaman
             pageLength: 10, // Menentukan jumlah data per halaman
-            order: [[0, 'asc']], // Mengurutkan berdasarkan kolom pertama
+            order: [
+                [0, 'asc']
+            ], // Mengurutkan berdasarkan kolom pertama
             responsive: true, // Membuat tabel responsif
             autoWidth: false // Menonaktifkan auto width
         });
     });
-
 </script>
 <!-- General JS Scripts -->
 <script src="{{ asset('assets/modules/jquery.min.js') }}"></script>
