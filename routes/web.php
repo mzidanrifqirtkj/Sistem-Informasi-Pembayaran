@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\SantriController;
 use App\Http\Controllers\Admin\KategoriSantriController;
 use App\Http\Controllers\Admin\BiayaTerjadwalController;
 use App\Http\Controllers\Admin\KelasController;
+use App\Http\Controllers\Admin\MapelKelasController;
 use App\Http\Controllers\Admin\MataPelajaranController;
 use App\Http\Controllers\Admin\TagihanBulananController;
 use App\Http\Controllers\Admin\TagihanController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Admin\PenugasanUstadzController;
 use App\Http\Controllers\Admin\TahunAjarController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\TambahanBulananController;
+use App\Http\Controllers\Admin\WaliKelasController;
 use App\Models\BiayaTahunan;
 use App\Models\PenugasanUstadz;
 use App\Models\User;
@@ -30,6 +32,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('profile', [ProfileController::class, 'index'])->name('admin.profile');
 
     Route::get('santri', [SantriController::class, 'index'])->name('admin.santri.index');
+    Route::get('santri/data', [SantriController::class, 'getSantri'])->name('admin.santri.data');
     Route::get('santri/create', [SantriController::class, 'create'])->name('admin.santri.create');
     Route::post('santri', [SantriController::class, 'store'])->name('admin.santri.store');
     Route::get('/santri/import', [SantriController::class, 'importForm'])->name('admin.santri.importForm');
@@ -40,6 +43,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('santri/{santri}', [SantriController::class, 'show'])->name('admin.santri.show');
 
     Route::get('user', [UserController::class, 'index'])->name('admin.user.index');
+    Route::get('user/data', [UserController::class, 'getUser'])->name('admin.user.data');
     Route::get('user/create', [UserController::class, 'create'])->name('admin.user.create');
     Route::post('user', [UserController::class, 'store'])->name('admin.user.store');
     Route::get('/user/import', [UserController::class, 'importForm'])->name('admin.user.importForm');
@@ -109,6 +113,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('kelas/{kelas}/edit', [KelasController::class, 'edit'])->name('admin.kelas.edit');
     Route::put('kelas/{kelas}', [KelasController::class, 'update'])->name('admin.kelas.update');
     Route::delete('kelas/{id}', [KelasController::class, 'destroy'])->name('admin.kelas.destroy');
+    Route::get('mapel-kelas', [MapelKelasController::class, 'index'])->name('admin.mapel_kelas.index');
+    Route::get('mapel-kelas/create', [MapelKelasController::class, 'create'])->name('admin.mapel_kelas.create');
+    Route::post('mapel-kelas', [MapelKelasController::class, 'store'])->name('admin.mapel_kelas.store');
+    Route::get('mapel-kelas/{mapelKelas}/edit', [MapelKelasController::class, 'edit'])->name('admin.mapel_kelas.edit');
+    Route::put('mapel-kelas/{mapelKelas}', [MapelKelasController::class, 'update'])->name('admin.mapel_kelas.update');
+    Route::delete('mapel-kelas/{mapelKelas}', [MapelKelasController::class, 'destroy'])->name('admin.mapel_kelas.destroy');
 
     Route::get('tahun-ajar', [TahunAjarController::class, 'index'])->name('admin.tahun_ajar.index');
     Route::get('tahun-ajar/create', [TahunAjarController::class, 'create'])->name('admin.tahun_ajar.create');
@@ -124,25 +134,23 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::put('mapel/{mataPelajaran}', [MataPelajaranController::class, 'update'])->name('admin.mapel.update');
     Route::delete('mapel/{mataPelajaran}', [MataPelajaranController::class, 'destroy'])->name('admin.mapel.destroy');
 
+    //data ustadz
     Route::get('ustadz', [PenugasanUstadzController::class, 'getUstadzs'])->name('admin.ustadz.get');
     Route::get('ustadz/add', [PenugasanUstadzController::class, 'addUstadz'])->name('admin.ustadz.add');
     Route::post('ustadz/add', [PenugasanUstadzController::class, 'storeUstadz'])->name('admin.ustadz.store');
+    //data penugasan ustadz
+    Route::get('ustadz/penugasan', [PenugasanUstadzController::class, 'index'])->name('admin.ustadz.penugasan.index');
+    Route::get('ustadz/penugasan/get-wali', [PenugasanUstadzController::class, 'getWaliKelas'])->name('admin.ustadz.penugasan.getWaliKelas');
+    Route::get('ustadz/penugasan/get-qori', [PenugasanUstadzController::class, 'getQori'])->name('admin.ustadz.penugasan.getQori');
+    //penugasan qori
+    Route::get('ustadz/penugasan/qori/create', [PenugasanUstadzController::class, 'createQori'])->name('admin.ustadz.penugasan.qori.create');
+    Route::get('ustadz/penugasan/qori/get-pelajaran', [PenugasanUstadzController::class, 'getPelajaran'])->name('admin.ustadz.penugasan.qori.getPelajaran');
+    Route::post('ustadz/penugasan/qori', [PenugasanUstadzController::class, 'storeQori'])->name('admin.ustadz.penugasan.qori.store');
+    //penugasan wali kelas
+    Route::get('ustadz/penugasan/mustahiq/create', [PenugasanUstadzController::class, 'createMustahiq'])->name('admin.ustadz.penugasan.mustahiq.create');
+    Route::get('ustadz/penugasan/mustahiq/get-kelas', [PenugasanUstadzController::class, 'getKelas'])->name('admin.ustadz.penugasan.mustahiq.getKelas');
+    Route::post('ustadz/penugasan/mustahiq', [PenugasanUstadzController::class, 'storeMustahiq'])->name('admin.ustadz.penugasan.mustahiq.store');
 
-    Route::get('ustadz/penugasan', [PenugasanUstadzController::class, 'getPenugasan'])->name('admin.ustadz.penugasan.index');
-    Route::get('ustadz/penugasan/create', [PenugasanUstadzController::class, 'createPenugasan'])->name('admin.ustadz.penugasan.create');
-    Route::post('ustadz/penugasan', [PenugasanUstadzController::class, 'storePenugasan'])->name('admin.ustadz.penugasan.store');
-    // Route::get('ustadz/penugasan/{id}', [PenugasanUstadzController::class, 'showPenugasan'])->name('admin.ustadz.penugasan.show');
-
-    Route::get('ustadz/penugasan/create-mapel-kelas', [PenugasanUstadzController::class, 'createMapelKelas'])->name('admin.ustadz.penugasan.createMapelKelas');
-    Route::post('ustadz/penugasan/create-mapel-kelas', [PenugasanUstadzController::class, 'storeMapelKelas'])->name('admin.ustadz.penugasan.storeMapelKelas');
-
-
-    Route::get('/penugasan/get-pelajaran', [PenugasanUstadzController::class, 'getPelajaran'])->name('penugasan.getPelajaran');
-    Route::get('ustadz/penugasan/get-kelas', [PenugasanUstadzController::class, 'getKelas'])->name('penugasan.getKelas');
-
-    Route::get('ustadz/penugasan/{id}/edit', [PenugasanUstadzController::class, 'editPenugasan'])->name('admin.ustadz.penugasan.edit');
-    Route::put('ustadz/penugasan/{id}', [PenugasanUstadzController::class, 'updatePenugasan'])->name('admin.ustadz.penugasan.update');
-    Route::delete('ustadz/penugasan/{id}', [PenugasanUstadzController::class, 'destroyPenugasan'])->name('admin.ustadz.penugasan.destroy');
 
 });
 

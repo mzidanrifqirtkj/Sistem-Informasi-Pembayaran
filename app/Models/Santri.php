@@ -102,8 +102,8 @@ class Santri extends Model
         return $this->hasMany(PenilaianSantri::class, 'santri_id', 'id_santri');
     }
 
-    public function penugasan()
+    public function qoriKelas()
     {
-        return $this->hasMany(PenugasanUstadz::class, 'ustadz_id', 'id_santri');
+        return $this->hasMany(QoriKelas::class, 'ustadz_id', 'id_santri');
     }
 }

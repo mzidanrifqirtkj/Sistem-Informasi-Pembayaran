@@ -11,24 +11,15 @@ class PenilaianSantri extends Model
 
     protected $table = 'penilaian_santri';
     protected $primaryKey = 'id_penilaian_santri';
-    protected $fillable = [
-        'santri_id',
-        'penugasan_id',
-        'nilai_tugas',
-        'nilai_uh',
-        'nilai_uts',
-        'nilai_uas',
-        'nilai_akhir',
-        'semester',
-    ];
+    protected $fillable = ['santri_id', 'penugasan_ustadz_id', 'nilai', 'semester'];
 
     public function santri()
     {
         return $this->belongsTo(Santri::class, 'santri_id', 'id_santri');
     }
 
-    public function penugasan()
+    public function qoriKelas()
     {
-        return $this->belongsTo(PenugasanUstadz::class, 'penugasan_id', 'id_penugasan');
+        return $this->belongsTo(QoriKelas::class, 'penugasan_ustadz_id', 'id_penugasan_ustadz');
     }
 }

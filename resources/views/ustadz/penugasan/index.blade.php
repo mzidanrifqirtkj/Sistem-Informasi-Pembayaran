@@ -1,100 +1,168 @@
 @extends('layouts.home')
-@section('title_page','Daftar Ustadz')
+@section('title_page','Daftar Penugasan')
+
 @section('content')
-
-
-<div class="row">
-    <div class="col-md-2">
-        <a href="{{ route('admin.ustadz.penugasan.create') }}" class="btn btn-primary">Tambah Penugasan</a><br><br>
+<div class="container my-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h2>Daftar Penugasan Ustadz</h2>
+        </div>
     </div>
 
-    <div class="col-md-8 mb-3">
-        <form action="#" class="flex-sm">
-            <div class="input-group">
-                <input type="text" name="keyword" class="form-control" placeholder="Search" value="{{ Request::get('keyword') }}">
-                <div class="input-group-append">
-                    <button class="btn btn-primary mr-2 rounded-right" type="submit"><i class="fas fa-search"></i></button>
-                    {{-- <button onclick="window.location.href='{{ route('admin.santri.index') }}'" type="button" class="btn btn-md btn-secondary rounded"><i class="fas fa-sync-alt"></i></button> --}}
-                </div>
-            </div>
-        </form>
+    <!-- Tombol Navigasi Penugasan -->
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-center ">
+            <a href="{{ route('admin.ustadz.penugasan.qori.create') }}" class="btn btn-primary">Penugasan Qori</a>
+            <a href="{{ route('admin.ustadz.penugasan.mustahiq.create') }}" class="btn btn-primary">Penugasan Mustahiq</a>
+        </div>
     </div>
-</div>
 
-<div class="table-responsive">
-    <table class="table table-hover table-bordered">
-        <thead>
-            <tr>
-                <th>Ustadz</th>
-                <th>Mata Pelajaran</th>
-                <th>Kelas</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($penugasans as $penugasan)
-            <tr>
-                <td>{{ $penugasan->ustadz->nama_santri }}</td>
-                <td>{{ $penugasan->mataPelajaran->nama_mapel }}</td>
-                <td>{{ $penugasan->kelas->nama_kelas ?? '-' }}</td>
-                <td>
-                    <a href="{{ route('penugasan.edit', $penugasan->id_penugasan) }}">Edit</a>
-                    <form action="{{ route('penugasan.destroy', $penugasan->id_penugasan) }}" method="POST" style="display:inline;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit">Hapus</button>
-                    </form>
-                </td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-</div>
-{{--
-<div class="mt-3 float-right">
-    {{ $penugasans->links('pagination::bootstrap-5') }}
-</div> --}}
-
-@endsection
-
-@section('modal')
-<!-- Modal Delete -->
-<div class="modal fade" id="deleteKelasModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <form action="javascript:void(0)" id="deleteForm" method="post">
-            @method('DELETE')
-            @csrf
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="vcenter">Hapus Kelas</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+    <div class="row mb-3">
+        <div class="col-md-4 offset-md-4 text-center">
+            <label for="tahunAjar">Pilih Tahun Ajar</label>
+            <select id="tahunAjar" class="form-control">
+                @foreach($tahunAjar as $tahun)
+                <option value="{{ $tahun->id_tahun_ajar }}" {{ (isset($defaultTahun) && $defaultTahun->id_tahun_ajar == $tahun->id_tahun_ajar) ? 'selected' : '' }}>
+                    {{ $tahun->tahun_ajar }}
+                </option>
+                @endforeach
+            </select>
+        </div>
+    </div>
+    <!-- Tabel Wali Kelas (Mustahiq) -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Daftar Wali Kelas (Mustahiq)</h5>
                 </div>
-                <div class="modal-body">
-                    <p>Apakah anda yakin?</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                    <button type="submit" onclick="formSubmit()" class="btn btn-danger">Hapus</button>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table id="waliTable" class="table table-hover table-bordered mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width:5%;">No</th>
+                                    <th>Kelas</th>
+                                    <th>Mustahiq</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data dimuat melalui AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </form>
+        </div>
+    </div>
+
+    <!-- Tabel Qori -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Daftar Qori</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table id="qoriTable" class="table table-hover table-bordered mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width:5%;">No</th>
+                                    <th>Qori</th>
+                                    <th>Mata Pelajaran</th>
+                                    <th>Kelas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data dimuat melalui AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 @endsection
 
 @section('script')
 <script>
+    $(document).ready(function() {
+        // Ambil nilai default tahun ajar dari dropdown
+        let tahunAjarId = $('#tahunAjar').val();
 
-    function deleteData(id) {
-        let url = '{{ route("admin.santri.destroy", ":id") }}';
-        url = url.replace(':id', id);
-        $("#deleteForm").attr('action', url);
-    }
+        // Inisialisasi DataTable untuk Wali Kelas
+        let waliTable = $('#waliTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: "{{ route('admin.ustadz.penugasan.getWaliKelas') }}",
+                type: 'GET',
+                data: function(d) {
+                    d.id_tahun_ajar = $('#tahunAjar').val();
+                }
+            },
+            columns: [{
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    render: (data, type, row, meta) => meta.row + 1
+                },
+                {
+                    data: 'kelas.nama_kelas',
+                    name: 'nama_kelas',
+                    defaultContent: '-'
+                },
+                {
+                    data: 'ustadz.nama_santri',
+                    name: 'nama_ustadz',
+                    defaultContent: '-'
+                }
+            ]
+        });
 
-    function formSubmit() {
-        $("#deleteForm").submit();
-    }
+        // Inisialisasi DataTable untuk Qori
+        let qoriTable = $('#qoriTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: "{{ route('admin.ustadz.penugasan.getQori') }}",
+                type: 'GET',
+                data: function(d) {
+                    d.id_tahun_ajar = $('#tahunAjar').val();
+                }
+            },
+            columns: [{
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    render: (data, type, row, meta) => meta.row + 1
+                },
+                {
+                    data: 'ustadz.nama_santri',
+                    name: 'nama_ustadz',
+                    defaultContent: '-'
+                },
+                {
+                    data: 'mapel_kelas.mata_pelajaran.nama_mapel',
+                    name: 'nama_mapel',
+                    defaultContent: '-'
+                },
+                {
+                    data: 'mapel_kelas.kelas.nama_kelas',
+                    name: 'nama_kelas',
+                    defaultContent: '-'
+                }
+            ]
+        });
+
+        // Reload tabel ketika dropdown tahun ajar berubah
+        $('#tahunAjar').change(function() {
+            waliTable.ajax.reload();
+            qoriTable.ajax.reload();
+        });
+    });
 </script>
 @endsection

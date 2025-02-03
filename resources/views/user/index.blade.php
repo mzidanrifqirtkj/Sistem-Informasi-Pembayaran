@@ -4,74 +4,30 @@
 
 
 <div class="row">
-    <div class="col-md-2">
-        <a href="{{ route('admin.user.create') }}" class="btn btn-primary">Tambah user</a><br><br>
-    </div>
-    <div class="col-md-2">
-        <a href="{{ route('admin.user.importForm') }}" class="btn btn-primary">Import user</a><br><br>
-    </div>
-    <div class="col-md-8 mb-3">
-        <form action="#" class="flex-sm">
-            <div class="input-group">
-                <input type="text" name="keyword" class="form-control" placeholder="Search" value="{{ Request::get('keyword') }}">
-                <div class="input-group-append">
-                    <button class="btn btn-primary mr-2 rounded-right" type="submit"><i class="fas fa-search"></i></button>
-                    <button onclick="window.location.href='{{ route('admin.user.index') }}'" type="button" class="btn btn-md btn-secondary rounded"><i class="fas fa-sync-alt"></i></button>
-                </div>
-            </div>
-        </form>
+    <div class="col-md-4 d-flex justify-content-between">
+        <a href="{{ route('admin.user.create') }}" class="btn btn-primary">Tambah user</a>
+        <a href="{{ route('admin.user.importForm') }}" class="btn btn-primary">Import user</a>
     </div>
 </div>
 
-<div class="table-responsive">
-    <table class="table table-hover table-bordered">
+<div class="table-responsive mt-3">
+    <table class="table table-hover table-bordered" id="userTable">
         <thead>
             <tr align="center">
-                <th width="5%">NIS</th>
-                <th>Nama</th>
+                <th width="5%">No</th>
+                <th>Nis</th>
+                <th>Nama Santri</th>
                 <th>Email</th>
                 <th>Role</th>
                 <th width="13%">Action</th>
             </tr>
         </thead>
-        <tbody>
-            @forelse ($users as $user)
-            <tr>
-                <td>{{ $user->nis }}</td>
-                <td>
-                    @if ($user->santri)
-                    <a href="{{ route('admin.santri.show', $user->santri) }}">{{ $user->santri->nama_santri }}</a>
-                    @else
-                    <span class="text-muted">Belum terkait dengan Santri</span>
-                    @endif
-                </td>
-                {{-- <td>{{ $user->santri }}</td> --}}
-                <td>{{ $user->email }}</td>
-                <td>{{ $user->role }}</td>
-                <td align="center">
-                    {{-- @if (Auth::user()->role == 'Pengurus')
-                            <small class="text-warning">No Action</small>
-                        @else --}}
-                    <a href="{{ route('admin.user.edit', $user->id_user) }}" type="button" class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a>
-                    <a href="javascript:void(0)" id="btn-delete" class="btn btn-sm btn-danger" onclick="deleteData('{{ $user->id_user }}')" data-toggle="modal" data-target="#deleteSuratModal"><i class="fas fa-trash"></i></a>
-                    {{-- @endif --}}
-                </td>
-            </tr>
-
-            @empty
-            <tr>
-                <td colspan="4">Tidak ada data.</td>
-            </tr>
-            @endforelse
-        </tbody>
     </table>
 </div>
 <div class="mt-2 float-left">
     <span class="ml-3">Data Keseluruhan: <span class="text-primary font-weight-bold">{{ DB::table('users')->count() }}</span> user.</span>
 </div>
-<div class="mt-3 float-right">
-    {{ $users->links('pagination::bootstrap-5') }}
-</div>
+
 
 @endsection
 
@@ -104,6 +60,23 @@
 
 @section('script')
 <script>
+    $(document).ready(function() {
+        $('#userTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: "{{ route('admin.user.data') }}",
+            columns: [
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                { data: 'santri', name: 'santri' },
+                { data: 'nis', name: 'nis' },
+                { data: 'role', name: 'role' },
+                { data: 'email', name: 'email' },
+                { data: 'action', name: 'action', orderable: false, searchable: false }
+            ]
+        });
+    });
+
+
     function viewFile(data) {
         let url = window.location.origin + '/storage/in-mail/' + data;
         $('#embed-file').attr('src', url);

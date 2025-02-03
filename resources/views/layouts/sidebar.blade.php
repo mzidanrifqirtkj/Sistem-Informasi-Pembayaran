@@ -77,21 +77,25 @@
             </li>
 
 
-            <li class="menu-header">Pendidikan</li>
-            <li class="{{ request()->routeIs('admin.kelas*') ? 'active' : '' }}">
-                <a href="{{ route('admin.kelas.index') }}" class="nav-link">
-                    <i class="fas fa-home"></i><span>Data Kelas</span>
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('admin.tahun_ajar*') ? 'active' : '' }}">
-                <a href="{{ route('admin.tahun_ajar.index') }}" class="nav-link">
-                    <i class="fas fa-home"></i><span>Tahun Ajar</span>
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('admin.mapel*') ? 'active' : '' }}">
-                <a href="{{ route('admin.mapel.index') }}" class="nav-link">
-                    <i class="fas fa-home"></i><span>Daftar Mapel</span>
-                </a>
+            <li class="menu-header">Madrasah Diniyah</li>
+            <li
+                class="dropdown {{ request()->routeIs('admin.mapel*') || request()->routeIs('admin.kelas*') || request()->routeIs('admin.mapel_kelas*') ? 'active' : '' }}">
+                <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i
+                        class="fas fa-file-invoice"></i> <span>Kurikulum</span></a>
+                <ul class="dropdown-menu">
+                    <li class="{{ request()->routeIs('admin.mapel_kelas*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.mapel_kelas.index') }}">Mapel Kelas</a>
+                    </li>
+                    <li class="{{ request()->routeIs('admin.kelas*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.kelas.index') }}">Kelas</a>
+                    </li>
+                    <li class="{{ request()->routeIs('admin.tahun_ajar*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.tahun_ajar.index') }}">Tahun Ajar</a>
+                    </li>
+                    <li class="{{ request()->routeIs('admin.mapel*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.mapel.index') }}">Daftar Mapel</a>
+                    </li>
+                </ul>
             </li>
             <li class="dropdown {{ request()->routeIs('admin.ustadz*') ? 'active' : '' }}">
                 <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i
@@ -106,9 +110,9 @@
                 </ul>
             </li>
             {{-- <li class="{{ (request()->routeIs('buku-kas*')) ? 'active' : '' }}">
-                <a href="{{ route('buku-kas.index') }}" class="nav-link">
-                    <i class="fas fa-book-open"></i><span>Buku Kas</span>
-                </a>
+            <a href="{{ route('buku-kas.index') }}" class="nav-link">
+                <i class="fas fa-book-open"></i><span>Buku Kas</span>
+            </a>
             </li>
             <li class="menu-header">Administrasi</li>
             <li class="{{ (request()->routeIs('surat-masuk*')) ? 'active' : '' }}">
