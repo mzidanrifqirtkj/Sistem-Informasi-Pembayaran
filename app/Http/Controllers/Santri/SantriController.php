@@ -8,9 +8,9 @@ use Illuminate\Http\Request;
 
 class SantriController extends Controller
 {
-    public function show(Santri $santri)
+    public function show()
     {
-        $santri->load('tambahanBulanans', 'user', 'kategoriSantri');
+        $santri = auth()->user()->santri()->with('tambahanBulanans', 'kategoriSantri')->firstOrFail();
         return view('santris.santri.show', compact('santri'));
     }
 }

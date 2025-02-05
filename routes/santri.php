@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'role:santri'])->prefix('santri')->group(function () {
     Route::get('dashboard', [SantriDashboardController::class, 'index'])->name('santri.dashboard');
-    // Route::get('santri/{santri}', [SantriController::class, 'show'])->name('santri.santri.show');
+    Route::get('data', [SantriController::class, 'show'])->name('santri.data.show');
 
     Route::get('tambahan-bulanan/item-santri', [TambahanBulananController::class, 'itemSantri'])->name('santri.tambahan_bulanan.item_santri');
 

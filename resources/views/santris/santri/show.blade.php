@@ -15,12 +15,6 @@
                     @endif
                 </div>
             </div>
-            <div class="col-sm-2">
-                <div class="form-group">
-                    <a href="{{ route('santri.santri.edit', $santri->id_santri) }}" class="btn btn-info"><i
-                            class="fas fa-pen"></i> &nbsp;&nbsp;Edit Profil</a>
-                </div>
-            </div>
         </div>
         <div class="row">
             <div class="col-sm">
@@ -134,7 +128,7 @@
             </div>
         </div>
         <div class="form-group">
-            <a href="{{ route('santri.santri.index') }}" class="btn btn-secondary">Kembali</a>
+            <a href="{{ route('santri.dashboard') }}" class="btn btn-secondary">Kembali</a>
         </div>
     </div>
 

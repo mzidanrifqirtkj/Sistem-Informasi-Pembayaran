@@ -13,11 +13,11 @@
                     <i class="fas fa-home"></i><span>Home</span>
                 </a>
             </li>
-            {{-- <li class="{{ request()->routeIs('santri.santri*') ? 'active' : '' }}">
-                <a href="{{ route('santri.santri.show') }}" class="nav-link">
+            <li class="{{ request()->routeIs('santri.santri*') ? 'active' : '' }}">
+                <a href="{{ route('santri.data.show') }}" class="nav-link">
                     <i class="fas fa-users"></i><span>Data Santri</span>
                 </a>
-            </li> --}}
+            </li>
             <li class="menu-header">Keuangan</li>
             <li class="dropdown {{ request()->routeIs('santri.tambahan_bulanan*') ? 'active' : '' }}">
                 <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i
