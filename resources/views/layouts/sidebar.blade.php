@@ -109,6 +109,15 @@
                     </li>
                 </ul>
             </li>
+            <li class="dropdown {{ request()->routeIs('admin.absensi*') ? 'active' : '' }}">
+                <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i
+                        class="fas fa-file-invoice"></i> <span>Absensi</span></a>
+                <ul class="dropdown-menu">
+                    <li class="{{ request()->routeIs('admin.absensi.index') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.absensi.index') }}">Absensi</a>
+                    </li>
+                </ul>
+            </li>
             {{-- <li class="{{ (request()->routeIs('buku-kas*')) ? 'active' : '' }}">
             <a href="{{ route('buku-kas.index') }}" class="nav-link">
                 <i class="fas fa-book-open"></i><span>Buku Kas</span>

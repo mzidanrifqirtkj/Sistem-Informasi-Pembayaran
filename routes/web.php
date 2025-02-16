@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AbsensiController;
 use App\Http\Controllers\Santri\DashboardController as SantriDashboardController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ProfileController;
@@ -150,6 +151,20 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('ustadz/penugasan/mustahiq/create', [PenugasanUstadzController::class, 'createMustahiq'])->name('admin.ustadz.penugasan.mustahiq.create');
     Route::get('ustadz/penugasan/mustahiq/get-kelas', [PenugasanUstadzController::class, 'getKelas'])->name('admin.ustadz.penugasan.mustahiq.getKelas');
     Route::post('ustadz/penugasan/mustahiq', [PenugasanUstadzController::class, 'storeMustahiq'])->name('admin.ustadz.penugasan.mustahiq.store');
+    //absensi
+    Route::get('absensi', [AbsensiController::class, 'index'])->name('admin.absensi.index'); // Menampilkan daftar absensi
+    Route::get('absensi/import', [AbsensiController::class, 'importForm'])->name('admin.absensi.importForm');
+    Route::post('absensi/import', [AbsensiController::class, 'import'])->name('admin.absensi.import');
+    Route::get('absensi/data', [AbsensiController::class, 'getAbsensi'])->name('admin.absensi.data');
+    Route::get('absensi/{id}/edit', [AbsensiController::class, 'edit'])->name('admin.absensi.edit'); // Form edit absensi
+    Route::put('absensi/{id}', [AbsensiController::class, 'update'])->name('admin.absensi.update'); // Proses update absensi
+    Route::delete('absensi/{id}', [AbsensiController::class, 'destroy'])->name('admin.absensi.destroy'); // Hapus absensi
+
+    Route::get('absensi/create', [AbsensiController::class, 'create'])->name('admin.absensi.create'); // Form tambah absensi
+    Route::post('absensi', [AbsensiController::class, 'store'])->name('admin.absensi.store'); // Proses tambah absensi
+
+    Route::get('absensi/{absensi}', [AbsensiController::class, 'show'])->name('admin.absensi.show'); // Detail absensi
+
 
 
 });
