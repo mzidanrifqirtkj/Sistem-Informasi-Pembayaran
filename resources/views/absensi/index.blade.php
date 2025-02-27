@@ -3,7 +3,7 @@
 @section('content')
     <div class="row">
         <div class="col-md-4 d-flex justify-content-between">
-            <a href="{{ route('admin.absensi.create') }}" class="btn btn-primary">Tambah Absensi</a>
+            {{-- <a href="{{ route('admin.absensi.create') }}" class="btn btn-primary">Tambah Absensi</a> --}}
             <a href="{{ route('admin.absensi.importForm') }}" class="btn btn-primary">Import Absensi</a>
         </div>
     </div>
@@ -12,7 +12,8 @@
 
         <div class="col-md-2">
             <label for="filterNama">Nama Santri</label>
-            <input id="filterNama" name="filterName" id="filterName" class="form-control filterNama"></input>
+            <input placeholder="Input Nama Santri" id="filterNama" name="filterName" id="filterName"
+                class="form-control filterNama"></input>
         </div>
 
         <div class="col-md-2">
@@ -37,9 +38,18 @@
             <label for="filterBulan">Bulan</label>
             <select id="filterBulan" class="form-control">
                 <option value="">Pilih Bulan</option>
-                @foreach (['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as $bulan)
-                    <option value="{{ $bulan }}">{{ $bulan }}</option>
-                @endforeach
+                <option value="Jan">Januari</option>
+                <option value="Feb">Februari</option>
+                <option value="Mar">Maret</option>
+                <option value="Apr">April</option>
+                <option value="May">Mei</option>
+                <option value="Jun">Juni</option>
+                <option value="Jul">Juli</option>
+                <option value="Aug">Agustus</option>
+                <option value="Sep">September</option>
+                <option value="Oct">Oktober</option>
+                <option value="Nov">November</option>
+                <option value="Dec">Desember</option>
             </select>
         </div>
         <div class="col-md-2">
@@ -131,7 +141,7 @@
                         data: 'DT_RowIndex',
                         name: 'DT_RowIndex',
                         orderable: false,
-                        searchable: false
+                        searchable: true
                     },
                     {
                         data: 'nis',
@@ -143,7 +153,26 @@
                     },
                     {
                         data: 'bulan',
-                        name: 'bulan'
+                        name: 'bulan',
+                        render: function(data, type, row) {
+                            // Ubah nilai singkat bulan menjadi nama bulan lengkap
+                            const bulanMap = {
+                                'Jan': 'Januari',
+                                'Feb': 'Februari',
+                                'Mar': 'Maret',
+                                'Apr': 'April',
+                                'May': 'Mei',
+                                'Jun': 'Juni',
+                                'Jul': 'Juli',
+                                'Aug': 'Agustus',
+                                'Sep': 'September',
+                                'Oct': 'Oktober',
+                                'Nov': 'November',
+                                'Dec': 'Desember'
+                            };
+                            return bulanMap[data] ||
+                                data; // Kembalikan nama bulan lengkap atau nilai aslinya jika tidak ditemukan
+                        }
                     },
                     {
                         data: 'minggu_per_bulan',
