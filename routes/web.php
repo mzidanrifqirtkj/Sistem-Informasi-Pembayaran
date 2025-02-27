@@ -159,6 +159,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('absensi/{id}/edit', [AbsensiController::class, 'edit'])->name('admin.absensi.edit'); // Form edit absensi
     Route::put('absensi/{id}', [AbsensiController::class, 'update'])->name('admin.absensi.update'); // Proses update absensi
     Route::delete('absensi/{id}', [AbsensiController::class, 'destroy'])->name('admin.absensi.destroy'); // Hapus absensi
+    Route::get('/admin/santri/list', [AbsensiController::class, 'getSantriList'])->name('admin.santri.list');
+
 
     Route::get('absensi/create', [AbsensiController::class, 'create'])->name('admin.absensi.create'); // Form tambah absensi
     Route::post('absensi', [AbsensiController::class, 'store'])->name('admin.absensi.store'); // Proses tambah absensi

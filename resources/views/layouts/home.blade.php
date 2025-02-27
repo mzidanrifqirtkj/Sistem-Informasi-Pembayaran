@@ -54,6 +54,8 @@
             text-align: center
         }
     </style>
+
+    @yield('css_inline')
 </head>
 
 <body>

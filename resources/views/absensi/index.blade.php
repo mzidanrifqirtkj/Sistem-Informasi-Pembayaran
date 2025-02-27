@@ -8,7 +8,13 @@
         </div>
     </div>
 
-    <div class="row align-items-end mb-3">
+    <div class="row align-items-end mb-3 mt-3">
+
+        <div class="col-md-2">
+            <label for="filterNama">Nama Santri</label>
+            <input id="filterNama" name="filterName" id="filterName" class="form-control filterNama"></input>
+        </div>
+
         <div class="col-md-2">
             <label for="filterKelas">Kelas</label>
             <select id="filterKelas" class="form-control">
@@ -103,6 +109,8 @@
 @section('script')
     <script>
         $(document).ready(function() {
+
+
             // Inisialisasi DataTable
             let table = $('#absensiTable').DataTable({
                 processing: true,
@@ -116,6 +124,7 @@
                         d.tahun_ajar = $('#filterTahunAjar').val();
                         d.bulan = $('#filterBulan').val();
                         d.minggu = $('#filterMinggu').val();
+                        d.nama_santri = $('#filterNama').val();
                     }
                 },
                 columns: [{
@@ -123,53 +132,53 @@
                         name: 'DT_RowIndex',
                         orderable: false,
                         searchable: false
-                    }, // Kolom nomor
+                    },
                     {
                         data: 'nis',
                         name: 'nis'
-                    }, // Kolom NIS
+                    },
                     {
                         data: 'nama_santri',
-                        name: 'nama_santri'
-                    }, // Kolom Nama Santri
+                        name: 'nama_santri',
+                    },
                     {
                         data: 'bulan',
                         name: 'bulan'
-                    }, // Kolom Bulan
+                    },
                     {
                         data: 'minggu_per_bulan',
                         name: 'minggu_per_bulan'
-                    }, // Kolom Minggu
+                    },
                     {
                         data: 'jumlah_hadir',
                         name: 'jumlah_hadir'
-                    }, // Kolom Hadir
+                    },
                     {
                         data: 'jumlah_izin',
                         name: 'jumlah_izin'
-                    }, // Kolom Izin
+                    },
                     {
                         data: 'jumlah_sakit',
                         name: 'jumlah_sakit'
-                    }, // Kolom Sakit
+                    },
                     {
                         data: 'jumlah_alpha',
                         name: 'jumlah_alpha'
-                    }, // Kolom Alpha
+                    },
                     {
                         data: 'kelas',
                         name: 'kelas'
-                    }, // Kolom Kelas
+                    },
                     {
                         data: 'tahun_ajar',
                         name: 'tahun_ajar'
-                    }, // Kolom Tahun Ajar
+                    },
                     {
                         data: 'action',
                         name: 'action',
                         orderable: false,
                         searchable: false
-                    } // Kolom Action
+                    }
                 ],
                 order: [
                     [0, 'asc']
@@ -186,7 +195,8 @@
 
             // Reset filter
             $('#resetFilters').click(function() {
-                $('#filterKelas, #filterTahunAjar, #filterBulan, #filterMinggu').val('');
+                $('#filterKelas, #filterTahunAjar, #filterBulan, #filterMinggu, #filterNama').val('');
+
                 table.draw(); // Memanggil ulang DataTable tanpa filter
             });
 
@@ -203,6 +213,11 @@
                 let id = $(this).data('id');
                 deleteData(id);
             });
+
+            $('#filterNama').on('input', function() {
+                table.draw(); // Memanggil ulang DataTable dengan filter baru
+            });
+
         });
     </script>
 @endsection

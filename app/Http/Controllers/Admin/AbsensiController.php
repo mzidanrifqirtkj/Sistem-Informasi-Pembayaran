@@ -9,6 +9,7 @@ use App\Models\Kelas;
 use App\Models\Santri;
 use App\Models\TahunAjar;
 use Illuminate\Http\Request;
+use Log;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AbsensiController extends Controller
@@ -18,9 +19,8 @@ class AbsensiController extends Controller
         $santriList = Santri::select('nama_santri')->get();
         $kelasList = Kelas::select('id_kelas', 'nama_kelas')->get();
         $tahunAjarList = TahunAjar::select('id_tahun_ajar', 'tahun_ajar')->get();
-        $bulanList = Absensi::select('bulan');
 
-        return view('absensi.index', compact('santriList', 'kelasList', 'tahunAjarList', 'bulanList'));
+        return view('absensi.index', compact('santriList', 'kelasList', 'tahunAjarList'));
     }
 
     public function getAbsensi(Request $request)
@@ -31,12 +31,16 @@ class AbsensiController extends Controller
 
             // Filter berdasarkan kelas
             if ($request->kelas) {
-                $absensis->where('kelas_id', $request->kelas);
+                $absensis->whereHas('kelas', function ($query) use ($request) {
+                    $query->where('id_kelas', $request->kelas);
+                });
             }
 
             // Filter berdasarkan tahun ajar
             if ($request->tahun_ajar) {
-                $absensis->where('tahun_ajar_id', $request->tahun_ajar);
+                $absensis->whereHas('tahunAjar', function ($query) use ($request) {
+                    $query->where('id_tahun_ajar', $request->tahun_ajar);
+                });
             }
 
             // Filter berdasarkan bulan
@@ -50,11 +54,11 @@ class AbsensiController extends Controller
             }
 
             // Filter berdasarkan nama santri
-            // if ($request->nama_santri) {
-            //     $absensis->whereHas('santris', function ($query) use ($request) {
-            //         $query->where('id_santri', $request->nama_santri);
-            //     });
-            // }
+            if ($request->nama_santri) {
+                $absensis->whereHas('santri', function ($query) use ($request) {
+                    $query->where('nama_santri', 'like', '%' . $request->nama_santri . '%');
+                });
+            }
 
 
             return datatables()->of($absensis)
@@ -71,6 +75,13 @@ class AbsensiController extends Controller
                 ->addColumn('action', function ($row) {
                     return '<a href="' . route('admin.absensi.edit', $row->id_absensi) . '" class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a>
                             <button class="btn btn-sm btn-danger" data-id="' . $row->id_absensi . '"><i class="fas fa-trash"></i></button>';
+                })
+                ->filter(function ($instence) use ($request) {
+                    if ($request->filled("nama_santri")) {
+                        $instence->whereHas('santri', function ($query) use ($request) {
+                            $query->where('nama_santri', 'like', '%' . $request->nama_santri . '%');
+                        });
+                    }
                 })
                 ->rawColumns(['action'])
                 ->make(true);
@@ -100,8 +111,6 @@ class AbsensiController extends Controller
             return redirect()->route('admin.absensi.index')->with('error', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
         }
     }
-
-    // App\Http\Controllers\Admin\AbsensiController.php
 
     public function edit($id)
     {
@@ -148,7 +157,6 @@ class AbsensiController extends Controller
             ->where('minggu_per_bulan', $request->minggu_per_bulan)
             ->where('kelas_id', $request->kelas_id)
             ->where('tahun_ajar_id', $request->tahun_ajar_id)
-            // ->where('id_absensi', '!=', $id) // Abaikan data yang sedang diedit
             ->first();
 
         // Jika data sudah ada, kembalikan pesan error
@@ -170,4 +178,10 @@ class AbsensiController extends Controller
 
         return redirect()->route('admin.absensi.index')->with('alert', 'Data absensi berhasil dihapus.');
     }
+
+
+
+
+
+
 }
