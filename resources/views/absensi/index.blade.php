@@ -119,12 +119,11 @@
 @section('script')
     <script>
         $(document).ready(function() {
-
-
             // Inisialisasi DataTable
             let table = $('#absensiTable').DataTable({
                 processing: true,
                 serverSide: true,
+                searching: false,
                 ajax: {
                     url: "{{ route('admin.absensi.data') }}",
                     type: "GET",
@@ -171,7 +170,7 @@
                                 'Dec': 'Desember'
                             };
                             return bulanMap[data] ||
-                                data; // Kembalikan nama bulan lengkap atau nilai aslinya jika tidak ditemukan
+                                data;
                         }
                     },
                     {
