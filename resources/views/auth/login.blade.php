@@ -1,4 +1,5 @@
 <x-guest-layout>
+    @section('title_page', 'Login')
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" :type="session('status_type', 'success')" />
 
