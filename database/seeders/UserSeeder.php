@@ -16,7 +16,6 @@ class UserSeeder extends Seeder
         // User::factory(10)->create();
 
         $admin = User::create([
-            'name' => 'admin',
             'email' => 'admin@gmail.com',
             'password' => bcrypt('12345678')
         ]);
@@ -24,7 +23,6 @@ class UserSeeder extends Seeder
         $admin->assignRole('admin');
 
         $santri = User::create([
-            'name' => 'santri',
             'email' => 'santri@gmail.com',
             'password' => bcrypt('12345678')
         ]);

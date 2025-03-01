@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BiayaTerjadwal;
 use App\Models\Santri;
 use App\Models\TagihanTerjadwal;
+use Auth;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -17,8 +18,22 @@ class TagihanTerjadwalController extends Controller
 {
     public function index()
     {
-        $tagihanTerjadwals = TagihanTerjadwal::with(['santri', 'biayaTerjadwal'])->paginate(10);
-        // dd($tagihanTerjadwals);
+        $user = Auth::user(); // Ambil user yang sedang login
+        $tagihanTerjadwals = collect(); // Inisialisasi koleksi kosong
+
+        if ($user->hasRole('admin')) {
+            // Jika user adalah admin, ambil semua data tagihan terjadwal dengan pagination
+            $tagihanTerjadwals = TagihanTerjadwal::with(['santri', 'biayaTerjadwal'])->paginate(10);
+        } elseif ($user->hasRole('santri')) {
+            // Jika user adalah santri, ambil data tagihan terjadwal yang sesuai dengan user yang login
+            $santri = $user->santri;
+            if ($santri) { // Pastikan relasi santri ada
+                $tagihanTerjadwals = TagihanTerjadwal::with(['santri', 'biayaTerjadwal'])
+                    ->where('santri_id', $santri->id_santri)
+                    ->paginate(10); // Gunakan paginate() untuk konsistensi
+            }
+        }
+
         return view('tagihan-terjadwal.index', compact('tagihanTerjadwals'));
     }
     // public function generateBulkTagihan()
@@ -128,13 +143,13 @@ class TagihanTerjadwalController extends Controller
     {
         $santris = Santri::all();
         $biayaTerjadwals = BiayaTerjadwal::all();
-        $now  = (int) date('Y');
+        $now = (int) date('Y');
         return view('tagihan-terjadwal.create', compact('santris', 'biayaTerjadwals', 'now'));
     }
     public function store(Request $request)
     {
         // Validasi Input
-        try{
+        try {
             $validatedData = $request->validate([
                 'santri_id' => 'required|exists:santris,id_santri',
                 'tahun' => 'nullable|integer|min:2000|max:' . (now()->year + 1),
@@ -189,9 +204,8 @@ class TagihanTerjadwalController extends Controller
             TagihanTerjadwal::create($data);
 
             return redirect()->route('admin.tagihan_terjadwal.index')->with('success', 'Tagihan berhasil dibuat.');
-        }
-        catch (\Exception $e) {
-            return back()->withErrors(['biaya_terjadwal_id' => 'Gagal membuat tagihan '. $e->getMessage()]);
+        } catch (\Exception $e) {
+            return back()->withErrors(['biaya_terjadwal_id' => 'Gagal membuat tagihan ' . $e->getMessage()]);
         }
     }
 

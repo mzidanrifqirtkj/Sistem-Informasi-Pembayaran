@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Santri;
 use App\Models\TambahanBulanan;
+use Auth;
 use Illuminate\Http\Request;
 
 class TambahanBulananController extends Controller
@@ -76,7 +77,22 @@ class TambahanBulananController extends Controller
     }
     public function itemSantri()
     {
-        $santris = Santri::with(['tambahanBulanans', 'kategoriSantri'])->get();
+        $user = Auth::user(); // Ambil user yang sedang login
+        $santris = collect(); // Inisialisasi koleksi kosong
+
+        if ($user->hasRole('admin')) {
+            // Jika user adalah admin, ambil semua data santri
+            $santris = Santri::with(['tambahanBulanans', 'kategoriSantri'])->get();
+        } elseif ($user->hasRole('santri')) {
+            // Jika user adalah santri, ambil data santri yang sesuai dengan user yang login
+            $santri = $user->santri;
+            if ($santri) { // Pastikan relasi santri ada
+                $santris = Santri::with(['tambahanBulanans', 'kategoriSantri'])
+                    ->where('id_santri', $santri->id_santri)
+                    ->get();
+            }
+        }
+
         return view('tambahan-bulanan.item-santri', compact('santris'));
     }
 

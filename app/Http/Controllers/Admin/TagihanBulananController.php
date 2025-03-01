@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Santri;
 use App\Models\TagihanBulanan;
+use Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,16 +16,48 @@ class TagihanBulananController extends Controller
      */
     public function index()
     {
-        // $tagihanBulanans = TagihanBulanan::all();
-        $now = now()->year;
-        // $santris = Santri::with('tagihanBulanan')->paginate(5);
-        $santris = \App\Models\Santri::with([
-            'tagihanBulanan' => function ($query) use ($now) {
-                $query->where('tahun', $now);
+        $user = Auth::user(); // Ambil user yang sedang login
+        $now = now()->year; // Ambil tahun saat ini
+
+        if ($user->hasRole('admin')) {
+            // Jika user adalah admin, ambil semua data santri beserta tagihan bulanan untuk tahun ini
+            $santris = \App\Models\Santri::with([
+                'tagihanBulanan' => function ($query) use ($now) {
+                    $query->where('tahun', $now); // Filter tagihan berdasarkan tahun
+                }
+            ])->paginate(10); // Paginasi data santri
+
+            $dataTagihans = TagihanBulanan::with(['santri'])
+                ->where('tahun', $now) // Filter tagihan berdasarkan tahun
+                ->get();
+        } elseif ($user->hasRole('santri')) {
+            // Jika user adalah santri, ambil data tagihan bulanan yang terkait dengan santri tersebut
+            $santri = $user->santri; // Ambil data santri dari user yang login
+
+            if ($santri) {
+                // Ambil data tagihan bulanan untuk santri tersebut pada tahun ini
+                $dataTagihans = TagihanBulanan::with(['santri'])
+                    ->where('santri_id', $santri->id_santri) // Filter berdasarkan santri_id
+                    ->where('tahun', $now) // Filter berdasarkan tahun
+                    ->get();
+
+                // Untuk konsistensi, kita juga bisa mengirim data santri ke view
+                $santris = Santri::with([
+                    'tagihanBulanan' => function ($query) use ($now) {
+                        $query->where('tahun', $now); // Filter tagihan berdasarkan tahun
+                    }
+                ])->where('id_santri', $santri->santri_id) // Filter santri berdasarkan id
+                    ->paginate(10);
+            } else {
+                // Jika relasi santri tidak ditemukan, kembalikan koleksi kosong
+                $dataTagihans = collect();
+                $santris = collect();
             }
-        ])->paginate(10);
-        // dd($santris);
-        $dataTagihans = TagihanBulanan::with(['santri'])->get();
+        } else {
+            // Jika role tidak dikenali, kembalikan koleksi kosong
+            $dataTagihans = collect();
+            $santris = collect();
+        }
 
         return view('tagihan-bulanan.index', compact('dataTagihans', 'santris', 'now'));
     }
@@ -119,7 +152,7 @@ class TagihanBulananController extends Controller
      */
     public function create()
     {
-        $now  = (int) date('Y');
+        $now = (int) date('Y');
         $santris = Santri::with(['kategoriSantri', 'tambahanBulanans'])->get();
         return view('tagihan-bulanan.create', compact('santris', 'now'));
     }
