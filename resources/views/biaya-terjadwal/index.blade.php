@@ -1,5 +1,5 @@
 @extends('layouts.home')
-@section('title_page','Biaya Pembayaran')
+@section('title_page', 'Biaya Pembayaran')
 @section('content')
 
 
@@ -7,7 +7,7 @@
     <div class="row">
         <div class="col-md-2 mb-3">
             {{-- @if (auth()->user()->role == 'Administrator') --}}
-            <a href="{{ route('admin.biaya_terjadwal.create') }}" class="btn btn-primary">Tambah Biaya</a><br><br>
+            <a href="{{ route('biaya_terjadwal.create') }}" class="btn btn-primary">Tambah Biaya</a><br><br>
             {{-- @endif --}}
         </div>
     </div>
@@ -22,10 +22,13 @@
                         <h3 class="text-success mb-2">Rp. {{ number_format($biaya->nominal, 2, ',', '.') }}</h3>
                         <p class="text-muted">({{ $biaya->periode }})</p>
                         <div class="d-flex justify-content-center gap-2">
-                            <a href="{{ route('admin.biaya_terjadwal.edit', $biaya->id_biaya_terjadwal) }}" class="btn btn-sm btn-info">
+                            <a href="{{ route('biaya_terjadwal.edit', $biaya->id_biaya_terjadwal) }}"
+                                class="btn btn-sm btn-info">
                                 <i class="fas fa-pen"></i> Edit
                             </a>
-                            <button class="btn btn-sm btn-danger" onclick="deleteBiayaTerjadwal('{{ $biaya->id_biaya_terjadwal }}')" data-toggle="modal" data-target="#deleteSantriModal">
+                            <button class="btn btn-sm btn-danger"
+                                onclick="deleteBiayaTerjadwal('{{ $biaya->id_biaya_terjadwal }}')" data-toggle="modal"
+                                data-target="#deleteSantriModal">
                                 <i class="fas fa-trash"></i> Hapus
                             </button>
                         </div>
@@ -66,17 +69,17 @@
 
 
 @section('script')
-<script>
-    // Fungsi untuk biaya_terjadwal
-    function deleteBiayaTerjadwal(id) {
-        let url = '{{ route("admin.biaya_terjadwal.destroy", ":id") }}';
-        url = url.replace(':id', id);
-        $("#deleteFormTerjadwal").attr('action', url);
-        $("#deleteBiayaTerjadwalModal").modal('show');
-    }
-    function formSubmitTerjadwal() {
-        $("#deleteFormTerjadwal").submit();
-    }
-</script>
-@endsection
+    <script>
+        // Fungsi untuk biaya_terjadwal
+        function deleteBiayaTerjadwal(id) {
+            let url = '{{ route('biaya_terjadwal.destroy', ':id') }}';
+            url = url.replace(':id', id);
+            $("#deleteFormTerjadwal").attr('action', url);
+            $("#deleteBiayaTerjadwalModal").modal('show');
+        }
 
+        function formSubmitTerjadwal() {
+            $("#deleteFormTerjadwal").submit();
+        }
+    </script>
+@endsection

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Santri;
 use App\Models\TagihanBulanan;
 use App\Models\TagihanTerjadwal;
+use Auth;
 use Barryvdh\Debugbar\Facades\Debugbar;
 use Exception;
 use Illuminate\Http\Request;
@@ -22,27 +23,83 @@ class PembayaranController extends Controller
     //         'santriTagihanBulanan',
     //         'tagihanBulanan'
     //     ])->get();
-    //     return view('admin.pembayaran.index', compact('dataPembayarans'));
+    //     return view('pembayaran.index', compact('dataPembayarans'));
     // }
 
     public function index()
     {
-        // $dataPembayarans = Pembayaran::with(['tagihanBulanan', 'tagihanTahunan']);
-        $santris = Santri::with('kategoriSantri')->get();
+        $user = Auth::user(); // Ambil user yang sedang login
+
+        if ($user->hasRole('admin')) {
+            // Jika user adalah admin, ambil semua data santri
+            $santris = Santri::with('kategoriSantri')->paginate(10);
+        } elseif ($user->hasRole('santri')) {
+            // Jika user adalah santri, ambil data santri yang sesuai dengan user yang login
+            $santri = $user->santri; // Ambil data santri dari user yang login
+
+            if ($santri) {
+                // Ambil data santri yang login
+                $santris = Santri::with('kategoriSantri')
+                    ->where('id_santri', $santri->id_santri) // Filter berdasarkan id_santri
+                    ->paginate(10);
+            } else {
+                // Jika relasi santri tidak ditemukan, kembalikan koleksi kosong
+                $santris = collect();
+            }
+        } else {
+            // Jika role tidak dikenali, kembalikan koleksi kosong
+            $santris = collect();
+        }
+
         return view('pembayaran.index', compact('santris'));
     }
     public function riwayat()
     {
-        $now = now()->year;
-        $santris = Santri::with([
-            'tagihanBulanan' => function ($query) use ($now) {
-                $query->where('tahun', $now);
+        $user = Auth::user(); // Ambil user yang sedang login
+        $now = now()->year; // Ambil tahun saat ini
+
+        if ($user->hasRole('admin')) {
+            // Jika user adalah admin, ambil semua data santri beserta tagihan bulanan untuk tahun ini
+            $santris = Santri::with([
+                'tagihanBulanan' => function ($query) use ($now) {
+                    $query->where('tahun', $now); // Filter tagihan berdasarkan tahun
+                }
+            ])->paginate(10); // Paginasi data santri
+
+            $dataPembayarans = Pembayaran::with(['tagihanBulanan.santri', 'tagihanTerjadwal.santri'])->get();
+        } elseif ($user->hasRole('santri')) {
+            // Jika user adalah santri, ambil data tagihan bulanan yang terkait dengan santri tersebut
+            $santri = $user->santri; // Ambil data santri dari user yang login
+
+            if ($santri) {
+                // Ambil data tagihan bulanan untuk santri tersebut pada tahun ini
+                $santris = Santri::with([
+                    'tagihanBulanan' => function ($query) use ($now) {
+                        $query->where('tahun', $now); // Filter tagihan berdasarkan tahun
+                    }
+                ])->where('id_santri', $santri->id_santri) // Filter santri berdasarkan id
+                    ->paginate(10);
+
+                // Ambil data pembayaran untuk santri tersebut
+                $dataPembayarans = Pembayaran::with(['tagihanBulanan.santri', 'tagihanTerjadwal.santri'])
+                    ->whereHas('tagihanBulanan', function ($query) use ($santri) {
+                        $query->where('santri_id', $santri->id_santri);
+                    })
+                    ->orWhereHas('tagihanTerjadwal', function ($query) use ($santri) {
+                        $query->where('santri_id', $santri->id_santri);
+                    })
+                    ->get();
+            } else {
+                // Jika relasi santri tidak ditemukan, kembalikan koleksi kosong
+                $santris = collect();
+                $dataPembayarans = collect();
             }
-        ])->paginate(10);
-        // dd($santris);
-        $dataPembayarans = Pembayaran::with(['tagihanBulanan.santri', 'tagihanTerjadwal.santri'])->get();
-        // dd($dataPembayarans);
-        // dd($dataPembayarans->first()->tagihanBulanan);
+        } else {
+            // Jika role tidak dikenali, kembalikan koleksi kosong
+            $santris = collect();
+            $dataPembayarans = collect();
+        }
+
         return view('pembayaran.riwayat', compact('santris', 'now', 'dataPembayarans'));
     }
 
@@ -50,7 +107,7 @@ class PembayaranController extends Controller
     public function show($santriId)
     {
 
-        $santri = Santri::with('kategoriSantri',  'tagihanBulanan', 'tagihanTerjadwal.biayaTerjadwal')->findOrFail($santriId);
+        $santri = Santri::with('kategoriSantri', 'tagihanBulanan', 'tagihanTerjadwal.biayaTerjadwal')->findOrFail($santriId);
         return view('pembayaran.show', compact('santri'));
     }
 
@@ -141,7 +198,7 @@ class PembayaranController extends Controller
         try {
             $pembayaran = Pembayaran::findOrFail($id);
             $pembayaran->delete();
-            return redirect()->route('admin.pembayaran.index')->with('alert', 'Pembayaran berhasil dihapus.');
+            return redirect()->route('pembayaran.index')->with('alert', 'Pembayaran berhasil dihapus.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }

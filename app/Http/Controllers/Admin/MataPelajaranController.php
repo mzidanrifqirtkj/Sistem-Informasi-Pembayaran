@@ -36,9 +36,9 @@ class MataPelajaranController extends Controller
             ]);
 
             MataPelajaran::create($request->all());
-            return redirect()->route('admin.mapel.index')->with('alert', 'Mata Pelajaran berhasil ditambahkan');
+            return redirect()->route('mapel.index')->with('alert', 'Mata Pelajaran berhasil ditambahkan');
         } catch (\Exception $e) {
-            return redirect()->route('admin.mapel.index')->with('error', 'Terjadi kesalahan');
+            return redirect()->route('mapel.index')->with('error', 'Terjadi kesalahan');
         }
     }
 
@@ -69,9 +69,9 @@ class MataPelajaranController extends Controller
             ]);
 
             $mataPelajaran->update($request->all());
-            return redirect()->route('admin.mapel.index')->with('alert', 'Mata Pelajaran berhasil diubah');
+            return redirect()->route('mapel.index')->with('alert', 'Mata Pelajaran berhasil diubah');
         } catch (\Exception $e) {
-            return redirect()->route('admin.mapel.index')->with('error', 'Terjadi kesalahan');
+            return redirect()->route('mapel.index')->with('error', 'Terjadi kesalahan');
         }
     }
 
@@ -83,9 +83,9 @@ class MataPelajaranController extends Controller
         try {
             $mataPelajaran = MataPelajaran::findOrFail($id);
             $mataPelajaran->delete();
-            return redirect()->route('admin.mapel.index')->with('alert', 'Mata Pelajaran berhasil dihapus');
+            return redirect()->route('mapel.index')->with('alert', 'Mata Pelajaran berhasil dihapus');
         } catch (\Exception $e) {
-            return redirect()->route('admin.mapel.index')->with('error', 'Terjadi kesalahan');
+            return redirect()->route('mapel.index')->with('error', 'Terjadi kesalahan');
         }
     }
 }

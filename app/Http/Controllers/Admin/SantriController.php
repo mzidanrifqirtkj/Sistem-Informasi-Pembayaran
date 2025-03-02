@@ -45,7 +45,7 @@ class SantriController extends Controller
             return DataTables::of($santris)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    return '<a href="' . route('admin.santri.edit', $row->id_santri) . '" class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a>
+                    return '<a href="' . route('santri.edit', $row->id_santri) . '" class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a>
                             <button class="btn btn-sm btn-danger" onclick="deleteData(' . $row->id_santri . ')"><i class="fas fa-trash"></i></button>';
                 })
                 ->rawColumns(['action'])
@@ -76,9 +76,9 @@ class SantriController extends Controller
 
         try {
             Excel::import(new SantriImport, $request->file('file'));
-            return redirect()->route('admin.santri.index')->with('alert', 'Data santri berhasil diimpor.');
+            return redirect()->route('santri.index')->with('alert', 'Data santri berhasil diimpor.');
         } catch (\Exception $e) {
-            return redirect()->route('admin.santri.index')->with('error', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
+            return redirect()->route('santri.index')->with('error', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
         }
     }
 
@@ -140,7 +140,7 @@ class SantriController extends Controller
         Santri::create($validated);
         // ketika baru di create, buat tagihan pendaftaran
 
-        return redirect()->route('admin.santri.index')->with('alert', 'Santri created successfully.');
+        return redirect()->route('santri.index')->with('alert', 'Santri created successfully.');
     }
 
     /**
@@ -242,7 +242,7 @@ class SantriController extends Controller
                 $santri->update($dataToUpdate);
             }
 
-            return redirect()->route('admin.santri.show', $santri)->with('alert', 'Santri updated successfully.');
+            return redirect()->route('santri.show', $santri)->with('alert', 'Santri updated successfully.');
         } catch (\Exception $e) {
             // Log general exception
             return back()->with('error', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
@@ -255,7 +255,7 @@ class SantriController extends Controller
     public function destroy(Santri $santri)
     {
         $santri->delete();
-        return redirect()->route('admin.santri.index')->with('alert', 'Santri deleted successfully.');
+        return redirect()->route('santri.index')->with('alert', 'Santri deleted successfully.');
     }
 
 }

@@ -4,8 +4,8 @@
 
     <div class="row">
         <div class="col-md-4 d-flex justify-content-between">
-            <a href="{{ route('admin.santri.create') }}" class="btn btn-primary">Tambah Santri</a>
-            <a href="{{ route('admin.santri.importForm') }}" class="btn btn-primary">Import Santri</a>
+            <a href="{{ route('santri.create') }}" class="btn btn-primary">Tambah Santri</a>
+            <a href="{{ route('santri.importForm') }}" class="btn btn-primary">Import Santri</a>
         </div>
     </div>
 
@@ -59,7 +59,7 @@
             $('#santriTable').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: "{{ route('admin.santri.data') }}",
+                ajax: "{{ route('santri.data') }}",
                 columns: [{
                         data: 'DT_RowIndex',
                         name: 'DT_RowIndex',
@@ -74,7 +74,7 @@
                         data: 'nama_santri',
                         name: 'nama_santri',
                         render: function(data, type, row) {
-                            return '<a href="' + '{{ route('admin.santri.show', ':id') }}'.replace(
+                            return '<a href="' + '{{ route('santri.show', ':id') }}'.replace(
                                 ":id", row.id_santri) + '">' + data + '</a>';
                         }
                     },
@@ -97,7 +97,7 @@
         });
 
         function deleteData(id) {
-            let url = '{{ route('admin.santri.destroy', ':id') }}';
+            let url = '{{ route('santri.destroy', ':id') }}';
             url = url.replace(':id', id);
             $("#deleteForm").attr('action', url);
             $('#deleteSantriModal').modal('show');

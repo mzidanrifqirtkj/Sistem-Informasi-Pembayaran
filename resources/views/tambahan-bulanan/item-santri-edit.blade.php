@@ -2,7 +2,7 @@
 @section('title_page', 'Edit Item')
 @section('content')
 
-    <form action="{{ route('admin.tambahan_bulanan.update_item_santri', $santri) }}" method="post">
+    <form action="{{ route('tambahan_bulanan.update_item_santri', $santri) }}" method="post">
         @csrf
         @method('PUT')
         <div class="container">
@@ -23,7 +23,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($santri->tambahanBulanans as $item)
+                            @foreach ($santri->tambahanBulanans as $item)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $item->nama_item }}</td>
@@ -54,7 +54,7 @@
                 <div class="col-sm-12">
                     <div class="form-group">
                         <button type="submit" class="btn btn-primary">Simpan</button>
-                        <a href="{{ route('admin.tambahan_bulanan.index') }}" class="btn btn-secondary">Kembali</a>
+                        <a href="{{ route('tambahan_bulanan.index') }}" class="btn btn-secondary">Kembali</a>
                     </div>
                 </div>
             </div>
@@ -66,7 +66,7 @@
 @section('title_page', 'Edit Item Tambahan Bulanan')
 @section('content')
 
-    <form action="{{ route('admin.tambahan_bulanan.item_santri.update', $santri) }}" method="post">
+    <form action="{{ route('tambahan_bulanan.item_santri.update', $santri) }}" method="post">
         @csrf
         @method('PUT')
         <div class="container">
@@ -87,31 +87,25 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($items as $item)
+                            @foreach ($items as $item)
                                 @php
                                     // Cek apakah item sudah dimiliki santri
-                                    $pivot = $santri->tambahanBulanans->where('id_tambahan_bulanan', $item->id_tambahan_bulanan)->first();
+                                    $pivot = $santri->tambahanBulanans
+                                        ->where('id_tambahan_bulanan', $item->id_tambahan_bulanan)
+                                        ->first();
                                 @endphp
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $item->nama_item }}</td>
                                     <td>
-                                        <input
-                                            type="checkbox"
-                                            name="items[{{ $item->id_tambahan_bulanan }}][aktif]"
-                                            value="1"
-                                            {{ $pivot ? 'checked' : '' }}
-                                        >
+                                        <input type="checkbox" name="items[{{ $item->id_tambahan_bulanan }}][aktif]"
+                                            value="1" {{ $pivot ? 'checked' : '' }}>
                                     </td>
                                     <td>
-                                        <input
-                                            type="number"
-                                            class="form-control"
+                                        <input type="number" class="form-control"
                                             name="items[{{ $item->id_tambahan_bulanan }}][jumlah]"
                                             value="{{ old('items.' . $item->id_tambahan_bulanan . '.jumlah', $pivot->pivot->jumlah ?? 0) }}"
-                                            min="0"
-                                            {{ !$pivot ? 'disabled' : '' }}
-                                        >
+                                            min="0" {{ !$pivot ? 'disabled' : '' }}>
                                     </td>
                                 </tr>
                             @endforeach
@@ -123,7 +117,7 @@
                 <div class="col-sm-12">
                     <div class="form-group">
                         <button type="submit" class="btn btn-primary">Simpan</button>
-                        <a href="{{ route('admin.tambahan_bulanan.index') }}" class="btn btn-secondary">Kembali</a>
+                        <a href="{{ route('tambahan_bulanan.index') }}" class="btn btn-secondary">Kembali</a>
                     </div>
                 </div>
             </div>

@@ -20,8 +20,9 @@ class BiayaTerjadwalController extends Controller
     {
         return view('biaya-terjadwal.create');
     }
-    public function store(Request $request){
-        try{
+    public function store(Request $request)
+    {
+        try {
             $request->validate([
                 'nama_biaya' => 'required|string|max:255',
                 'periode' => 'required|string|max:255',
@@ -35,25 +36,26 @@ class BiayaTerjadwalController extends Controller
                 'nominal' => $request->nominal,
             ]);
 
-            return redirect()->route('admin.biaya_terjadwal.index')->with('alert', 'Biaya terjadwal berhasil ditambahkan.');
-        } catch(\Exception $e){
+            return redirect()->route('biaya_terjadwal.index')->with('alert', 'Biaya terjadwal berhasil ditambahkan.');
+        } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
     public function edit($id)
     {
-        try{
+        try {
             $data = BiayaTerjadwal::findOrFail($id);
             return view('biaya-terjadwal.edit', compact('data'));
         }
         // catch error
-        catch( \Exception $e){
+        catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
-    public function update(Request $request, $id){
-        try{
+    public function update(Request $request, $id)
+    {
+        try {
             $request->validate([
                 'nama_biaya' => 'required|string|max:255',
                 'periode' => 'required|in:tahunan,sekali',
@@ -65,9 +67,8 @@ class BiayaTerjadwalController extends Controller
                 'periode' => $request->periode,
                 'nominal' => $request->nominal,
             ]);
-            return redirect()->route('admin.biaya_terjadwal.index')->with('alert', 'Data berhasil diperbarui');
-        }
-        catch(\Exception $e){
+            return redirect()->route('biaya_terjadwal.index')->with('alert', 'Data berhasil diperbarui');
+        } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
     }

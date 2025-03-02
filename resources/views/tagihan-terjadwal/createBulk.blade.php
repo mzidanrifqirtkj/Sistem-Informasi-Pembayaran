@@ -1,39 +1,40 @@
 @extends('layouts.home')
-@section('title_page','Bayar Pendaftaran Santri')
+@section('title_page', 'Bayar Pendaftaran Santri')
 @section('content')
 
-<form action="{{ route('admin.tagihan_terjadwal.bulkTerjadwal') }}" method="post">
-    @csrf
-    @method('POST')
-    <div class="row">
-        <div class="col-sm">
-            <div class="form-group">
-                <label for="biaya_terjadwal_id">Biaya Terjadwal</label>
-                <select class="form-control select2 @error('biaya_terjadwal_id') is-invalid @enderror" name="biaya_terjadwal_id" required>
-                    <option selected disabled>Pilih Biaya</option>
-                    @foreach ($biayaTerjadwals as $biaya)
-                    <option value="{{ $biaya->id_biaya_terjadwal }}">{{ $biaya->nama_biaya }}</option>
-                    @endforeach
-                </select>
+    <form action="{{ route('tagihan_terjadwal.bulkTerjadwal') }}" method="post">
+        @csrf
+        @method('POST')
+        <div class="row">
+            <div class="col-sm">
+                <div class="form-group">
+                    <label for="biaya_terjadwal_id">Biaya Terjadwal</label>
+                    <select class="form-control select2 @error('biaya_terjadwal_id') is-invalid @enderror"
+                        name="biaya_terjadwal_id" required>
+                        <option selected disabled>Pilih Biaya</option>
+                        @foreach ($biayaTerjadwals as $biaya)
+                            <option value="{{ $biaya->id_biaya_terjadwal }}">{{ $biaya->nama_biaya }}</option>
+                        @endforeach
+                    </select>
 
-                @error('biaya_terjadwal_id')
-                <span class="invalid-feedback" role="alert">
-                    <strong>{{ $message }}</strong>
-                </span>
-                @enderror
+                    @error('biaya_terjadwal_id')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                    @enderror
+                </div>
             </div>
         </div>
-    </div>
-    <div class="row">
-        <div class="col-sm">
-            <div class="form-group">
-                <button class="btn btn-primary">Buat Tagihan</button>
-                <a href="{{ route('admin.tagihan_terjadwal.index') }}" class="btn btn-secondary">Kembali</a>
+        <div class="row">
+            <div class="col-sm">
+                <div class="form-group">
+                    <button class="btn btn-primary">Buat Tagihan</button>
+                    <a href="{{ route('tagihan_terjadwal.index') }}" class="btn btn-secondary">Kembali</a>
+                </div>
             </div>
         </div>
-    </div>
 
-</form>
+    </form>
 
 @endsection
 

@@ -34,7 +34,7 @@ class TambahanBulananController extends Controller
                 'nominal' => $request->nominal,
             ]);
 
-            return redirect()->route('admin.tambahan_bulanan.index')->with('alert', 'Item berhasil ditambahkan.');
+            return redirect()->route('tambahan_bulanan.index')->with('alert', 'Item berhasil ditambahkan.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -60,7 +60,7 @@ class TambahanBulananController extends Controller
             ]);
             $item = TambahanBulanan::findOrFail($item);
             $item->update($validatedData);
-            return redirect()->route('admin.tambahan_bulanan.index')->with('alert', 'Item Berhasil di Edit');
+            return redirect()->route('tambahan_bulanan.index')->with('alert', 'Item Berhasil di Edit');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -70,7 +70,7 @@ class TambahanBulananController extends Controller
         try {
             $item = TambahanBulanan::findOrFail($id);
             $item->delete();
-            return redirect()->route('admin.tambahan_bulanan.index')->with('alert', 'Item Berhasil di Hapus');
+            return redirect()->route('tambahan_bulanan.index')->with('alert', 'Item Berhasil di Hapus');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -118,6 +118,6 @@ class TambahanBulananController extends Controller
 
         $santri->tambahanBulanans()->sync($syncData);
 
-        return redirect()->route('admin.tambahan_bulanan.item_santri')->with('alert', 'Data berhasil diperbarui.');
+        return redirect()->route('tambahan_bulanan.item_santri')->with('alert', 'Data berhasil diperbarui.');
     }
 }

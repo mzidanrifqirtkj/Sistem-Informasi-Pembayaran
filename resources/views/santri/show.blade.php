@@ -1,5 +1,5 @@
 @extends('layouts.home')
-@section('title_page','Tampil Data Santri')
+@section('title_page', 'Tampil Data Santri')
 @section('content')
 
     <div class="container">
@@ -7,16 +7,18 @@
             <div class="col-sm-10">
                 <div class="form-group">
                     @if ($santri->foto != null)
-                        <img src="{{ asset('storage/' . $santri->foto) }}" alt="Profile Image Santri" class="rounded-circle" width="200"
-                        style="position: relative;width: 200px;height: 200px;overflow: hidden;">
+                        <img src="{{ asset('storage/' . $santri->foto) }}" alt="Profile Image Santri" class="rounded-circle"
+                            width="200" style="position: relative;width: 200px;height: 200px;overflow: hidden;">
                     @else
-                        <img alt="Profile Image Santri" src="{{ asset('assets/img/avatar/avatar-1.png') }}" class="rounded-circle" width="200">
+                        <img alt="Profile Image Santri" src="{{ asset('assets/img/avatar/avatar-1.png') }}"
+                            class="rounded-circle" width="200">
                     @endif
                 </div>
             </div>
             <div class="col-sm-2">
                 <div class="form-group">
-                    <a href="{{ route('admin.santri.edit', $santri->id_santri) }}" class="btn btn-info"><i class="fas fa-pen"></i>  &nbsp;&nbsp;Edit Profil</a>
+                    <a href="{{ route('santri.edit', $santri->id_santri) }}" class="btn btn-info"><i class="fas fa-pen"></i>
+                        &nbsp;&nbsp;Edit Profil</a>
                 </div>
             </div>
         </div>
@@ -86,7 +88,7 @@
             <div class="col-sm">
                 <div class="form-group">
                     <label for="father_name">Nama Ayah</label>
-                    <h4>{{ $santri->nama_ayah}}</h4>
+                    <h4>{{ $santri->nama_ayah }}</h4>
                 </div>
             </div>
             <div class="col-sm">
@@ -127,12 +129,12 @@
             <div class="col-sm">
                 <div class="form-group">
                     <label for="year_out">Tahun Keluar</label>
-                    <h4>{{ $santri->year_out ?: "-" }}</h4>
+                    <h4>{{ $santri->year_out ?: '-' }}</h4>
                 </div>
             </div>
         </div>
         <div class="form-group">
-            <a href="{{ route('admin.santri.index') }}" class="btn btn-secondary">Kembali</a>
+            <a href="{{ route('santri.index') }}" class="btn btn-secondary">Kembali</a>
         </div>
     </div>
 

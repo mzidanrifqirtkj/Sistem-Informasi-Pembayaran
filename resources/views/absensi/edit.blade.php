@@ -4,7 +4,7 @@
 
     <div class="row">
         <div class="col-md-8">
-            <form action="{{ route('admin.absensi.update', $absensi->id_absensi) }}" method="POST">
+            <form action="{{ route('absensi.update', $absensi->id_absensi) }}" method="POST">
                 @csrf
                 @method('PUT')
 
@@ -112,7 +112,7 @@
 
                 <!-- Tombol Submit dan Kembali -->
                 <button type="submit" class="btn btn-primary">Update</button>
-                <a href="{{ route('admin.absensi.index') }}" class="btn btn-secondary">Kembali</a>
+                <a href="{{ route('absensi.index') }}" class="btn btn-secondary">Kembali</a>
             </form>
         </div>
     </div>

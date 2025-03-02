@@ -36,9 +36,9 @@ class TahunAjarController extends Controller
             ]);
 
             TahunAjar::create($request->all());
-            return redirect()->route('admin.tahun_ajar.index')->with('alert', 'Tahun ajar berhasil ditambahkan');
+            return redirect()->route('tahun_ajar.index')->with('alert', 'Tahun ajar berhasil ditambahkan');
         } catch (\Exception $e) {
-            return redirect()->route('admin.tahun_ajar.index')->with('error', 'Tahun ajar gagal ditambahkan');
+            return redirect()->route('tahun_ajar.index')->with('error', 'Tahun ajar gagal ditambahkan');
         }
     }
 
@@ -69,9 +69,9 @@ class TahunAjarController extends Controller
             ]);
 
             $tahunAjar->update($request->all());
-            return redirect()->route('admin.tahun_ajar.index')->with('alert', 'Tahun ajar berhasil diubah');
+            return redirect()->route('tahun_ajar.index')->with('alert', 'Tahun ajar berhasil diubah');
         } catch (\Exception $e) {
-            return redirect()->route('admin.tahun_ajar.index')->with('error', 'Tahun ajar gagal diubah');
+            return redirect()->route('tahun_ajar.index')->with('error', 'Tahun ajar gagal diubah');
         }
     }
 
@@ -82,9 +82,9 @@ class TahunAjarController extends Controller
     {
         try {
             $tahunAjar->delete();
-            return redirect()->route('admin.tahun_ajar.index')->with('alert', 'Tahun ajar berhasil dihapus');
+            return redirect()->route('tahun_ajar.index')->with('alert', 'Tahun ajar berhasil dihapus');
         } catch (\Exception $e) {
-            return redirect()->route('admin.tahun_ajar.index')->with('error', 'Tahun ajar gagal dihapus');
+            return redirect()->route('tahun_ajar.index')->with('error', 'Tahun ajar gagal dihapus');
         }
     }
 }

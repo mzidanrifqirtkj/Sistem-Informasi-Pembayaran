@@ -30,7 +30,7 @@ class KategoriSantriController extends Controller
                 'nominal_syahriyah' => $request->nominal_syahriyah,
             ]);
 
-            return redirect()->route('admin.kategori.index')->with('success', 'Kategori santri berhasil ditambahkan.');
+            return redirect()->route('kategori.index')->with('success', 'Kategori santri berhasil ditambahkan.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menambahkan kategori santri: ' . $e->getMessage());
         }
@@ -53,7 +53,7 @@ class KategoriSantriController extends Controller
                 'nominal_syahriyah' => $request->nominal_syahriyah,
             ]);
 
-            return redirect()->route('admin.kategori.index')->with('success', 'Kategori santri berhasil diperbarui.');
+            return redirect()->route('kategori.index')->with('success', 'Kategori santri berhasil diperbarui.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui kategori santri: ' . $e->getMessage());
         }
@@ -64,7 +64,7 @@ class KategoriSantriController extends Controller
             $kategori_santri = KategoriSantri::findOrFail($id);
             $kategori_santri->delete();
 
-            return redirect()->route('admin.biaya_terjadwal.index')->with('alert', 'Kategori santri berhasil dihapus.');
+            return redirect()->route('biaya_terjadwal.index')->with('alert', 'Kategori santri berhasil dihapus.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus kategori santri: ' . $e->getMessage());
         }

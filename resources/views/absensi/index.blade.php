@@ -3,8 +3,9 @@
 @section('content')
     <div class="row">
         <div class="col-md-4 d-flex justify-content-between">
-            {{-- <a href="{{ route('admin.absensi.create') }}" class="btn btn-primary">Tambah Absensi</a> --}}
-            <a href="{{ route('admin.absensi.importForm') }}" class="btn btn-primary">Import Absensi</a>
+            @if (Auth::user()->hasRole('admin'))
+                <a href="{{ route('absensi.importForm') }}" class="btn btn-primary">Import Absensi</a>
+            @endif
         </div>
     </div>
 
@@ -81,7 +82,9 @@
                     <th>Alpha</th>
                     <th>Kelas</th>
                     <th>Tahun Ajar</th>
-                    <th width="13%">Action</th>
+                    @if (Auth::user()->hasRole('admin'))
+                        <th width="13%">Action</th>
+                    @endif
                 </tr>
             </thead>
         </table>
@@ -90,30 +93,32 @@
 @endsection
 
 @section('modal')
-    <!-- Modal Delete -->
-    <div class="modal fade" id="deleteAbsensiModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <form id="deleteForm" method="post">
-                @csrf
-                @method('DELETE')
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h4 class="modal-title">Hapus Absensi</h4>
-                        <button type="button" class="close" data-dismiss="modal">
-                            <span>&times;</span>
-                        </button>
+    @if (Auth::user()->hasRole('admin'))
+        <!-- Modal Delete -->
+        <div class="modal fade" id="deleteAbsensiModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <form id="deleteForm" method="post">
+                    @csrf
+                    @method('DELETE')
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Hapus Absensi</h4>
+                            <button type="button" class="close" data-dismiss="modal">
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Apakah Anda yakin ingin menghapus data absensi ini?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-danger">Hapus</button>
+                        </div>
                     </div>
-                    <div class="modal-body">
-                        <p>Apakah Anda yakin ingin menghapus data absensi ini?</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-danger">Hapus</button>
-                    </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
-    </div>
+    @endif
 @endsection
 
 @section('script')
@@ -125,7 +130,7 @@
                 serverSide: true,
                 searching: false,
                 ajax: {
-                    url: "{{ route('admin.absensi.data') }}",
+                    url: "{{ route('absensi.data') }}",
                     type: "GET",
                     data: function(d) {
                         // Kirim nilai filter ke server
@@ -169,8 +174,7 @@
                                 'Nov': 'November',
                                 'Dec': 'Desember'
                             };
-                            return bulanMap[data] ||
-                                data;
+                            return bulanMap[data] || data;
                         }
                     },
                     {
@@ -201,12 +205,14 @@
                         data: 'tahun_ajar',
                         name: 'tahun_ajar'
                     },
-                    {
-                        data: 'action',
-                        name: 'action',
-                        orderable: false,
-                        searchable: false
-                    }
+                    @if (Auth::user()->hasRole('admin'))
+                        {
+                            data: 'action',
+                            name: 'action',
+                            orderable: false,
+                            searchable: false
+                        }
+                    @endif
                 ],
                 order: [
                     [0, 'asc']
@@ -224,13 +230,12 @@
             // Reset filter
             $('#resetFilters').click(function() {
                 $('#filterKelas, #filterTahunAjar, #filterBulan, #filterMinggu, #filterNama').val('');
-
                 table.draw(); // Memanggil ulang DataTable tanpa filter
             });
 
             // Fungsi untuk menghapus data
             function deleteData(id) {
-                let url = '{{ route('admin.absensi.destroy', ':id') }}';
+                let url = '{{ route('absensi.destroy', ':id') }}';
                 url = url.replace(':id', id);
                 $("#deleteForm").attr('action', url);
                 $('#deleteAbsensiModal').modal('show');
@@ -245,7 +250,6 @@
             $('#filterNama').on('input', function() {
                 table.draw(); // Memanggil ulang DataTable dengan filter baru
             });
-
         });
     </script>
 @endsection

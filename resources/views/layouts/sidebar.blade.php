@@ -12,7 +12,7 @@
             <!-- Menu Home -->
             @can('view_dashboard')
                 <li class="{{ request()->routeIs('home*') ? 'active' : '' }}">
-                    <a href="{{ route('admin.dashboard') }}" class="nav-link">
+                    <a href="{{ route('dashboard') }}" class="nav-link">
                         <i class="fas fa-home"></i><span>Home</span>
                     </a>
                 </li>
@@ -22,15 +22,15 @@
             @can('view_santri')
                 @if (Auth::user()->hasRole('admin'))
                     <!-- Jika yang login adalah admin -->
-                    <li class="{{ request()->routeIs('admin.santri*') ? 'active' : '' }}">
-                        <a href="{{ route('admin.santri.index') }}" class="nav-link">
+                    <li class="{{ request()->routeIs('santri*') ? 'active' : '' }}">
+                        <a href="{{ route('santri.index') }}" class="nav-link">
                             <i class="fas fa-users"></i><span>Data Santri</span>
                         </a>
                     </li>
                 @elseif (Auth::user()->hasRole('santri'))
                     <!-- Jika yang login adalah santri -->
-                    <li class="{{ request()->routeIs('admin.santri.show') ? 'active' : '' }}">
-                        <a href="{{ route('admin.santri.show', Auth::user()->santri->id_santri) }}" class="nav-link">
+                    <li class="{{ request()->routeIs('santri.show') ? 'active' : '' }}">
+                        <a href="{{ route('santri.show', Auth::user()->santri->id_santri) }}" class="nav-link">
                             <i class="fas fa-users"></i><span>Data Santri</span>
                         </a>
                     </li>
@@ -43,8 +43,8 @@
 
             <!-- Menu Data Pengguna -->
             @can('view_user')
-                <li class="{{ request()->routeIs('admin.user*') ? 'active' : '' }}">
-                    <a href="{{ route('admin.user.index') }}" class="nav-link">
+                <li class="{{ request()->routeIs('user*') ? 'active' : '' }}">
+                    <a href="{{ route('user.index') }}" class="nav-link">
                         <i class="fas fa-user-cog"></i><span>Data Pengguna</span>
                     </a>
                 </li>
@@ -54,19 +54,19 @@
 
             <!-- Menu Biaya -->
             @canany(['view_biaya_terjadwal', 'view_kategori'])
-                <li class="dropdown {{ request()->routeIs('admin.biaya_terjadwal*') ? 'active' : '' }}">
+                <li class="dropdown {{ request()->routeIs('biaya_terjadwal*') ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-file-invoice"></i> <span>Biaya</span>
                     </a>
                     <ul class="dropdown-menu">
                         @can('view_biaya_terjadwal')
-                            <li class="{{ request()->routeIs('admin.biaya_terjadwal*') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.biaya_terjadwal.index') }}">Biaya Terjadwal</a>
+                            <li class="{{ request()->routeIs('biaya_terjadwal*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('biaya_terjadwal.index') }}">Biaya Terjadwal</a>
                             </li>
                         @endcan
                         @can('view_kategori')
-                            <li class="{{ request()->routeIs('admin.kategori*') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.kategori.index') }}">Biaya Bulanan</a>
+                            <li class="{{ request()->routeIs('kategori*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('kategori.index') }}">Biaya Bulanan</a>
                             </li>
                         @endcan
                     </ul>
@@ -75,19 +75,19 @@
 
             <!-- Menu Tambahan Bulanan -->
             @canany(['view_tambahan_bulanan', 'view_item_santri'])
-                <li class="dropdown {{ request()->routeIs('admin.tambahan_bulanan*') ? 'active' : '' }}">
+                <li class="dropdown {{ request()->routeIs('tambahan_bulanan*') ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-file-invoice"></i> <span>Tambahan Bulanan</span>
                     </a>
                     <ul class="dropdown-menu">
                         @can('view_tambahan_bulanan')
-                            <li class="{{ request()->routeIs('admin.tambahan_bulanan.index') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.tambahan_bulanan.index') }}">Item Tambahan</a>
+                            <li class="{{ request()->routeIs('tambahan_bulanan.index') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('tambahan_bulanan.index') }}">Item Tambahan</a>
                             </li>
                         @endcan
                         @can('view_item_santri')
-                            <li class="{{ request()->routeIs('admin.tambahan_bulanan.item_santri*') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.tambahan_bulanan.item_santri') }}">Item Tambahan
+                            <li class="{{ request()->routeIs('tambahan_bulanan.item_santri*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('tambahan_bulanan.item_santri') }}">Item Tambahan
                                     Santri</a>
                             </li>
                         @endcan
@@ -98,19 +98,19 @@
             <!-- Menu Tagihan -->
             @canany(['view_tagihan_terjadwal', 'view_tagihan_bulanan'])
                 <li
-                    class="dropdown {{ request()->routeIs('admin.tagihan_bulanan*') || request()->routeIs('admin.tagihan_terjadwal*') ? 'active' : '' }}">
+                    class="dropdown {{ request()->routeIs('tagihan_bulanan*') || request()->routeIs('tagihan_terjadwal*') ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-file-invoice"></i> <span>Tagihan</span>
                     </a>
                     <ul class="dropdown-menu">
                         @can('view_tagihan_terjadwal')
-                            <li class="{{ request()->routeIs('admin.tagihan_terjadwal*') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.tagihan_terjadwal.index') }}">Tagihan Terjadwal</a>
+                            <li class="{{ request()->routeIs('tagihan_terjadwal*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('tagihan_terjadwal.index') }}">Tagihan Terjadwal</a>
                             </li>
                         @endcan
                         @can('view_tagihan_bulanan')
-                            <li class="{{ request()->routeIs('admin.tagihan_bulanan*') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.tagihan_bulanan.index') }}">Tagihan Bulanan</a>
+                            <li class="{{ request()->routeIs('tagihan_bulanan*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('tagihan_bulanan.index') }}">Tagihan Bulanan</a>
                             </li>
                         @endcan
                     </ul>
@@ -119,19 +119,19 @@
 
             <!-- Menu Pembayaran -->
             @canany(['view_pembayaran', 'view_riwayat_pembayaran'])
-                <li class="dropdown {{ request()->routeIs('admin.pembayaran*') ? 'active' : '' }}">
+                <li class="dropdown {{ request()->routeIs('pembayaran*') ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-file-invoice"></i> <span>Pembayaran</span>
                     </a>
                     <ul class="dropdown-menu">
                         @can('view_pembayaran')
-                            <li class="{{ request()->routeIs('admin.pembayaran.index') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.pembayaran.index') }}">Pembayaran Tagihan</a>
+                            <li class="{{ request()->routeIs('pembayaran.index') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('pembayaran.index') }}">Pembayaran Tagihan</a>
                             </li>
                         @endcan
                         @can('view_riwayat_pembayaran')
-                            <li class="{{ request()->routeIs('admin.pembayaran.riwayat') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.pembayaran.riwayat') }}">Riwayat Pembayaran</a>
+                            <li class="{{ request()->routeIs('pembayaran.riwayat') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('pembayaran.riwayat') }}">Riwayat Pembayaran</a>
                             </li>
                         @endcan
                     </ul>
@@ -143,29 +143,29 @@
             <!-- Menu Kurikulum -->
             @canany(['view_mapel_kelas', 'view_kelas', 'view_tahun_ajar', 'view_mapel'])
                 <li
-                    class="dropdown {{ request()->routeIs('admin.mapel*') || request()->routeIs('admin.kelas*') || request()->routeIs('admin.mapel_kelas*') ? 'active' : '' }}">
+                    class="dropdown {{ request()->routeIs('mapel*') || request()->routeIs('kelas*') || request()->routeIs('mapel_kelas*') ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-file-invoice"></i> <span>Kurikulum</span>
                     </a>
                     <ul class="dropdown-menu">
                         @can('view_mapel_kelas')
-                            <li class="{{ request()->routeIs('admin.mapel_kelas*') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.mapel_kelas.index') }}">Mapel Kelas</a>
+                            <li class="{{ request()->routeIs('mapel_kelas*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('mapel_kelas.index') }}">Mapel Kelas</a>
                             </li>
                         @endcan
                         @can('view_kelas')
-                            <li class="{{ request()->routeIs('admin.kelas*') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.kelas.index') }}">Kelas</a>
+                            <li class="{{ request()->routeIs('kelas*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('kelas.index') }}">Kelas</a>
                             </li>
                         @endcan
                         @can('view_tahun_ajar')
-                            <li class="{{ request()->routeIs('admin.tahun_ajar*') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.tahun_ajar.index') }}">Tahun Ajar</a>
+                            <li class="{{ request()->routeIs('tahun_ajar*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('tahun_ajar.index') }}">Tahun Ajar</a>
                             </li>
                         @endcan
                         @can('view_mapel')
-                            <li class="{{ request()->routeIs('admin.mapel*') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.mapel.index') }}">Daftar Mapel</a>
+                            <li class="{{ request()->routeIs('mapel*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('mapel.index') }}">Daftar Mapel</a>
                             </li>
                         @endcan
                     </ul>
@@ -174,19 +174,19 @@
 
             <!-- Menu Ustadz -->
             @canany(['view_ustadz', 'view_penugasan_ustadz'])
-                <li class="dropdown {{ request()->routeIs('admin.ustadz*') ? 'active' : '' }}">
+                <li class="dropdown {{ request()->routeIs('ustadz*') ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-file-invoice"></i> <span>Ustadz</span>
                     </a>
                     <ul class="dropdown-menu">
                         @can('view_ustadz')
-                            <li class="{{ request()->routeIs('admin.ustadz.get') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.ustadz.get') }}">Data Ustadz</a>
+                            <li class="{{ request()->routeIs('ustadz.get') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('ustadz.get') }}">Data Ustadz</a>
                             </li>
                         @endcan
                         @can('view_penugasan_ustadz')
-                            <li class="{{ request()->routeIs('admin.ustadz.penugasan*') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('admin.ustadz.penugasan.index') }}">Penugasan Ustadz</a>
+                            <li class="{{ request()->routeIs('ustadz.penugasan*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('ustadz.penugasan.index') }}">Penugasan Ustadz</a>
                             </li>
                         @endcan
                     </ul>
@@ -195,13 +195,13 @@
 
             <!-- Menu Absensi -->
             @can('view_absensi')
-                <li class="dropdown {{ request()->routeIs('admin.absensi*') ? 'active' : '' }}">
+                <li class="dropdown {{ request()->routeIs('absensi*') ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-file-invoice"></i> <span>Absensi</span>
                     </a>
                     <ul class="dropdown-menu">
-                        <li class="{{ request()->routeIs('admin.absensi.index') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('admin.absensi.index') }}">Absensi</a>
+                        <li class="{{ request()->routeIs('absensi.index') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('absensi.index') }}">Absensi</a>
                         </li>
                     </ul>
                 </li>

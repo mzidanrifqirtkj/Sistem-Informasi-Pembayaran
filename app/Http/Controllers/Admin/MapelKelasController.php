@@ -59,7 +59,7 @@ class MapelKelasController extends Controller
                 );
             }
 
-            return redirect()->route('admin.mapel_kelas.index')->with('alert', 'Pelajaran berhasil ditambahkan ke kelas!');
+            return redirect()->route('mapel_kelas.index')->with('alert', 'Pelajaran berhasil ditambahkan ke kelas!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Pelajaran gagal ditambahkan ke kelas!' . $e->getMessage());
         }

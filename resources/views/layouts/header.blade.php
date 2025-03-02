@@ -50,12 +50,12 @@
         <div class="dropdown-menu dropdown-menu-right">
             @if (Auth::user()->hasRole('admin'))
                 <!-- Jika yang login adalah admin -->
-                <a href="{{ route('admin.profile.edit') }}" class="dropdown-item has-icon">
+                <a href="{{ route('profile.edit') }}" class="dropdown-item has-icon">
                     <i class="fas fa-user"></i> Profil
                 </a>
             @elseif (Auth::user()->hasRole('santri'))
                 <!-- Jika yang login adalah santri -->
-                <a href="{{ route('admin.profile.edit', Auth::user()->santri->nis) }}" class="dropdown-item has-icon">
+                <a href="{{ route('profile.edit', Auth::user()->santri->nis) }}" class="dropdown-item has-icon">
                     <i class="fas fa-user"></i> Profil
                 </a>
             @endif

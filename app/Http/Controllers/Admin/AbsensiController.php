@@ -8,6 +8,7 @@ use App\Models\Absensi;
 use App\Models\Kelas;
 use App\Models\Santri;
 use App\Models\TahunAjar;
+use Auth;
 use Illuminate\Http\Request;
 use Log;
 use Maatwebsite\Excel\Facades\Excel;
@@ -16,9 +17,22 @@ class AbsensiController extends Controller
 {
     public function index()
     {
+        $user = Auth::user(); // Ambil user yang sedang login
+
+        // Ambil data santri, kelas, dan tahun ajar
         $santriList = Santri::select('nama_santri')->get();
         $kelasList = Kelas::select('id_kelas', 'nama_kelas')->get();
         $tahunAjarList = TahunAjar::select('id_tahun_ajar', 'tahun_ajar')->get();
+
+        // Jika user adalah santri, ambil data santri yang login
+        if ($user->hasRole('santri')) {
+            $santri = $user->santri; // Ambil data santri dari user yang login
+            if ($santri) {
+                $santriList = Santri::where('id_santri', $santri->id_santri)->get();
+            } else {
+                $santriList = collect(); // Jika relasi santri tidak ditemukan, kembalikan koleksi kosong
+            }
+        }
 
         return view('absensi.index', compact('santriList', 'kelasList', 'tahunAjarList'));
     }
@@ -26,8 +40,20 @@ class AbsensiController extends Controller
     public function getAbsensi(Request $request)
     {
         try {
+            $user = Auth::user(); // Ambil user yang sedang login
+
             $absensis = Absensi::with(['santri', 'kelas', 'tahunAjar'])
                 ->select('id_absensi', 'nis', 'bulan', 'minggu_per_bulan', 'jumlah_hadir', 'jumlah_izin', 'jumlah_sakit', 'jumlah_alpha', 'tahun_ajar_id', 'kelas_id', 'created_at');
+
+            // Jika user adalah santri, filter data absensi berdasarkan santri yang login
+            if ($user->hasRole('santri')) {
+                $santri = $user->santri; // Ambil data santri dari user yang login
+                if ($santri) {
+                    $absensis->where('nis', $santri->nis); // Filter berdasarkan NIS santri
+                } else {
+                    $absensis->where('nis', '-1'); // Jika relasi santri tidak ditemukan, kembalikan koleksi kosong
+                }
+            }
 
             // Filter berdasarkan kelas
             if ($request->kelas) {
@@ -60,7 +86,6 @@ class AbsensiController extends Controller
                 });
             }
 
-
             return datatables()->of($absensis)
                 ->addIndexColumn()
                 ->addColumn('nama_santri', function ($row) {
@@ -72,9 +97,15 @@ class AbsensiController extends Controller
                 ->addColumn('tahun_ajar', function ($row) {
                     return $row->tahunAjar ? $row->tahunAjar->tahun_ajar : '-';
                 })
-                ->addColumn('action', function ($row) {
-                    return '<a href="' . route('admin.absensi.edit', $row->id_absensi) . '" class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a>
-                            <button class="btn btn-sm btn-danger" data-id="' . $row->id_absensi . '"><i class="fas fa-trash"></i></button>';
+                ->addColumn('action', function ($row) use ($user) {
+                    $action = '';
+                    if ($user->hasRole('admin')) {
+                        $action .= '<a href="' . route('absensi.edit', $row->id_absensi) . '" class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a>';
+                    }
+                    if ($user->hasRole('admin')) {
+                        $action .= '<button class="btn btn-sm btn-danger" data-id="' . $row->id_absensi . '"><i class="fas fa-trash"></i></button>';
+                    }
+                    return $action;
                 })
                 ->filter(function ($instence) use ($request) {
                     if ($request->filled("nama_santri")) {
@@ -106,9 +137,9 @@ class AbsensiController extends Controller
 
         try {
             Excel::import(new AbsensiImport, $request->file('file'));
-            return redirect()->route('admin.absensi.index')->with('success', 'Data absensi berhasil diimpor.');
+            return redirect()->route('absensi.index')->with('success', 'Data absensi berhasil diimpor.');
         } catch (\Exception $e) {
-            return redirect()->route('admin.absensi.index')->with('error', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
+            return redirect()->route('absensi.index')->with('error', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
         }
     }
 
@@ -116,7 +147,7 @@ class AbsensiController extends Controller
     {
         $absensi = Absensi::findOrFail($id); // Ambil data absensi berdasarkan ID
         if (!$absensi) {
-            return redirect()->route('admin.absensi.index')->with('error', 'Data absensi tidak ditemukan.');
+            return redirect()->route('absensi.index')->with('error', 'Data absensi tidak ditemukan.');
         }
 
         $santris = Santri::all(); // Ambil semua data santri untuk dropdown
@@ -148,7 +179,7 @@ class AbsensiController extends Controller
 
         // Jika data tidak ditemukan, kembalikan pesan error
         if (!$absensi) {
-            return redirect()->route('admin.absensi.index')->with('error', 'Data absensi tidak ditemukan.');
+            return redirect()->route('absensi.index')->with('error', 'Data absensi tidak ditemukan.');
         }
 
         // Cek apakah ada data absensi lain dengan nis, bulan, minggu_per_bulan, dan kelas_id yang sama
@@ -168,7 +199,7 @@ class AbsensiController extends Controller
         $absensi->update($request->all());
 
         // Redirect ke halaman index dengan pesan sukses
-        return redirect()->route('admin.absensi.index')->with('success', 'Data absensi berhasil diperbarui.');
+        return redirect()->route('absensi.index')->with('success', 'Data absensi berhasil diperbarui.');
     }
 
     public function destroy($id)
@@ -176,7 +207,7 @@ class AbsensiController extends Controller
         $absensi = Absensi::findOrFail($id);
         $absensi->delete();
 
-        return redirect()->route('admin.absensi.index')->with('alert', 'Data absensi berhasil dihapus.');
+        return redirect()->route('absensi.index')->with('alert', 'Data absensi berhasil dihapus.');
     }
 
 

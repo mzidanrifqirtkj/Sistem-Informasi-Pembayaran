@@ -32,7 +32,6 @@
                     <th colspan="14">{{ $now }}</th>
                 </tr>
                 <tr align="center">
-                    {{-- <th widt   h="5%">No</th> --}}
                     <th class="w-25">Nama Santri</th>
                     <th>Jan</th>
                     <th>Feb</th>
@@ -49,48 +48,87 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse ($santris as $santri)
-                    <tr align="center">
-                        <td>
-                            {{ $santri->nama_santri }}
-                        </td>
-                        @php
-                            // Buat array nama bulan secara berurutan
-                            $months = [
-                                'Jan',
-                                'Feb',
-                                'Mar',
-                                'Apr',
-                                'May',
-                                'Jun',
-                                'Jul',
-                                'Aug',
-                                'Sep',
-                                'Oct',
-                                'Nov',
-                                'Dec',
-                            ];
-                            // Ambil daftar bulan yang sudah ada di tagihan dan statusnya lunas
-                            $bulanTagihanLunas = $santri->tagihanBulanan
-                                ->where('status', 'lunas') // Filter hanya tagihan dengan status lunas
-                                ->pluck('bulan')
-                                ->toArray();
-                        @endphp
-                        @foreach ($months as $month)
-                            <td>
-                                <div class="custom-control custom-checkbox" style="display: flex">
-                                    <input type="checkbox" class="custom-control-input" id="cbx-{{ $loop->index }}"
-                                        disabled @if (in_array($month, $bulanTagihanLunas)) checked @endif>
-                                    <label class="custom-control-label" for="cbx-{{ $loop->index }}"></label>
-                                </div>
-                            </td>
-                        @endforeach
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="14">Tidak ada data.</td>
-                    </tr>
-                @endforelse
+                @if (Auth::user()->hasRole('admin'))
+                    <!-- Tampilkan semua data santri untuk admin -->
+                    @forelse ($santris as $santri)
+                        <tr align="center">
+                            <td>{{ $santri->nama_santri }}</td>
+                            @php
+                                $months = [
+                                    'Jan',
+                                    'Feb',
+                                    'Mar',
+                                    'Apr',
+                                    'May',
+                                    'Jun',
+                                    'Jul',
+                                    'Aug',
+                                    'Sep',
+                                    'Oct',
+                                    'Nov',
+                                    'Dec',
+                                ];
+                                $bulanTagihanLunas = $santri->tagihanBulanan
+                                    ->where('status', 'lunas') // Filter hanya tagihan dengan status lunas
+                                    ->pluck('bulan')
+                                    ->toArray();
+                            @endphp
+                            @foreach ($months as $month)
+                                <td>
+                                    <div class="custom-control custom-checkbox" style="display: flex">
+                                        <input type="checkbox" class="custom-control-input" id="cbx-{{ $loop->index }}"
+                                            disabled @if (in_array($month, $bulanTagihanLunas)) checked @endif>
+                                        <label class="custom-control-label" for="cbx-{{ $loop->index }}"></label>
+                                    </div>
+                                </td>
+                            @endforeach
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="14">Tidak ada data.</td>
+                        </tr>
+                    @endforelse
+                @elseif(Auth::user()->hasRole('santri'))
+                    <!-- Tampilkan data santri yang login saja -->
+                    @forelse ($santris as $santri)
+                        <tr align="center">
+                            <td>{{ $santri->nama_santri }}</td>
+                            @php
+                                $months = [
+                                    'Jan',
+                                    'Feb',
+                                    'Mar',
+                                    'Apr',
+                                    'May',
+                                    'Jun',
+                                    'Jul',
+                                    'Aug',
+                                    'Sep',
+                                    'Oct',
+                                    'Nov',
+                                    'Dec',
+                                ];
+                                $bulanTagihanLunas = $santri->tagihanBulanan
+                                    ->where('status', 'lunas') // Filter hanya tagihan dengan status lunas
+                                    ->pluck('bulan')
+                                    ->toArray();
+                            @endphp
+                            @foreach ($months as $month)
+                                <td>
+                                    <div class="custom-control custom-checkbox" style="display: flex">
+                                        <input type="checkbox" class="custom-control-input" id="cbx-{{ $loop->index }}"
+                                            disabled @if (in_array($month, $bulanTagihanLunas)) checked @endif>
+                                        <label class="custom-control-label" for="cbx-{{ $loop->index }}"></label>
+                                    </div>
+                                </td>
+                            @endforeach
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="14">Tidak ada data.</td>
+                        </tr>
+                    @endforelse
+                @endif
             </tbody>
         </table>
     </div>
@@ -139,44 +177,55 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($dataPembayarans as $result)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-
-                            {{-- $result->tagihanBulanan->santri->nama_santri ?? '-' --}}
-                            <td>
-                                {{ $result->tagihanBulanan->santri->nama_santri ?? $result->tagihanTerjadwal->santri->nama_santri }}
-                            </td>
-                            <td>{{ $result->tagihanTerjadwal->biayaTerjadwal->nama_biaya ?? 'Syahriyah  ' }}</td>
-                            <td>{{ $result->tagihanBulanan->bulan ?? '-' }}</td>
-                            <td>{{ $result->tagihanBulanan->tahun ?? $result->tagihanTerjadwal->tahun }}</td>
-                            <td>{{ $result->nominal_pembayaran }}</td>
-                            <td>{{ $result->tanggal_pembayaran }}</td>
-                            {{-- <td>{{ $result->date }}</td> --}}
-                            <td align="center">
-                                {{-- <a href="{{ route('santri.pembayaran.edit', $result->id_tagihan_bulanan) }}" type="button" class="btn btn-sm btn-warning"><i class="fas fa-print"></i></a> --}}
-                                {{-- @if (auth()->user()->role == 'Administrator') --}}
-                                <a href="javascript:void(0)" id="btn-delete" class="btn btn-sm btn-danger"
-                                    onclick="deleteData('{{ $result->id_tagihan_bulanan }}')" data-toggle="modal"
-                                    data-target="#deleteSyahriahModal"><i class="fas fa-trash"></i></a>
-                                {{-- @endif --}}
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7">Tidak ada data.</td>
-                        </tr>
-                    @endforelse
+                    @if (Auth::user()->hasRole('admin'))
+                        <!-- Tampilkan semua data pembayaran untuk admin -->
+                        @forelse ($dataPembayarans as $result)
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ $result->tagihanBulanan->santri->nama_santri ?? $result->tagihanTerjadwal->santri->nama_santri }}
+                                </td>
+                                <td>{{ $result->tagihanTerjadwal->biayaTerjadwal->nama_biaya ?? 'Syahriyah' }}</td>
+                                <td>{{ $result->tagihanBulanan->bulan ?? '-' }}</td>
+                                <td>{{ $result->tagihanBulanan->tahun ?? $result->tagihanTerjadwal->tahun }}</td>
+                                <td>{{ $result->nominal_pembayaran }}</td>
+                                <td>{{ $result->tanggal_pembayaran }}</td>
+                                <td align="center">
+                                    <a href="javascript:void(0)" id="btn-delete" class="btn btn-sm btn-danger"
+                                        onclick="deleteData('{{ $result->id_tagihan_bulanan }}')" data-toggle="modal"
+                                        data-target="#deleteSyahriahModal"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7">Tidak ada data.</td>
+                            </tr>
+                        @endforelse
+                    @elseif(Auth::user()->hasRole('santri'))
+                        <!-- Tampilkan data pembayaran untuk santri yang login -->
+                        @forelse ($dataPembayarans as $result)
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ $result->tagihanBulanan->santri->nama_santri ?? $result->tagihanTerjadwal->santri->nama_santri }}
+                                </td>
+                                <td>{{ $result->tagihanTerjadwal->biayaTerjadwal->nama_biaya ?? 'Syahriyah' }}</td>
+                                <td>{{ $result->tagihanBulanan->bulan ?? '-' }}</td>
+                                <td>{{ $result->tagihanBulanan->tahun ?? $result->tagihanTerjadwal->tahun }}</td>
+                                <td>{{ $result->nominal_pembayaran }}</td>
+                                <td>{{ $result->tanggal_pembayaran }}</td>
+                                <td align="center">
+                                    <a href="javascript:void(0)" id="btn-delete" class="btn btn-sm btn-danger"
+                                        onclick="deleteData('{{ $result->id_tagihan_bulanan }}')" data-toggle="modal"
+                                        data-target="#deleteSyahriahModal"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7">Tidak ada data.</td>
+                            </tr>
+                        @endforelse
+                    @endif
                 </tbody>
             </table>
-        </div>
-        <div class="mt-2 float-left">
-            <span class="ml-3">Data Keseluruhan: <span
-                    class="text-primary font-weight-bold">{{ DB::table('tagihan_bulanans')->count() }}</span> Tagihan
-                syahriah telah terbuat.</span>
-        </div>
-        <div class="mt-3 float-right">
-            {{-- {{ $dataPembayarans->links('pagination::bootstrap-5') }}  --}}
         </div>
     </div>
 

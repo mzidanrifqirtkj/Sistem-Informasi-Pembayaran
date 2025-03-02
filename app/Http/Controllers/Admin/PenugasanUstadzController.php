@@ -39,9 +39,9 @@ class PenugasanUstadzController extends Controller
             $santri = Santri::findOrFail($request->santri_id);
             $santri->is_ustadz = 1;
             $santri->save();
-            return redirect()->route('admin.ustadz.get')->with('alert', 'Ustadz berhasil ditambahkan');
+            return redirect()->route('ustadz.get')->with('alert', 'Ustadz berhasil ditambahkan');
         } catch (\Exception $e) {
-            return redirect()->route('admin.ustadz.get')->with('error', 'Terjadi kesalahan ' . $e->getMessage());
+            return redirect()->route('ustadz.get')->with('error', 'Terjadi kesalahan ' . $e->getMessage());
         }
     }
 
@@ -61,7 +61,7 @@ class PenugasanUstadzController extends Controller
 
         // Buat query awal dengan eager load relasi
         $query = WaliKelas::with(['kelas', 'ustadz'])
-        ->where('tahun_ajar_id', $idTahunAjar);
+            ->where('tahun_ajar_id', $idTahunAjar);
 
         return \Yajra\DataTables\Facades\DataTables::of($query)
             ->filter(function ($query) use ($request) {
@@ -112,12 +112,12 @@ class PenugasanUstadzController extends Controller
                         })
                             // Cari pada relasi mapelKelas -> mataPelajaran
                             ->orWhereHas('mapelKelas.mataPelajaran', function ($q3) use ($search) {
-                                $q3->where('nama_mapel', 'like', "%{$search}%");
-                            })
+                            $q3->where('nama_mapel', 'like', "%{$search}%");
+                        })
                             // Cari pada relasi ustadz
                             ->orWhereHas('ustadz', function ($q4) use ($search) {
-                                $q4->where('nama_santri', 'like', "%{$search}%");
-                            });
+                            $q4->where('nama_santri', 'like', "%{$search}%");
+                        });
                     });
                 }
             })
@@ -148,7 +148,7 @@ class PenugasanUstadzController extends Controller
     public function getPelajaran(Request $request)
     {
         $idTahunAjar = $request->id_tahun_ajar;
-        $idKelas     = $request->id_kelas;
+        $idKelas = $request->id_kelas;
 
         // Ambil daftar ustadz (santri dengan is_ustadz true)
         $ustadzs = Santri::where('is_ustadz', true)->get();
@@ -179,8 +179,8 @@ class PenugasanUstadzController extends Controller
                     $options .= '<option value="' . $ustadz->id_santri . '" ' . $selected . '>' . $ustadz->nama_santri . '</option>';
                 }
 
-            // Bungkus opsi dalam elemen select, sertakan data-mapel-kelas-id untuk keperluan identifikasi
-            return "<select class='form-control ustadz-dropdown' data-mapel-kelas-id='{$row->id_mapel_kelas}'> $options  </select>";
+                // Bungkus opsi dalam elemen select, sertakan data-mapel-kelas-id untuk keperluan identifikasi
+                return "<select class='form-control ustadz-dropdown' data-mapel-kelas-id='{$row->id_mapel_kelas}'> $options  </select>";
             })
             ->rawColumns(['ustadz_dropdown'])
             ->toJson();
@@ -197,7 +197,7 @@ class PenugasanUstadzController extends Controller
             $mapelKelasId = $data['mapel_kelas_id'];
             $ustadzId = isset($data['ustadz_id']) ? trim($data['ustadz_id']) : null;
 
-            if($ustadzId === '' || $ustadzId === null){
+            if ($ustadzId === '' || $ustadzId === null) {
                 $deleted = QoriKelas::where('mapel_kelas_id', $mapelKelasId)->delete();
                 Log::debug("Deleted qori kelas for mapel_kelas_id {$mapelKelasId}. Deleted: {$deleted}");
                 continue;
@@ -207,7 +207,7 @@ class PenugasanUstadzController extends Controller
             $existing = QoriKelas::where('ustadz_id', $ustadzId)
                 ->where('mapel_kelas_id', '!=', $mapelKelasId)
                 ->first();
-            if($existing){
+            if ($existing) {
                 $errors[] = "Ustadz dengan ID {$ustadzId} sudah menjadi qori untuk mata pelajaran lain.";
                 continue;
             }
@@ -224,11 +224,11 @@ class PenugasanUstadzController extends Controller
 
         if (!empty($errors)) {
             return response()->json([
-                'error'    => true,
+                'error' => true,
                 'messages' => $errors
             ], 400);
         }
-        
+
         return response()->json(['message' => 'Penugasan berhasil disimpan!']);
     }
 
@@ -244,9 +244,12 @@ class PenugasanUstadzController extends Controller
         try {
             $idTahunAjar = $request->id_tahun_ajar;
 
-            $query = Kelas::with(['waliKelas' => function ($query) use ($idTahunAjar) {
-                $query->where('tahun_ajar_id', $idTahunAjar);
-            }, 'waliKelas.ustadz']);
+            $query = Kelas::with([
+                'waliKelas' => function ($query) use ($idTahunAjar) {
+                    $query->where('tahun_ajar_id', $idTahunAjar);
+                },
+                'waliKelas.ustadz'
+            ]);
 
             return DataTables::of($query)
                 ->addIndexColumn()
@@ -257,10 +260,10 @@ class PenugasanUstadzController extends Controller
                     $selectedUstadzId = $row->waliKelas ? $row->waliKelas->ustadz_id : null;
                     $options = '<option value="">Pilih Ustadz</option>';
 
-                foreach ($ustadzs as $ustadz) {
-                    $selected = ($selectedUstadzId == $ustadz->id_santri) ? 'selected' : '';
-                    $options .= "<option value='{$ustadz->id_santri}' {$selected}>{$ustadz->nama_santri}</option>";
-                }
+                    foreach ($ustadzs as $ustadz) {
+                        $selected = ($selectedUstadzId == $ustadz->id_santri) ? 'selected' : '';
+                        $options .= "<option value='{$ustadz->id_santri}' {$selected}>{$ustadz->nama_santri}</option>";
+                    }
 
                     return "<select class='form-control ustadz-dropdown' data-kelas-id='{$row->id_kelas}'>$options</select>";
                 })
@@ -268,7 +271,7 @@ class PenugasanUstadzController extends Controller
                 ->make(true);
         } catch (\Exception $e) {
             return response()->json([
-                'error'   => true,
+                'error' => true,
                 'message' => $e->getMessage()
             ], 500);
         }
@@ -304,18 +307,18 @@ class PenugasanUstadzController extends Controller
             // updateOrCreate: jika sudah ada wali untuk kelas & tahun tersebut, update ustadz-nya; jika tidak, buat baru
             WaliKelas::updateOrCreate(
                 [
-                    'kelas_id'      => $kelasId,
+                    'kelas_id' => $kelasId,
                     'tahun_ajar_id' => $idTahunAjar,
                 ],
                 [
-                    'ustadz_id'     => $ustadzId,
+                    'ustadz_id' => $ustadzId,
                 ]
             );
         }
 
         if (!empty($errors)) {
             return response()->json([
-                'error'    => true,
+                'error' => true,
                 'messages' => $errors
             ], 400);
         }

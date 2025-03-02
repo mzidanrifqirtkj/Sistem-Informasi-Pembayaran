@@ -39,9 +39,9 @@ class KelasController extends Controller
             ]);
 
             Kelas::create($request->all());
-            return redirect()->route('admin.kelas.index')->with('alert', 'Kelas berhasil ditambahkan');
+            return redirect()->route('kelas.index')->with('alert', 'Kelas berhasil ditambahkan');
         } catch (\Exception $e) {
-            return redirect()->route('admin.kelas.index')->with('error', 'Kelas gagal ditambahkan');
+            return redirect()->route('kelas.index')->with('error', 'Kelas gagal ditambahkan');
         }
     }
 
@@ -73,9 +73,9 @@ class KelasController extends Controller
 
             $kelas->update($request->all());
             // dd($kelas);
-            return redirect()->route('admin.kelas.index')->with('alert', 'Kelas berhasil diubah');
+            return redirect()->route('kelas.index')->with('alert', 'Kelas berhasil diubah');
         } catch (\Exception $e) {
-            return redirect()->route('admin.kelas.index')->with('error', 'Kelas gagal diubah');
+            return redirect()->route('kelas.index')->with('error', 'Kelas gagal diubah');
         }
     }
 
@@ -87,9 +87,9 @@ class KelasController extends Controller
         try {
             $kelas = Kelas::findOrFail($id);
             $kelas->delete();
-            return redirect()->route('admin.kelas.index')->with('alert', 'Kelas berhasil dihapus');
+            return redirect()->route('kelas.index')->with('alert', 'Kelas berhasil dihapus');
         } catch (\Exception $e) {
-            return redirect()->route('admin.kelas.index')->with('error', 'Kelas gagal dihapus');
+            return redirect()->route('kelas.index')->with('error', 'Kelas gagal dihapus');
         }
     }
 

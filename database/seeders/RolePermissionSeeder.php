@@ -165,6 +165,7 @@ class RolePermissionSeeder extends Seeder
             'view_riwayat_pembayaran',
             'view_profile',
             'edit_profile',
+            'view_absensi'
         ];
 
         // Menambahkan permission ke database

@@ -10,7 +10,7 @@
 
         <div class="card mx-auto" style="max-width: 600px;">
             <div class="card-body">
-                <form method="POST" action="{{ route('admin.profile.update_password') }}">
+                <form method="POST" action="{{ route('profile.update_password') }}">
                     @csrf
 
                     <div class="mb-4">

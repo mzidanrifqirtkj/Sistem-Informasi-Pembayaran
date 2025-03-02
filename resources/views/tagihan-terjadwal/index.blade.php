@@ -5,12 +5,12 @@
     <div class="row">
         @can('create_tagihan_terjadwal')
             <div class="col-md-2">
-                <a href="{{ route('admin.tagihan_terjadwal.create') }}" class="btn btn-primary">Buat Tagihan</a><br><br>
+                <a href="{{ route('tagihan_terjadwal.create') }}" class="btn btn-primary">Buat Tagihan</a><br><br>
             </div>
         @endcan
         @can('bulk_generate_tagihan_terjadwal')
             <div class="col-md-2">
-                <a href="{{ route('admin.tagihan_terjadwal.createBulkTerjadwal') }}" class="btn btn-primary">Generate
+                <a href="{{ route('tagihan_terjadwal.createBulkTerjadwal') }}" class="btn btn-primary">Generate
                     Tagihan</a><br><br>
             </div>
         @endcan
@@ -22,7 +22,7 @@
                     <div class="input-group-append">
                         <button class="btn btn-primary mr-2 rounded-right" type="submit"><i
                                 class="fas fa-search"></i></button>
-                        <button onclick="window.location.href='{{ route('admin.tagihan_terjadwal.index') }}'" type="button"
+                        <button onclick="window.location.href='{{ route('tagihan_terjadwal.index') }}'" type="button"
                             class="btn btn-md btn-secondary rounded"><i class="fas fa-sync-alt"></i></button>
                     </div>
                 </div>
@@ -49,9 +49,9 @@
                 @forelse ($tagihanTerjadwals as $result => $tagihan)
                     <tr>
                         <td>{{ $loop->iteration }}</td>
-                        <td><a href="{{ route('admin.santri.show', $tagihan->santri) }}"
+                        <td><a href="{{ route('santri.show', $tagihan->santri) }}"
                                 target="blank">{{ $tagihan->santri->nama_santri }}</a></td>
-                        <td><a href="{{ route('admin.biaya_terjadwal.index') }}"
+                        <td><a href="{{ route('biaya_terjadwal.index') }}"
                                 target="blank">{{ $tagihan->biayaTerjadwal->nama_biaya }}</a></td>
                         <td>{{ $tagihan->tahun }}</td>
                         <td>Rp {{ number_format($tagihan->nominal, 0, ',', '.') }}</td>
@@ -71,8 +71,8 @@
                         </td>
                         @can('edit_tagihan_terjadwal')
                             <td align="center">
-                                <a href="{{ route('admin.tagihan_terjadwal.edit', $tagihan->id_tagihan_terjadwal) }}"
-                                    type="button" class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a>
+                                <a href="{{ route('tagihan_terjadwal.edit', $tagihan->id_tagihan_terjadwal) }}" type="button"
+                                    class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a>
                                 {{-- @if (Auth::user()->role == 'Administrator')                             --}}
                                 <a href="javascript:void(0)" id="btn-delete" class="btn btn-sm btn-danger"
                                     onclick="deleteData('{{ $tagihan->id_tagihan_terjadwal }}')" data-toggle="modal"
@@ -128,7 +128,7 @@
 @section('script')
     <script>
         function deleteData(id) {
-            let url = '{{ route('admin.tagihan_terjadwal.destroy', ':id') }}';
+            let url = '{{ route('tagihan_terjadwal.destroy', ':id') }}';
             url = url.replace(':id', id);
             $("#deleteForm").attr('action', url);
         }

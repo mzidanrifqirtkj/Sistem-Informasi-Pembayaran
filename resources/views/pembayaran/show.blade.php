@@ -1,5 +1,5 @@
 @extends('layouts.home')
-@section('title_page','Pembayaran Santri')
+@section('title_page', 'Pembayaran Santri')
 @section('content')
 
     @if (Session::has('alert'))
@@ -26,37 +26,41 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($santri->tagihanBulanan as $tagihan)
-                <tr>
-                    <td>{{ $loop->iteration }}</td>
-                    <td>{{ $tagihan->bulan }}</td>
-                    <td>{{ $tagihan->tahun }}</td>
-                    <td>{{ $tagihan->nominal }}</td>
-                    <td>
-                        <span class="status-checkbox {{ $tagihan->status == 'lunas' ? 'text-primary' : 'text-danger' }}">
-                            {{ $tagihan->status == 'lunas' ? '✔' : '✖' }}
-                        </span>
-                    </td>
+                @foreach ($santri->tagihanBulanan as $tagihan)
+                    <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ $tagihan->bulan }}</td>
+                        <td>{{ $tagihan->tahun }}</td>
+                        <td>{{ $tagihan->nominal }}</td>
+                        <td>
+                            <span
+                                class="status-checkbox {{ $tagihan->status == 'lunas' ? 'text-primary' : 'text-danger' }}">
+                                {{ $tagihan->status == 'lunas' ? '✔' : '✖' }}
+                            </span>
+                        </td>
 
-                    {{-- <td>{{ $tagihan->status }}</td> --}}
-                    @if ($tagihan->status === 'lunas')
-                        <td>
-                            <a href="{{ route('admin.tagihan_bulanan.edit', $tagihan->id_tagihan_bulanan) }}" type="button" class="btn btn-sm btn-warning"><i class="fas fa-print"></i></a>
-                            {{-- @if (Auth::user()->role == 'Administrator')                             --}}
-                            <a href="javascript:void(0)" id="btn-delete" class="btn btn-sm btn-danger" onclick="deleteDataBulanan('{{ $tagihan->id_tagihan_bulanan }}')" data-toggle="modal" data-target="#deleteModal"><i class="fas fa-trash"></i></a>
-                        </td>
-                    @else
-                        <td>
-                            <form action="{{ route('admin.pembayaran.store') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="santri_id" value="{{ $santri->id_santri }}">
-                                <input type="hidden" name="jenis_tagihan" value="bulanan">
-                                <input type="hidden" name="tagihan_id" value="{{ $tagihan->id_tagihan_bulanan }}">
-                                <input type="number" name="nominal" placeholder="Masukkan Nominal" required>
-                                <button type="submit" class="btn btn-success">Bayar</button>
-                            </form>
-                        </td>
-                    @endif
+                        {{-- <td>{{ $tagihan->status }}</td> --}}
+                        @if ($tagihan->status === 'lunas')
+                            <td>
+                                <a href="{{ route('tagihan_bulanan.edit', $tagihan->id_tagihan_bulanan) }}" type="button"
+                                    class="btn btn-sm btn-warning"><i class="fas fa-print"></i></a>
+                                {{-- @if (Auth::user()->role == 'Administrator')                             --}}
+                                <a href="javascript:void(0)" id="btn-delete" class="btn btn-sm btn-danger"
+                                    onclick="deleteDataBulanan('{{ $tagihan->id_tagihan_bulanan }}')" data-toggle="modal"
+                                    data-target="#deleteModal"><i class="fas fa-trash"></i></a>
+                            </td>
+                        @else
+                            <td>
+                                <form action="{{ route('pembayaran.store') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="santri_id" value="{{ $santri->id_santri }}">
+                                    <input type="hidden" name="jenis_tagihan" value="bulanan">
+                                    <input type="hidden" name="tagihan_id" value="{{ $tagihan->id_tagihan_bulanan }}">
+                                    <input type="number" name="nominal" placeholder="Masukkan Nominal" required>
+                                    <button type="submit" class="btn btn-success">Bayar</button>
+                                </form>
+                            </td>
+                        @endif
                 @endforeach
             </tbody>
         </table>
@@ -74,36 +78,40 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($santri->tagihanTerjadwal as $tagihan)
-                <tr>
-                    <td>{{ $loop->iteration }}</td>
-                    <td>{{ $tagihan->biayaTerjadwal->nama_biaya  }}</td>
-                    <td>{{ $tagihan->tahun  }}</td>
-                    <td>{{ $tagihan->nominal }}</td>
-                    <td>
-                        <span class="status-checkbox {{ $tagihan->status == 'lunas' ? 'text-primary' : 'text-danger' }}">
-                            {{ $tagihan->status == 'lunas' ? '✔' : '✖' }}
-                        </span>
-                    </td>
-                    @if ($tagihan->status === 'lunas')
+                @foreach ($santri->tagihanTerjadwal as $tagihan)
+                    <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ $tagihan->biayaTerjadwal->nama_biaya }}</td>
+                        <td>{{ $tagihan->tahun }}</td>
+                        <td>{{ $tagihan->nominal }}</td>
                         <td>
-                            <a href="{{ route('admin.tagihan_terjadwal.edit', $tagihan->id_tagihan_terjadwal) }}" type="button" class="btn btn-sm btn-warning"><i class="fas fa-print"></i></a>
-                            {{-- @if (Auth::user()->role == 'Administrator')                             --}}
-                            <a href="javascript:void(0)" id="btn-delete" class="btn btn-sm btn-danger" onclick="deleteDataTerjadwal('{{ $tagihan->id_tagihan_terjadwal }}')" data-toggle="modal" data-target="#deleteModal"><i class="fas fa-trash"></i></a>
+                            <span
+                                class="status-checkbox {{ $tagihan->status == 'lunas' ? 'text-primary' : 'text-danger' }}">
+                                {{ $tagihan->status == 'lunas' ? '✔' : '✖' }}
+                            </span>
                         </td>
-                    @else
-                        <td>
-                            <form action="{{ route('admin.pembayaran.store') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="santri_id" value="{{ $santri->id_santri }}">
-                                <input type="hidden" name="jenis_tagihan" value="terjadwal">
-                                <input type="hidden" name="tagihan_id" value="{{ $tagihan->id_tagihan_terjadwal }}">
-                                <input type="number" name="nominal" placeholder="Masukkan Nominal" required>
-                                <button type="submit" class="btn btn-success">Bayar</button>
-                            </form>
-                        </td>
-                    @endif
-                </tr>
+                        @if ($tagihan->status === 'lunas')
+                            <td>
+                                <a href="{{ route('tagihan_terjadwal.edit', $tagihan->id_tagihan_terjadwal) }}"
+                                    type="button" class="btn btn-sm btn-warning"><i class="fas fa-print"></i></a>
+                                {{-- @if (Auth::user()->role == 'Administrator')                             --}}
+                                <a href="javascript:void(0)" id="btn-delete" class="btn btn-sm btn-danger"
+                                    onclick="deleteDataTerjadwal('{{ $tagihan->id_tagihan_terjadwal }}')"
+                                    data-toggle="modal" data-target="#deleteModal"><i class="fas fa-trash"></i></a>
+                            </td>
+                        @else
+                            <td>
+                                <form action="{{ route('pembayaran.store') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="santri_id" value="{{ $santri->id_santri }}">
+                                    <input type="hidden" name="jenis_tagihan" value="terjadwal">
+                                    <input type="hidden" name="tagihan_id" value="{{ $tagihan->id_tagihan_terjadwal }}">
+                                    <input type="number" name="nominal" placeholder="Masukkan Nominal" required>
+                                    <button type="submit" class="btn btn-success">Bayar</button>
+                                </form>
+                            </td>
+                        @endif
+                    </tr>
                 @endforeach
             </tbody>
         </table>
@@ -163,27 +171,27 @@
 @endsection
 
 @section('script')
-<script>
-    function deleteDataBulanan(id) {
-        let url = '{{ route("admin.tagihan_bulanan.destroy", ":id") }}';
-        url = url.replace(':id', id);
-        $("#deleteFormBulanan").attr('action', url);
-        $("#deleteTagihanBulananModal").modal('show');
-    }
+    <script>
+        function deleteDataBulanan(id) {
+            let url = '{{ route('tagihan_bulanan.destroy', ':id') }}';
+            url = url.replace(':id', id);
+            $("#deleteFormBulanan").attr('action', url);
+            $("#deleteTagihanBulananModal").modal('show');
+        }
 
-    function deleteDataTerjadwal(id) {
-        let url = '{{ route("admin.tagihan_terjadwal.destroy", ":id") }}';
-        url = url.replace(':id', id);
-        $("#deleteFormTerjadwal").attr('action', url);
-        $("#deleteTagihanTerjadwalModal").modal('show');
-    }
+        function deleteDataTerjadwal(id) {
+            let url = '{{ route('tagihan_terjadwal.destroy', ':id') }}';
+            url = url.replace(':id', id);
+            $("#deleteFormTerjadwal").attr('action', url);
+            $("#deleteTagihanTerjadwalModal").modal('show');
+        }
 
-    function formSubmitBulanan() {
-        $("#deleteFormBulanan").submit();
-    }
+        function formSubmitBulanan() {
+            $("#deleteFormBulanan").submit();
+        }
 
-    function formSubmitTerjadwal() {
-        $("#deleteFormTerjadwal").submit();
-    }
-</script>
+        function formSubmitTerjadwal() {
+            $("#deleteFormTerjadwal").submit();
+        }
+    </script>
 @endsection

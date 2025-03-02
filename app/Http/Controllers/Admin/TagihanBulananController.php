@@ -143,7 +143,7 @@ class TagihanBulananController extends Controller
 
 
             DB::commit();
-            return redirect()->route('admin.tagihan_bulanan.index')->with('alert', 'Tagihan bulanan berhasil dibuat');
+            return redirect()->route('tagihan_bulanan.index')->with('alert', 'Tagihan bulanan berhasil dibuat');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Gagal membuat tagihan bulanan: ' . $e->getMessage());
@@ -215,7 +215,7 @@ class TagihanBulananController extends Controller
             $tagihanBulanan->updated_at = now();
             $tagihanBulanan->save();
 
-            return redirect()->route('admin.tagihan_bulanan.index')->with('alert', 'Tagihan berhasil ditambahkan.');
+            return redirect()->route('tagihan_bulanan.index')->with('alert', 'Tagihan berhasil ditambahkan.');
         } catch (\Exception $e) {
             return back()->withErrors('santri_id', $e->getMessage());
         }

@@ -1,12 +1,12 @@
 @extends('layouts.home')
-@section('title_page','Biaya Pembayaran')
+@section('title_page', 'Biaya Pembayaran')
 @section('content')
 
     <h2 class="text-center my-4">Biaya Bulanan</h2>
     <div class="row">
         <div class="col-md-2 mb-3">
             {{-- @if (auth()->user()->role == 'Administrator') --}}
-            <a href="{{ route('admin.kategori.create') }}" class="btn btn-primary">Tambah Kategori Bulanan</a><br><br>
+            <a href="{{ route('kategori.create') }}" class="btn btn-primary">Tambah Kategori Bulanan</a><br><br>
             {{-- @endif --}}
         </div>
     </div>
@@ -18,13 +18,17 @@
                         <h5 class="mb-0">{{ $kategori->nama_kategori }}</h5>
                     </div>
                     <div class="card-body text-center">
-                        <h3 class="text-success mb-2">Rp. {{ number_format($kategori->nominal_syahriyah, 2, ',', '.') }}</h3>
+                        <h3 class="text-success mb-2">Rp. {{ number_format($kategori->nominal_syahriyah, 2, ',', '.') }}
+                        </h3>
                         <p class="text-muted">/bulan</p>
                         <div class="d-flex justify-content-center gap-2">
-                            <a href="{{ route('admin.kategori.edit', $kategori->id_kategori_santri) }}" class="btn btn-sm btn-info">
+                            <a href="{{ route('kategori.edit', $kategori->id_kategori_santri) }}"
+                                class="btn btn-sm btn-info">
                                 <i class="fas fa-pen"></i> Edit
                             </a>
-                            <button class="btn btn-sm btn-danger" onclick="deleteKategoriSantri('{{ $kategori->id_kategori_santri }}')" data-toggle="modal" data-target="#deleteSantriModal">
+                            <button class="btn btn-sm btn-danger"
+                                onclick="deleteKategoriSantri('{{ $kategori->id_kategori_santri }}')" data-toggle="modal"
+                                data-target="#deleteSantriModal">
                                 <i class="fas fa-trash"></i> Hapus
                             </button>
                         </div>
@@ -65,16 +69,16 @@
 
 
 @section('script')
-<script>
-    function deleteKategoriSantri(id) {
-        let url = '{{ route("admin.kategori.destroy", ":id") }}';
-        url = url.replace(':id', id);
-        $("#deleteFormKategori").attr('action', url);
-        $("#deleteKategoriModal").modal('show');
-    }
-    function formSubmitKategori() {
-        $("#deleteFormKategori").submit();
-    }
-</script>
-@endsection
+    <script>
+        function deleteKategoriSantri(id) {
+            let url = '{{ route('kategori.destroy', ':id') }}';
+            url = url.replace(':id', id);
+            $("#deleteFormKategori").attr('action', url);
+            $("#deleteKategoriModal").modal('show');
+        }
 
+        function formSubmitKategori() {
+            $("#deleteFormKategori").submit();
+        }
+    </script>
+@endsection

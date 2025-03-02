@@ -46,7 +46,7 @@
                             </td>
                             @can('edit_item_santri')
                                 <td class="text-center">
-                                    <a href="{{ route('admin.tambahan_bulanan.item_santri.edit', $s) }}"
+                                    <a href="{{ route('tambahan_bulanan.item_santri.edit', $s) }}"
                                         class="btn btn-sm btn-primary">
                                         <i class="bi bi-pencil-square"></i> Edit
                                     </a>

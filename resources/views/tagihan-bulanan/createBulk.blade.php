@@ -1,67 +1,67 @@
 @extends('layouts.home')
-@section('title_page','Bayar Pendaftaran Santri')
+@section('title_page', 'Bayar Pendaftaran Santri')
 @section('content')
 
-<form action="{{ route('admin.tagihan_bulanan.bulkBulanan') }}" method="post">
-    @csrf
-    @method('POST')
-    <div class="row">
-        <div class="col-sm">
-            <div class="form-group">
-                <label for="bulan">Bulan</label>
-                <select class="form-control select2 @error('bulan') is-invalid @enderror" name="bulan" required>
-                    <option selected disabled>Pilih Bulan</option>
-                    <option value="Jan">Januari</option>
-                    <option value="Feb">Februari</option>
-                    <option value="Mar">Maret</option>
-                    <option value="Apr">April</option>
-                    <option value="May">Mei</option>
-                    <option value="Jun">Juni</option>
-                    <option value="Jul">Juli</option>
-                    <option value="Aug">Agustus</option>
-                    <option value="Sep">September</option>
-                    <option value="Oct">Oktober</option>
-                    <option value="Nov">November</option>
-                    <option value="Dec">Desember</option>
-                </select>
+    <form action="{{ route('tagihan_bulanan.bulkBulanan') }}" method="post">
+        @csrf
+        @method('POST')
+        <div class="row">
+            <div class="col-sm">
+                <div class="form-group">
+                    <label for="bulan">Bulan</label>
+                    <select class="form-control select2 @error('bulan') is-invalid @enderror" name="bulan" required>
+                        <option selected disabled>Pilih Bulan</option>
+                        <option value="Jan">Januari</option>
+                        <option value="Feb">Februari</option>
+                        <option value="Mar">Maret</option>
+                        <option value="Apr">April</option>
+                        <option value="May">Mei</option>
+                        <option value="Jun">Juni</option>
+                        <option value="Jul">Juli</option>
+                        <option value="Aug">Agustus</option>
+                        <option value="Sep">September</option>
+                        <option value="Oct">Oktober</option>
+                        <option value="Nov">November</option>
+                        <option value="Dec">Desember</option>
+                    </select>
 
-                @error('bulan')
-                <span class="invalid-feedback" role="alert">
-                    <strong>{{ $message }}</strong>
-                </span>
-                @enderror
+                    @error('bulan')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                    @enderror
+                </div>
             </div>
         </div>
-    </div>
-    <div class="row">
-        <div class="col-sm">
-            <div class="form-group">
-                <label for="tahun">Tahun</label>
-                <select class="form-control select2 @error('tahun') is-invalid @enderror" name="tahun" required>
-                    <option selected disabled>Pilih Tahun</option>
-                    @for($i = 2020; $i <= date('Y'); $i++)
-                        <option value="{{ $i }}">{{ $i }}</option>
+        <div class="row">
+            <div class="col-sm">
+                <div class="form-group">
+                    <label for="tahun">Tahun</label>
+                    <select class="form-control select2 @error('tahun') is-invalid @enderror" name="tahun" required>
+                        <option selected disabled>Pilih Tahun</option>
+                        @for ($i = 2020; $i <= date('Y'); $i++)
+                            <option value="{{ $i }}">{{ $i }}</option>
                         @endfor
-                </select>
+                    </select>
 
-                @error('tahun')
-                <span class="invalid-feedback" role="alert">
-                    <strong>{{ $message }}</strong>
-                </span>
-                @enderror
+                    @error('tahun')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                    @enderror
+                </div>
             </div>
         </div>
-    </div>
-    <div class="row">
-        <div class="col-sm">
-            <div class="form-group">
-                <button class="btn btn-primary">Generate Tagihan</button>
-                <a href="{{ route('admin.tagihan_bulanan.index') }}" class="btn btn-secondary">Kembali</a>
+        <div class="row">
+            <div class="col-sm">
+                <div class="form-group">
+                    <button class="btn btn-primary">Generate Tagihan</button>
+                    <a href="{{ route('tagihan_bulanan.index') }}" class="btn btn-secondary">Kembali</a>
+                </div>
             </div>
         </div>
-    </div>
 
-</form>
+    </form>
 
 @endsection
 

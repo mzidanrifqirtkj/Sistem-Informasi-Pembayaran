@@ -132,7 +132,7 @@ class TagihanTerjadwalController extends Controller
             });
 
             DB::commit();
-            return redirect()->route('admin.tagihan_terjadwal.index')->with('success', 'Tagihan berhasil dibuat untuk semua santri menggunakan chunk.');
+            return redirect()->route('tagihan_terjadwal.index')->with('success', 'Tagihan berhasil dibuat untuk semua santri menggunakan chunk.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -203,7 +203,7 @@ class TagihanTerjadwalController extends Controller
             // Simpan tagihan baru
             TagihanTerjadwal::create($data);
 
-            return redirect()->route('admin.tagihan_terjadwal.index')->with('success', 'Tagihan berhasil dibuat.');
+            return redirect()->route('tagihan_terjadwal.index')->with('success', 'Tagihan berhasil dibuat.');
         } catch (\Exception $e) {
             return back()->withErrors(['biaya_terjadwal_id' => 'Gagal membuat tagihan ' . $e->getMessage()]);
         }
@@ -243,7 +243,7 @@ class TagihanTerjadwalController extends Controller
     //         $dataTagihan['tahun'] = now()->year;
     //         $dataTagihan['rincian'] = $rincian;
     //         TagihanTerjadwal::create($dataTagihan);
-    //         return redirect()->route('admin.tagihan_terjadwal.index')->with('success', 'Tagihan berhasil ditambahkan.');
+    //         return redirect()->route('tagihan_terjadwal.index')->with('success', 'Tagihan berhasil ditambahkan.');
     //     } catch (ModelNotFoundException $e) {
     //         throw new Exception('Data yang diminta tidak ditemukan. Harap periksa kembali.');
     //     } catch (\Exception $e) {
@@ -257,7 +257,7 @@ class TagihanTerjadwalController extends Controller
 
         try {
             $tagihanTerjadwal = TagihanTerjadwal::findOrFail($tagihanTerjadwal);
-            return view('admin.tagihan-terjadwal.edit', compact('tagihanTerjadwal', 'biayaTerjadwals'));
+            return view('tagihan-terjadwal.edit', compact('tagihanTerjadwal', 'biayaTerjadwals'));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Tagihan tidak ditemukan.');
         }
@@ -282,7 +282,7 @@ class TagihanTerjadwalController extends Controller
 
             $tagihan->update($updateData);
 
-            return redirect()->route('admin.tagihan_terjadwal.index')->with('success', 'Tagihan berhasil diperbarui.');
+            return redirect()->route('tagihan_terjadwal.index')->with('success', 'Tagihan berhasil diperbarui.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui tagihan.');
         }

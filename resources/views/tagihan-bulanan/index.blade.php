@@ -6,10 +6,10 @@
 
     <div class="row">
         <div class="col-md-4">
-            <a href="{{ route('admin.tagihan_bulanan.create') }}" class="btn btn-primary">Buat Tagihan Syahriah</a><br><br>
+            <a href="{{ route('tagihan_bulanan.create') }}" class="btn btn-primary">Buat Tagihan Syahriah</a><br><br>
         </div>
         <div class="col-md-4">
-            <a href="{{ route('admin.tagihan_bulanan.createBulkBulanan') }}" class="btn btn-primary">Generate Tagihan
+            <a href="{{ route('tagihan_bulanan.createBulkBulanan') }}" class="btn btn-primary">Generate Tagihan
                 Syahriah</a><br><br>
         </div>
         <div class="col-md-4 mb-3">
@@ -25,7 +25,7 @@
                     <div class="input-group-append">
                         <button class="btn btn-primary mr-2 rounded-right" type="submit"><i
                                 class="fas fa-search"></i></button>
-                        <button onclick="window.location.href='{{ route('admin.tagihan_bulanan.index') }}'" type="button"
+                        <button onclick="window.location.href='{{ route('tagihan_bulanan.index') }}'" type="button"
                             class="btn btn-md btn-secondary rounded"><i class="fas fa-sync-alt"></i></button>
                     </div>
                 </div>
@@ -61,8 +61,8 @@
                     <!-- Tampilkan semua data santri untuk admin -->
                     @forelse ($santris as $santri)
                         <tr align="center">
-                            <td><a href="{{ route('admin.santri.show', $santri) }}"
-                                    target="_blank">{{ $santri->nama_santri }}</a></td>
+                            <td><a href="{{ route('santri.show', $santri) }}" target="_blank">{{ $santri->nama_santri }}</a>
+                            </td>
                             @php
                                 $months = [
                                     'Jan',
@@ -99,7 +99,7 @@
                     <!-- Tampilkan data santri yang login saja -->
                     @forelse ($santris as $santri)
                         <tr align="center">
-                            <td><a href="{{ route('admin.santri.show', $santri) }}"
+                            <td><a href="{{ route('santri.show', $santri) }}"
                                     target="_blank">{{ $santri->nama_santri }}</a></td>
                             @php
                                 $months = [
@@ -159,9 +159,8 @@
                         <div class="input-group-append">
                             <button class="btn btn-primary mr-2 rounded-right" type="submit"><i
                                     class="fas fa-search"></i></button>
-                            <button onclick="window.location.href='{{ route('admin.tagihan_bulanan.index') }}'"
-                                type="button" class="btn btn-md btn-secondary rounded"><i
-                                    class="fas fa-sync-alt"></i></button>
+                            <button onclick="window.location.href='{{ route('tagihan_bulanan.index') }}'" type="button"
+                                class="btn btn-md btn-secondary rounded"><i class="fas fa-sync-alt"></i></button>
                         </div>
                     </div>
                 </form>
@@ -184,14 +183,14 @@
                         <!-- Tampilkan semua data tagihan untuk admin -->
                         @forelse ($dataTagihans as $result)
                             <tr>
-                                <td><a href="{{ route('admin.santri.show', $result->santri) }}"
+                                <td><a href="{{ route('santri.show', $result->santri) }}"
                                         target="blank">{{ $result->santri->nama_santri }}</a></td>
                                 <td>{{ $result->bulan }}</td>
                                 <td>{{ $result->tahun }}</td>
                                 <td>{{ $result->nominal }}</td>
                                 <td>{{ json_encode($result->rincian) }}</td>
                                 <td align="center">
-                                    <a href="{{ route('admin.tagihan_bulanan.edit', $result->id_tagihan_bulanan) }}"
+                                    <a href="{{ route('tagihan_bulanan.edit', $result->id_tagihan_bulanan) }}"
                                         type="button" class="btn btn-sm btn-warning"><i class="fas fa-print"></i></a>
                                     <a href="javascript:void(0)" id="btn-delete" class="btn btn-sm btn-danger"
                                         onclick="deleteData('{{ $result->id_tagihan_bulanan }}')" data-toggle="modal"
@@ -207,14 +206,14 @@
                         <!-- Tampilkan data tagihan untuk santri yang login -->
                         @forelse ($dataTagihans as $result)
                             <tr>
-                                <td><a href="{{ route('admin.santri.show', $result->santri) }}"
+                                <td><a href="{{ route('santri.show', $result->santri) }}"
                                         target="blank">{{ $result->santri->nama_santri }}</a></td>
                                 <td>{{ $result->bulan }}</td>
                                 <td>{{ $result->tahun }}</td>
                                 <td>{{ $result->nominal }}</td>
                                 <td>{{ json_encode($result->rincian) }}</td>
                                 <td align="center">
-                                    <a href="{{ route('admin.tagihan_bulanan.edit', $result->id_tagihan_bulanan) }}"
+                                    <a href="{{ route('tagihan_bulanan.edit', $result->id_tagihan_bulanan) }}"
                                         type="button" class="btn btn-sm btn-warning"><i class="fas fa-print"></i></a>
                                 </td>
                             </tr>
@@ -261,7 +260,7 @@
 @section('script')
     <script>
         function deleteData(id) {
-            let url = '{{ route('admin.tagihan_bulanan.destroy', ':id') }}';
+            let url = '{{ route('tagihan_bulanan.destroy', ':id') }}';
             url = url.replace(':id', id);
             $("#deleteForm").attr('action', url);
         }

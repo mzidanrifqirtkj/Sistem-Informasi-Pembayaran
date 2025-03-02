@@ -1,5 +1,5 @@
 @extends('layouts.home')
-@section('title_page','Bayar Syahriah/SPP Santri')
+@section('title_page', 'Bayar Syahriah/SPP Santri')
 @section('content')
 
     @if (Session::has('error'))
@@ -11,7 +11,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.kategori.store') }}" method="post">
+    <form action="{{ route('kategori.store') }}" method="post">
         @csrf
         @method('PUT')
         <div class="container">
@@ -19,7 +19,8 @@
                 <div class="col-sm">
                     <div class="form-group">
                         <label for="nama_kategori">Nama Kategori</label>
-                        <input type="text" class="form-control @error('nama_kategori') is-invalid @enderror" name="nama_kategori" value="{{ old('nama_kategori', $data->nama_kategori) }}">
+                        <input type="text" class="form-control @error('nama_kategori') is-invalid @enderror"
+                            name="nama_kategori" value="{{ old('nama_kategori', $data->nama_kategori) }}">
                         @error('nama_kategori')
                             <span class="invalid-feedback" role="alert">
                                 <strong>{{ $message }}</strong>
@@ -30,7 +31,8 @@
                 <div class="col-sm">
                     <div class="form-group">
                         <label for="nominal_syahriyah">Biaya Syahriyah</label>
-                        <input type="number" class="form-control @error('nominal_syahriyah') is-invalid @enderror" name="nominal_syahriyah" value="{{ old('nominal_syahriyah', $data->nominal_syahriyah) }}">
+                        <input type="number" class="form-control @error('nominal_syahriyah') is-invalid @enderror"
+                            name="nominal_syahriyah" value="{{ old('nominal_syahriyah', $data->nominal_syahriyah) }}">
                         @error('nominal_syahriyah')
                             <span class="invalid-feedback" role="alert">
                                 <strong>{{ $message }}</strong>
@@ -43,7 +45,7 @@
                 <div class="col-sm">
                     <div class="form-group">
                         <button class="btn btn-primary">Edit</button>
-                        <a href="{{ route('admin.biaya_terjadwal.index') }}" class="btn btn-secondary">Kembali</a>
+                        <a href="{{ route('biaya_terjadwal.index') }}" class="btn btn-secondary">Kembali</a>
                     </div>
                 </div>
             </div>

@@ -31,10 +31,10 @@ class UserController extends Controller
             return datatables()->of($users)
                 ->addIndexColumn()
                 ->addColumn('santri', function ($row) {
-                    return '<a href="' . route('admin.santri.show', $row->santri) . '">' . $row->santri->nama_santri . '</a>';
+                    return '<a href="' . route('santri.show', $row->santri) . '">' . $row->santri->nama_santri . '</a>';
                 })
                 ->addColumn('action', function ($row) {
-                    return '<a href="' . route('admin.user.edit', $row->id_user) . '" class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a>
+                    return '<a href="' . route('user.edit', $row->id_user) . '" class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a>
                         <button class="btn btn-sm btn-danger" onclick="deleteData(' . $row->id_user . ')"><i class="fas fa-trash"></i></button>';
                 })
                 ->rawColumns(['santri', 'action'])
@@ -52,16 +52,17 @@ class UserController extends Controller
         return view('user.import');
     }
 
-    public function import(Request $request){
+    public function import(Request $request)
+    {
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv|max:2048',
         ]);
 
         try {
             Excel::import(new UserImport, $request->file('file'));
-            return redirect()->route('admin.user.index')->with('alert', 'Data user berhasil diimpor.');
+            return redirect()->route('user.index')->with('alert', 'Data user berhasil diimpor.');
         } catch (\Exception $e) {
-            return redirect()->route('admin.user.index')->with('error', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
+            return redirect()->route('user.index')->with('error', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
         }
     }
     /**
