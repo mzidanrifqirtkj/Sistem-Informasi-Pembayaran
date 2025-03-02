@@ -21,7 +21,7 @@ class TagihanBulananController extends Controller
 
         if ($user->hasRole('admin')) {
             // Jika user adalah admin, ambil semua data santri beserta tagihan bulanan untuk tahun ini
-            $santris = \App\Models\Santri::with([
+            $santris = Santri::with([
                 'tagihanBulanan' => function ($query) use ($now) {
                     $query->where('tahun', $now); // Filter tagihan berdasarkan tahun
                 }
@@ -46,7 +46,7 @@ class TagihanBulananController extends Controller
                     'tagihanBulanan' => function ($query) use ($now) {
                         $query->where('tahun', $now); // Filter tagihan berdasarkan tahun
                     }
-                ])->where('id_santri', $santri->santri_id) // Filter santri berdasarkan id
+                ])->where('id_santri', $santri->id_santri) // Filter santri berdasarkan id
                     ->paginate(10);
             } else {
                 // Jika relasi santri tidak ditemukan, kembalikan koleksi kosong
@@ -58,6 +58,8 @@ class TagihanBulananController extends Controller
             $dataTagihans = collect();
             $santris = collect();
         }
+
+        // dd($dataTagihans, $santris);
 
         return view('tagihan-bulanan.index', compact('dataTagihans', 'santris', 'now'));
     }
