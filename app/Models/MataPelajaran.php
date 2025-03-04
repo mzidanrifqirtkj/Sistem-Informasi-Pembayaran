@@ -7,11 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 class MataPelajaran extends Model
 {
     protected $table = 'mata_pelajarans';
-    protected $primaryKey = 'id_mata_pelajaran';
-    protected $fillable = ['nama_pelajaran', 'ustadz_id'];
+    protected $primaryKey = 'id_mapel';
+    protected $fillable = ['nama_mapel', 'kategori_mapel_id'];
 
-    public function ustadz()
+    public function kategoriMapel()
     {
-        return $this->belongsTo(Santri::class, 'ustadz_id');
+        return $this->belongsTo(KategoriMapel::class, 'kategori_mapel_id', 'id_kategori_mapel');
+    }
+
+    public function mapelKelas()
+    {
+        return $this->hasMany(MapelKelas::class, 'mapel_id', 'id_mapel');
     }
 }

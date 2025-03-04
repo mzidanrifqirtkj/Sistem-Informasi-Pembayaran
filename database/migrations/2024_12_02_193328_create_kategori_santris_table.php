@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('kategori_santris', function (Blueprint $table) {
             $table->id('id_kategori_santri');
-            $table->string('nama_kategori')->enum("Reguler", "Fauqo", "Dzuriyah");
-            $table->decimal('nominal_syahriyah', 10, 2);
+            $table->string('nama_kategori');
+            $table->double('nominal_syahriyah');
             $table->timestamps();
         });
     }

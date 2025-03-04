@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -34,7 +33,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id')->unique();
             $table->unsignedBigInteger('kategori_santri_id');
 
-            $table->foreign('user_id')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreign('user_id')->references('id_user')->on('users')->onDelete('cascade')->nullable();
             $table->foreign('kategori_santri_id')->references('id_kategori_santri')->on('kategori_santris')->onDelete('cascade');
             //data ayah
             $table->string('nama_ayah');

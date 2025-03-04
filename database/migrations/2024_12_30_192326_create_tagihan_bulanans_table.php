@@ -9,15 +9,15 @@ return new class extends Migration
     {
         Schema::create('tagihan_bulanans', function (Blueprint $table) {
             $table->id('id_tagihan_bulanan');
-            $table->unsignedBigInteger('santri_id');
-            $table->foreign('santri_id')->references('id_santri')->on('santris');
-
-            $table->string('nama_tagihan')->default('Syahriyah');
-            $table->enum('bulan', ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']);
+            $table->foreignId('santri_id');
+            $table->enum('bulan', ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']);
             $table->year('tahun');
-            $table->decimal('jumlah', 10, 2);
-            $table->enum('status', ['Belum Dibayar', 'Lunas']);
+            $table->double('nominal');
+            $table->json('rincian');
+            $table->enum('status', ['lunas', 'belum_lunas'])->default('belum_lunas');
             $table->timestamps();
+
+            $table->foreign('santri_id')->references('id_santri')->on('santris')->onDelete('cascade');
 
             //foreign key
         });
@@ -25,6 +25,6 @@ return new class extends Migration
 
     public function down()
     {
-        Schema::dropIfExists('tagihan_bulanan');
+        Schema::dropIfExists('tagihans');
     }
 };

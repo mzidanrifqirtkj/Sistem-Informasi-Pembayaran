@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Traits\HasRoles;
 
 class Santri extends Model
 {
     use HasFactory;
+    protected $guard = 'santri';
     protected $table = 'santris';
     protected $primaryKey = 'id_santri';
     public $timestamps = false;
@@ -52,45 +54,56 @@ class Santri extends Model
         'tabungan'
     ];
 
+    // Verifikasi password untuk Santri berdasarkan user
+    public function verifyPassword($password)
+    {
+        return $this->user->password === bcrypt($password);
+    }
 
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id_user');
     }
 
-    public function santriTambahanPembayarans()
+    public function santriTambahanBulanans()
     {
-        return $this->hasMany(SantriTambahanPembayaran::class, 'santri_id', 'id_santri');
+        return $this->hasMany(SantriTambahanBulanan::class, 'santri_id', 'id_santri');
     }
 
-    public function tambahanPembayarans()
+    public function tambahanBulanans()
     {
-        return $this->belongsToMany(
-            TambahanPembayaran::class,          // Model relasi
-            'santri_tambahan_pembayarans',       // Tabel pivot
-            'santri_id',                        // Foreign key di tabel pivot
-            'tambahan_pembayaran_id'            // Relasi ke id di model TambahanPembayaran
-        )->withTimestamps();                    // Opsional: Jika pivot memiliki timestamps
+        return $this->belongsToMany(TambahanBulanan::class, 'santri_tambahan_bulanans', 'santri_id', 'tambahan_bulanan_id')->withPivot(['jumlah'])->withTimestamps();
     }
 
-
-    public function kategori_santri()
+    public function kategoriSantri()
     {
         return $this->belongsTo(KategoriSantri::class, 'kategori_santri_id', 'id_kategori_santri');
     }
 
-    public function pembayaran()
+    public function tagihanBulanan()
     {
-        return $this->hasMany(Pembayaran::class);
+        return $this->hasMany(TagihanBulanan::class, 'santri_id', 'id_santri');
     }
+
+
+    public function tagihanTerjadwal()
+    {
+        return $this->hasMany(TagihanTerjadwal::class, 'santri_id', 'id_santri');
+    }
+
 
     public function absensi()
     {
-        return $this->hasMany(Absensi::class);
+        return $this->hasMany(Absensi::class, 'nis', 'nis');
     }
 
-    public function nilai()
+    public function penilaianSantri()
     {
-        return $this->hasMany(Nilai::class);
+        return $this->hasMany(PenilaianSantri::class, 'santri_id', 'id_santri');
+    }
+
+    public function qoriKelas()
+    {
+        return $this->hasMany(QoriKelas::class, 'ustadz_id', 'id_santri');
     }
 }

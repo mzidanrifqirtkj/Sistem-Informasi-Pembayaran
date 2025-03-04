@@ -17,9 +17,9 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->name,
+            'nis' => $this->faker->unique()->numerify('####'),
             'email' => $this->faker->unique()->safeEmail,
-            'role' => $this->faker->randomElement(['admin', 'user']),
+            // 'role' => $this->faker->randomElement(['admin', 'user']),
             'email_verified_at' => $this->faker->dateTimeThisYear(),
             'password' => bcrypt('password'),
             'remember_token' => \Illuminate\Support\Str::random(10),

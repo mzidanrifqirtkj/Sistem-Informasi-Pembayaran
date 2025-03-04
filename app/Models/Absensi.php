@@ -2,43 +2,58 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Absensi extends Model
 {
-    protected $table = 'absensi';
+    use HasFactory;
+    protected $table = 'absensis';
     protected $primaryKey = 'id_absensi';
     protected $fillable = [
-        'riwayat_kelas_id',
         'santri_id',
-        'tanggal_absen',
+        'nis',
+        'nama_santri',
         'jumlah_hadir',
         'jumlah_izin',
         'jumlah_sakit',
         'jumlah_alpha',
-        'keterangan'
+        'bulan',
+        'minggu_per_bulan',
+        'tahun_ajar_id',
+        'kelas_id',
     ];
-    
+
+    protected $casts = [
+        'jumlah_hadir' => 'integer',
+        'jumlah_izin' => 'integer',
+        'jumlah_sakit' => 'integer',
+        'jumlah_alpha' => 'integer',
+        'bulan' => 'string',
+        'minggu_per_bulan' => 'string',
+    ];
+
     public $timestamps = false;
 
     public function santri()
     {
-        return $this->belongsTo(Santri::class, 'santri_id', 'id_santri');
+        return $this->belongsTo(Santri::class, 'nis', 'nis');
     }
 
-    public function mata_pelajaran()
+    public function tahunAjar()
     {
-        return $this->belongsTo(MataPelajaran::class, 'mata_pelajaran_id', 'id_mata_pelajaran');
+        return $this->belongsTo(TahunAjar::class, 'tahun_ajar_id', 'id_tahun_ajar');
     }
 
-    public function riwayat_kelas()
+    public function kelas()
     {
-        return $this->belongsTo(RiwayatKelas::class, 'riwayat_kelas_id', 'id_riwayat_kelas');
+        return $this->belongsTo(Kelas::class, 'kelas_id', 'id_kelas');
     }
 
-    public function scopeBySantri($query, $santri_id)
+    public function scopeFilterByBulanMinggu($query, $bulan, $minggu)
     {
-        return $query->where('santri_id', $santri_id);
+        return $query->where('bulan', $bulan)
+            ->where('minggu_per_bulan', $minggu);
     }
 
 

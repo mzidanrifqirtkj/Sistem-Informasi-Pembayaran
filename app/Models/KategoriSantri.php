@@ -21,4 +21,5 @@ class KategoriSantri extends Model
     {
         return $this->hasMany(Santri::class, 'kategori_santri_id', 'id_kategori_santri');
     }
+
 }

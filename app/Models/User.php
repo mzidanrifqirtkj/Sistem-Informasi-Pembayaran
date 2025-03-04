@@ -6,28 +6,30 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
+    protected $primaryKey = 'id_user';
+
     protected $fillable = [
-        'name',
         'email',
-        'role',
         'email_verified_at',
         'password',
+        'remember_token'
     ];
 
     public function santri()
     {
-        return $this->hasOne(Santri::class);
+        return $this->hasOne(Santri::class, 'user_id', 'id_user');
     }
 
     /**
