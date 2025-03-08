@@ -14,17 +14,17 @@ class CreateAbsensisTable extends Migration
         Schema::create('absensis', function (Blueprint $table) {
             $table->id('id_absensi');
             $table->string('nis', 50);
-            $table->tinyInteger('jumlah_hadir')->unsigned()->default(0);
-            $table->tinyInteger('jumlah_izin')->unsigned()->default(0);
-            $table->tinyInteger('jumlah_sakit')->unsigned()->default(0);
-            $table->tinyInteger('jumlah_alpha')->unsigned()->default(0);
-            $table->enum('bulan', ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])->default('Jan');
-            $table->enum('minggu_per_bulan', ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4', 'Minggu 5'])->nullable();
-            $table->foreignId('tahun_ajar_id')->constrained('tahun_ajars')->cascadeOnDelete();
-            $table->foreignId('kelas_id')->constrained('kelas')->cascadeOnDelete();
+            $table->unsignedBigInteger('kelas_id'); // Relasi ke tabel kelas
+            $table->date('tanggal');
+            $table->enum('status', ['hadir', 'izin', 'sakit', 'alpa'])->default('alpa');
+            $table->unsignedBigInteger('tahun_ajar_id');
             $table->timestamps();
 
-            $table->foreign('nis')->references('nis')->on('santris')->cascadeOnDelete();
+            // Foreign keys
+            $table->foreign('kelas_id')->references('id_kelas')->on('kelas')->onDelete('cascade');
+            $table->foreign('tahun_ajar_id')->references('id_tahun_ajar')->on('tahun_ajars')->onDelete('cascade');
+            $table->foreign('nis')->references('nis')->on('santris')->onDelete('cascade');
+
         });
     }
 

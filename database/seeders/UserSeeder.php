@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\User;
+use App\Models\Santri;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
@@ -13,22 +15,42 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
 
-        $admin = User::create([
-            'email' => 'admin@gmail.com',
-            'password' => bcrypt('12345678')
-        ]);
+        // Data admin
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@gmail.com'], // Cek berdasarkan email
+            [
+                'nis' => null, // Admin tidak memiliki NIS
+                'password' => Hash::make('12345678'), // Password: 12345678
+                'email_verified_at' => now(),
+            ]
+        );
 
-        $admin->assignRole('admin');
+        // Berikan role admin
+        $adminRole = Role::where('name', 'admin')->first();
+        if ($adminRole) {
+            $admin->assignRole($adminRole);
+        }
 
-        $santri = User::create([
-            'email' => 'santri@gmail.com',
-            'password' => bcrypt('12345678')
-        ]);
+        // Data santri
+        // $santri = Santri::first(); // Ambil santri pertama yang sudah dibuat
+        // if ($santri) {
+        //     $santriUser = User::firstOrCreate(
+        //         ['email' => 'santri@example.com'], // Cek berdasarkan email
+        //         [
+        //             'nis' => $santri->nis, // Gunakan NIS dari santri
+        //             'password' => Hash::make('12345678'), // Password: 12345678
+        //             'email_verified_at' => now(),
+        //         ]
+        //     );
 
-        $santri->assignRole('santri');
+        //     // Berikan role santri
+        //     $santriRole = Role::where('name', 'santri')->first();
+        //     if ($santriRole) {
+        //         $santriUser->assignRole($santriRole);
+        //     }
+        // }
+
+        $this->command->info('Data admin dan santri berhasil ditambahkan!');
     }
-
-
 }
