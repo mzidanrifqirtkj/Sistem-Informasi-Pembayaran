@@ -22,20 +22,20 @@ class TahunAjar extends Model
         return $this->hasMany(Absensi::class, 'tahun_ajar_id', 'id_tahun_ajar');
     }
 
-    public function mapelKelas()
-    {
-        return $this->hasMany(MapelKelas::class, 'tahun_ajar_id', 'id_tahun_ajar');
-    }
+    // public function mapelKelas()
+    // {
+    //     return $this->hasMany(MapelKelas::class, 'tahun_ajar_id', 'id_tahun_ajar');
+    // }
 
 
-    public function penilaianSantri()
-    {
-        return $this->hasMany(PenilaianSantri::class, 'tahun_ajar_id', 'id_tahun_ajar');
-    }
+    // public function penilaianSantri()
+    // {
+    //     return $this->hasMany(PenilaianSantri::class, 'tahun_ajar_id', 'id_tahun_ajar');
+    // }
 
-    public function waliKelas()
-    {
-        return $this->hasMany(WaliKelas::class, 'tahun_ajar_id', 'id_tahun_ajar');
-    }
+    // public function waliKelas()
+    // {
+    //     return $this->hasMany(WaliKelas::class, 'tahun_ajar_id', 'id_tahun_ajar');
+    // }
 
 }

@@ -1,23 +1,22 @@
-@extends('layouts.home')
-@section('title_page', 'Absensi Santri')
+<?php $__env->startSection('title_page', 'Absensi Santri'); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Absensi Santri - {{ $months[$currentMonth] }} {{ $currentYear }}</h3>
+                        <h3 class="card-title">Absensi Santri - <?php echo e($months[$currentMonth]); ?> <?php echo e($currentYear); ?></h3>
                     </div>
                     <div class="card-body">
                         <!-- Form Filter -->
-                        <form method="GET" action="{{ route('absensi.index') }}" class="mb-4">
+                        <form method="GET" action="<?php echo e(route('absensi.index')); ?>" class="mb-4">
                             <div class="row">
                                 <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="nama">Nama Santri</label>
                                         <input type="text" class="form-control" id="nama" name="nama"
-                                            value="{{ $namaSantri }}" placeholder="Cari nama...">
+                                            value="<?php echo e($namaSantri); ?>" placeholder="Cari nama...">
                                     </div>
                                 </div>
                                 <div class="col-md-2">
@@ -25,11 +24,12 @@
                                         <label for="kelas">Kelas</label>
                                         <select class="form-control" id="kelas" name="kelas">
                                             <option value="">Semua Kelas</option>
-                                            @foreach ($kelas as $k)
-                                                <option value="{{ $k->id_kelas }}"
-                                                    {{ $kelasId == $k->id_kelas ? 'selected' : '' }}>{{ $k->nama_kelas }}
+                                            <?php $__currentLoopData = $kelas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($k->id_kelas); ?>"
+                                                    <?php echo e($kelasId == $k->id_kelas ? 'selected' : ''); ?>><?php echo e($k->nama_kelas); ?>
+
                                                 </option>
-                                            @endforeach
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </select>
                                     </div>
                                 </div>
@@ -37,11 +37,12 @@
                                     <div class="form-group">
                                         <label for="bulan">Bulan</label>
                                         <select class="form-control" id="bulan" name="bulan">
-                                            @foreach ($months as $key => $month)
-                                                <option value="{{ $key }}"
-                                                    {{ $currentMonth == $key ? 'selected' : '' }}>{{ $month }}
+                                            <?php $__currentLoopData = $months; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $month): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($key); ?>"
+                                                    <?php echo e($currentMonth == $key ? 'selected' : ''); ?>><?php echo e($month); ?>
+
                                                 </option>
-                                            @endforeach
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </select>
                                     </div>
                                 </div>
@@ -49,11 +50,12 @@
                                     <div class="form-group">
                                         <label for="tahun">Tahun</label>
                                         <select class="form-control" id="tahun" name="tahun">
-                                            @foreach ($years as $year)
-                                                <option value="{{ $year }}"
-                                                    {{ $currentYear == $year ? 'selected' : '' }}>{{ $year }}
+                                            <?php $__currentLoopData = $years; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $year): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($year); ?>"
+                                                    <?php echo e($currentYear == $year ? 'selected' : ''); ?>><?php echo e($year); ?>
+
                                                 </option>
-                                            @endforeach
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </select>
                                     </div>
                                 </div>
@@ -61,11 +63,11 @@
                                     <div class="form-group">
                                         <label for="tahun_ajar">Tahun Ajar</label>
                                         <select class="form-control" id="tahun_ajar" name="tahun_ajar">
-                                            @foreach ($tahunAjars as $ta)
-                                                <option value="{{ $ta->id_tahun_ajar }}"
-                                                    {{ $tahunAjar->id_tahun_ajar == $ta->id_tahun_ajar ? 'selected' : '' }}>
-                                                    {{ $ta->tahun_ajar }}</option>
-                                            @endforeach
+                                            <?php $__currentLoopData = $tahunAjars; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ta): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($ta->id_tahun_ajar); ?>"
+                                                    <?php echo e($tahunAjar->id_tahun_ajar == $ta->id_tahun_ajar ? 'selected' : ''); ?>>
+                                                    <?php echo e($ta->tahun_ajar); ?></option>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </select>
                                     </div>
                                 </div>
@@ -73,25 +75,25 @@
                                     <div class="form-group">
                                         <label class="d-block">&nbsp;</label>
                                         <button type="submit" class="btn btn-primary">Filter</button>
-                                        <a href="{{ route('absensi.laporan') }}" class="btn btn-info">Lihat Laporan</a>
+                                        <a href="<?php echo e(route('absensi.laporan')); ?>" class="btn btn-info">Lihat Laporan</a>
                                     </div>
                                 </div>
                             </div>
                         </form>
 
-                        @if (count($santris) > 0)
+                        <?php if(count($santris) > 0): ?>
                             <!-- Form Pengisian Absensi Hari Ini -->
                             <div class="card mb-4">
                                 <div class="card-header">
-                                    <h5>Isi Absensi Hari Ini ({{ \Carbon\Carbon::now()->format('d-m-Y') }})</h5>
+                                    <h5>Isi Absensi Hari Ini (<?php echo e(\Carbon\Carbon::now()->format('d-m-Y')); ?>)</h5>
                                 </div>
                                 <div class="card-body">
-                                    <form action="{{ route('absensi.bulk.store') }}" method="POST">
-                                        @csrf
+                                    <form action="<?php echo e(route('absensi.bulk.store')); ?>" method="POST">
+                                        <?php echo csrf_field(); ?>
                                         <input type="hidden" name="tanggal"
-                                            value="{{ \Carbon\Carbon::now()->format('Y-m-d') }}">
-                                        <input type="hidden" name="tahun_ajar_id" value="{{ $tahunAjar->id_tahun_ajar }}">
-                                        <input type="hidden" name="kelas_id" value="{{ $kelasId }}">
+                                            value="<?php echo e(\Carbon\Carbon::now()->format('Y-m-d')); ?>">
+                                        <input type="hidden" name="tahun_ajar_id" value="<?php echo e($tahunAjar->id_tahun_ajar); ?>">
+                                        <input type="hidden" name="kelas_id" value="<?php echo e($kelasId); ?>">
 
                                         <div class="table-responsive">
                                             <table class="table table-bordered table-striped">
@@ -105,13 +107,13 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    @foreach ($santris as $key => $santri)
+                                                    <?php $__currentLoopData = $santris; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $santri): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                         <tr>
-                                                            <td>{{ $key + 1 }}</td>
-                                                            <td>{{ $santri->nis }}</td>
-                                                            <td>{{ $santri->nama_santri }}</td>
+                                                            <td><?php echo e($key + 1); ?></td>
+                                                            <td><?php echo e($santri->nis); ?></td>
+                                                            <td><?php echo e($santri->nama_santri); ?></td>
                                                             <td>
-                                                                @php
+                                                                <?php
                                                                     $kelasNama =
                                                                         DB::table('riwayat_kelas')
                                                                             ->join(
@@ -126,56 +128,57 @@
                                                                                 $tahunAjar->id_tahun_ajar,
                                                                             )
                                                                             ->value('nama_kelas') ?? 'Belum Ada Kelas';
-                                                                @endphp
-                                                                {{ $kelasNama }}
+                                                                ?>
+                                                                <?php echo e($kelasNama); ?>
+
                                                             </td>
                                                             <td>
-                                                                @php
+                                                                <?php
                                                                     $today = \Carbon\Carbon::now()->format('Y-m-d');
                                                                     $absensiToday =
                                                                         $absensis[$santri->nis][
                                                                             \Carbon\Carbon::now()->format('d')
                                                                         ] ?? null;
                                                                     $currentStatus = $absensiToday->status ?? '';
-                                                                @endphp
+                                                                ?>
                                                                 <div class="btn-group btn-group-toggle"
                                                                     data-toggle="buttons">
                                                                     <label
-                                                                        class="btn btn-outline-success {{ $currentStatus == 'hadir' ? 'active' : '' }}">
+                                                                        class="btn btn-outline-success <?php echo e($currentStatus == 'hadir' ? 'active' : ''); ?>">
                                                                         <input type="radio"
-                                                                            name="status[{{ $santri->nis }}]"
+                                                                            name="status[<?php echo e($santri->nis); ?>]"
                                                                             value="hadir"
-                                                                            {{ $currentStatus == 'hadir' ? 'checked' : '' }}>
+                                                                            <?php echo e($currentStatus == 'hadir' ? 'checked' : ''); ?>>
                                                                         Hadir
                                                                     </label>
                                                                     <label
-                                                                        class="btn btn-outline-warning {{ $currentStatus == 'izin' ? 'active' : '' }}">
+                                                                        class="btn btn-outline-warning <?php echo e($currentStatus == 'izin' ? 'active' : ''); ?>">
                                                                         <input type="radio"
-                                                                            name="status[{{ $santri->nis }}]"
+                                                                            name="status[<?php echo e($santri->nis); ?>]"
                                                                             value="izin"
-                                                                            {{ $currentStatus == 'izin' ? 'checked' : '' }}>
+                                                                            <?php echo e($currentStatus == 'izin' ? 'checked' : ''); ?>>
                                                                         Izin
                                                                     </label>
                                                                     <label
-                                                                        class="btn btn-outline-info {{ $currentStatus == 'sakit' ? 'active' : '' }}">
+                                                                        class="btn btn-outline-info <?php echo e($currentStatus == 'sakit' ? 'active' : ''); ?>">
                                                                         <input type="radio"
-                                                                            name="status[{{ $santri->nis }}]"
+                                                                            name="status[<?php echo e($santri->nis); ?>]"
                                                                             value="sakit"
-                                                                            {{ $currentStatus == 'sakit' ? 'checked' : '' }}>
+                                                                            <?php echo e($currentStatus == 'sakit' ? 'checked' : ''); ?>>
                                                                         Sakit
                                                                     </label>
                                                                     <label
-                                                                        class="btn btn-outline-danger {{ $currentStatus == 'alpha' ? 'active' : '' }}">
+                                                                        class="btn btn-outline-danger <?php echo e($currentStatus == 'alpha' ? 'active' : ''); ?>">
                                                                         <input type="radio"
-                                                                            name="status[{{ $santri->nis }}]"
+                                                                            name="status[<?php echo e($santri->nis); ?>]"
                                                                             value="alpha"
-                                                                            {{ $currentStatus == 'alpha' ? 'checked' : '' }}>
+                                                                            <?php echo e($currentStatus == 'alpha' ? 'checked' : ''); ?>>
                                                                         Alpha
                                                                     </label>
                                                                 </div>
                                                             </td>
                                                         </tr>
-                                                    @endforeach
+                                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                                 </tbody>
                                             </table>
                                         </div>
@@ -189,8 +192,8 @@
                             <!-- Tabel Absensi Bulan Ini -->
                             <div class="card">
                                 <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h5>Rekap Absensi Bulan {{ $months[$currentMonth] }} {{ $currentYear }}</h5>
-                                    <a href="{{ route('absensi.export', request()->query()) }}"
+                                    <h5>Rekap Absensi Bulan <?php echo e($months[$currentMonth]); ?> <?php echo e($currentYear); ?></h5>
+                                    <a href="<?php echo e(route('absensi.export', request()->query())); ?>"
                                         class="btn btn-sm btn-success">
                                         <i class="fas fa-file-pdf"></i> Export PDF
                                     </a>
@@ -203,25 +206,25 @@
                                                     <th rowspan="2" style="vertical-align: middle;">No</th>
                                                     <th rowspan="2" style="vertical-align: middle;">NIS</th>
                                                     <th rowspan="2" style="vertical-align: middle;">Nama Santri</th>
-                                                    <th colspan="{{ $daysInMonth }}" class="text-center">Tanggal</th>
+                                                    <th colspan="<?php echo e($daysInMonth); ?>" class="text-center">Tanggal</th>
                                                 </tr>
                                                 <tr>
-                                                    @for ($i = 1; $i <= $daysInMonth; $i++)
-                                                        <th class="text-center" width="30px">{{ $i }}</th>
-                                                    @endfor
+                                                    <?php for($i = 1; $i <= $daysInMonth; $i++): ?>
+                                                        <th class="text-center" width="30px"><?php echo e($i); ?></th>
+                                                    <?php endfor; ?>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @foreach ($santris as $key => $santri)
+                                                <?php $__currentLoopData = $santris; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $santri): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                     <tr>
-                                                        <td>{{ $key + 1 }}</td>
-                                                        <td>{{ $santri->nis }}</td>
-                                                        <td>{{ $santri->nama_santri }}</td>
+                                                        <td><?php echo e($key + 1); ?></td>
+                                                        <td><?php echo e($santri->nis); ?></td>
+                                                        <td><?php echo e($santri->nama_santri); ?></td>
 
-                                                        @for ($i = 1; $i <= $daysInMonth; $i++)
+                                                        <?php for($i = 1; $i <= $daysInMonth; $i++): ?>
                                                             <td class="text-center">
-                                                                @if (isset($absensis[$santri->nis][$i]))
-                                                                    @php
+                                                                <?php if(isset($absensis[$santri->nis][$i])): ?>
+                                                                    <?php
                                                                         $status = $absensis[$santri->nis][$i]->status;
                                                                         if ($status == 'hadir') {
                                                                             $badge = 'success';
@@ -236,11 +239,11 @@
                                                                             $badge = 'danger';
                                                                             $text = 'A';
                                                                         }
-                                                                    @endphp
+                                                                    ?>
                                                                     <span
-                                                                        class="badge badge-{{ $badge }}">{{ $text }}</span>
-                                                                @else
-                                                                    @php
+                                                                        class="badge badge-<?php echo e($badge); ?>"><?php echo e($text); ?></span>
+                                                                <?php else: ?>
+                                                                    <?php
                                                                         $date = \Carbon\Carbon::createFromDate(
                                                                             $currentYear,
                                                                             $currentMonth,
@@ -250,44 +253,44 @@
                                                                             $date->isSaturday() || $date->isSunday();
                                                                         $isPastDate = $date->isPast();
                                                                         $isToday = $date->isToday();
-                                                                    @endphp
+                                                                    ?>
 
-                                                                    @if ($isPastDate && !$isWeekend && !$isToday)
+                                                                    <?php if($isPastDate && !$isWeekend && !$isToday): ?>
                                                                         <span class="badge badge-secondary"
                                                                             data-toggle="tooltip"
                                                                             title="Belum diisi">-</span>
-                                                                    @elseif($isWeekend)
+                                                                    <?php elseif($isWeekend): ?>
                                                                         <span class="badge badge-light"
                                                                             data-toggle="tooltip" title="Weekend">W</span>
-                                                                    @else
+                                                                    <?php else: ?>
                                                                         <span
                                                                             class="badge
                                                                             badge-light"
                                                                             data-toggle="tooltip"
                                                                             title="Belum waktunya">-</span>
-                                                                    @endif
-                                                                @endif
+                                                                    <?php endif; ?>
+                                                                <?php endif; ?>
                                                             </td>
-                                                        @endfor
+                                                        <?php endfor; ?>
                                                     </tr>
-                                                @endforeach
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
                             </div>
-                        @else
+                        <?php else: ?>
                             <div class="alert alert-info">
                                 Tidak ada data santri yang sesuai dengan filter yang dipilih.
                             </div>
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    @push('scripts')
+    <?php $__env->startPush('scripts'); ?>
         <script>
             $(document).ready(function() {
                 // Inisialisasi tooltip
@@ -310,10 +313,10 @@
                     let tahun_ajar_id = $('#tahun_ajar').val();
 
                     $.ajax({
-                        url: "{{ route('absensi.store') }}",
+                        url: "<?php echo e(route('absensi.store')); ?>",
                         type: "POST",
                         data: {
-                            _token: "{{ csrf_token() }}",
+                            _token: "<?php echo e(csrf_token()); ?>",
                             nis: nis,
                             kelas_id: kelas_id,
                             tanggal: tanggal,
@@ -334,5 +337,7 @@
                 });
             });
         </script>
-    @endpush
-@endsection
+    <?php $__env->stopPush(); ?>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.home', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\SIAKAD_LQ\resources\views/absensi/index.blade.php ENDPATH**/ ?>

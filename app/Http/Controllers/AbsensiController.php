@@ -2,217 +2,396 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Imports\AbsensiImport;
 use App\Models\Absensi;
-use App\Models\Kelas;
 use App\Models\Santri;
+use App\Models\Kelas;
 use App\Models\TahunAjar;
-use Auth;
 use Illuminate\Http\Request;
-use Log;
-use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AbsensiController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $user = Auth::user(); // Ambil user yang sedang login
+        // Mendapatkan tahun dan bulan saat ini
+        $currentYear = $request->tahun ?? Carbon::now()->year;
+        $currentMonth = $request->bulan ?? Carbon::now()->month;
 
-        // Ambil data santri, kelas, dan tahun ajar
-        $santriList = Santri::select('nama_santri')->get();
-        $kelasList = Kelas::select('id_kelas', 'nama_kelas')->get();
-        $tahunAjarList = TahunAjar::select('id_tahun_ajar', 'tahun_ajar')->get();
-
-        // Jika user adalah santri, ambil data santri yang login
-        if ($user->hasRole('santri')) {
-            $santri = $user->santri; // Ambil data santri dari user yang login
-            if ($santri) {
-                $santriList = Santri::where('id_santri', $santri->id_santri)->get();
-            } else {
-                $santriList = collect(); // Jika relasi santri tidak ditemukan, kembalikan koleksi kosong
-            }
+        // Mendapatkan tahun ajar aktif jika tidak ada filter
+        $tahunAjar = null;
+        if ($request->tahun_ajar) {
+            $tahunAjar = TahunAjar::find($request->tahun_ajar);
+        } else {
+            $tahunAjar = TahunAjar::where('status', 'aktif')->first();
         }
 
-        return view('absensi.index', compact('santriList', 'kelasList', 'tahunAjarList'));
-    }
+        if (!$tahunAjar) {
+            return redirect()->back()->with('error', 'Tahun Ajar tidak ditemukan');
+        }
 
-    public function getAbsensi(Request $request)
-    {
-        try {
-            $user = Auth::user(); // Ambil user yang sedang login
+        // Mendapatkan jumlah hari dalam bulan
+        $daysInMonth = Carbon::createFromDate($currentYear, $currentMonth)->daysInMonth;
 
-            $absensis = Absensi::with(['santri', 'kelas', 'tahunAjar'])
-                ->select('id_absensi', 'nis', 'bulan', 'minggu_per_bulan', 'jumlah_hadir', 'jumlah_izin', 'jumlah_sakit', 'jumlah_alpha', 'tahun_ajar_id', 'kelas_id', 'created_at');
+        // Mendapatkan data kelas untuk filter
+        $kelas = Kelas::all();
+        $kelasId = $request->kelas ?? null;
 
-            // Jika user adalah santri, filter data absensi berdasarkan santri yang login
-            if ($user->hasRole('santri')) {
-                $santri = $user->santri; // Ambil data santri dari user yang login
-                if ($santri) {
-                    $absensis->where('nis', $santri->nis); // Filter berdasarkan NIS santri
-                } else {
-                    $absensis->where('nis', '-1'); // Jika relasi santri tidak ditemukan, kembalikan koleksi kosong
-                }
-            }
+        // Filter santri berdasarkan nama jika ada
+        $namaSantri = $request->nama ?? '';
 
-            // Filter berdasarkan kelas
-            if ($request->kelas) {
-                $absensis->whereHas('kelas', function ($query) use ($request) {
-                    $query->where('id_kelas', $request->kelas);
+        // Mendapatkan semua tahun ajar untuk filter
+        $tahunAjars = TahunAjar::all();
+
+        // Query dasar untuk mendapatkan santri dengan filter yang sesuai
+        $santriQuery = Santri::query()->where('status', 'aktif');
+
+        // Filter berdasarkan nama santri
+        if (!empty($namaSantri)) {
+            $santriQuery->where('nama_santri', 'like', '%' . $namaSantri . '%');
+        }
+
+        // Filter santri berdasarkan kelas yang dipilih
+        if ($kelasId) {
+            // Mengambil santri berdasarkan kelas melalui relasi riwayat kelas (asumsi ada relasi)
+            $santriIds = DB::table('riwayat_kelas')
+                ->where('kelas_id', $kelasId)
+                ->where('tahun_ajar_id', $tahunAjar->id_tahun_ajar)
+                ->pluck('santri_id');
+
+            $santriQuery->whereIn('id_santri', $santriIds);
+        }
+
+        $santris = $santriQuery->get();
+
+        // Mendapatkan data absensi untuk santri terpilih dalam bulan ini
+        $absensis = Absensi::whereMonth('tanggal', $currentMonth)
+            ->whereYear('tanggal', $currentYear)
+            ->where('tahun_ajar_id', $tahunAjar->id_tahun_ajar)
+            ->when($kelasId, function ($query) use ($kelasId) {
+                return $query->where('kelas_id', $kelasId);
+            })
+            ->get()
+            ->groupBy('nis')
+            ->map(function ($items) {
+                return $items->keyBy(function ($item) {
+                    return Carbon::parse($item->tanggal)->format('d');
                 });
-            }
+            });
 
-            // Filter berdasarkan tahun ajar
-            if ($request->tahun_ajar) {
-                $absensis->whereHas('tahunAjar', function ($query) use ($request) {
-                    $query->where('id_tahun_ajar', $request->tahun_ajar);
-                });
-            }
+        // Mendapatkan daftar bulan untuk filter
+        $months = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
+        ];
 
-            // Filter berdasarkan bulan
-            if ($request->bulan) {
-                $absensis->where('bulan', $request->bulan);
-            }
+        // Mendapatkan range tahun untuk filter (5 tahun ke belakang dan 5 tahun ke depan)
+        $years = range(Carbon::now()->year - 5, Carbon::now()->year + 5);
 
-            // Filter berdasarkan minggu
-            if ($request->minggu) {
-                $absensis->where('minggu_per_bulan', $request->minggu);
-            }
-
-            // Filter berdasarkan nama santri
-            if ($request->nama_santri) {
-                $absensis->whereHas('santri', function ($query) use ($request) {
-                    $query->where('nama_santri', 'like', '%' . $request->nama_santri . '%');
-                });
-            }
-
-            return datatables()->of($absensis)
-                ->addIndexColumn()
-                ->addColumn('nama_santri', function ($row) {
-                    return $row->santri ? $row->santri->nama_santri : '-';
-                })
-                ->addColumn('kelas', function ($row) {
-                    return $row->kelas ? $row->kelas->nama_kelas : '-';
-                })
-                ->addColumn('tahun_ajar', function ($row) {
-                    return $row->tahunAjar ? $row->tahunAjar->tahun_ajar : '-';
-                })
-                ->addColumn('action', function ($row) use ($user) {
-                    $action = '';
-                    if ($user->hasRole('admin')) {
-                        $action .= '<a href="' . route('absensi.edit', $row->id_absensi) . '" class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a>';
-                    }
-                    if ($user->hasRole('admin')) {
-                        $action .= '<button class="btn btn-sm btn-danger" data-id="' . $row->id_absensi . '"><i class="fas fa-trash"></i></button>';
-                    }
-                    return $action;
-                })
-                ->filter(function ($instence) use ($request) {
-                    if ($request->filled("nama_santri")) {
-                        $instence->whereHas('santri', function ($query) use ($request) {
-                            $query->where('nama_santri', 'like', '%' . $request->nama_santri . '%');
-                        });
-                    }
-                })
-                ->rawColumns(['action'])
-                ->make(true);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => true,
-                'message' => $e->getMessage()
-            ], 500);
-        }
+        return view('absensi.index', compact(
+            'santris',
+            'absensis',
+            'daysInMonth',
+            'currentMonth',
+            'currentYear',
+            'kelas',
+            'kelasId',
+            'namaSantri',
+            'tahunAjar',
+            'tahunAjars',
+            'months',
+            'years'
+        ));
     }
 
-    public function importForm()
-    {
-        return view('absensi.import');
-    }
-
-    public function import(Request $request)
-    {
-        $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv|max:2048',
-        ]);
-
-        try {
-            Excel::import(new AbsensiImport, $request->file('file'));
-            return redirect()->route('absensi.index')->with('success', 'Data absensi berhasil diimpor.');
-        } catch (\Exception $e) {
-            return redirect()->route('absensi.index')->with('error', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
-        }
-    }
-
-    public function edit($id)
-    {
-        $absensi = Absensi::findOrFail($id); // Ambil data absensi berdasarkan ID
-        if (!$absensi) {
-            return redirect()->route('absensi.index')->with('error', 'Data absensi tidak ditemukan.');
-        }
-
-        $santris = Santri::all(); // Ambil semua data santri untuk dropdown
-        $kelas = Kelas::all(); // Ambil semua data kelas untuk dropdown
-        $tahunAjar = TahunAjar::all(); // Ambil semua data tahun ajar untuk dropdown
-
-
-
-        return view('absensi.edit', compact('absensi', 'santris', 'kelas', 'tahunAjar'));
-    }
-
-    public function update(Request $request, $id)
+    public function store(Request $request)
     {
         // Validasi input
         $request->validate([
-            'nis' => 'required|exists:santris,nis',
-            'bulan' => 'required|in:Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
-            'minggu_per_bulan' => 'required|in:Minggu 1,Minggu 2,Minggu 3,Minggu 4,Minggu 5',
-            'jumlah_hadir' => 'required|integer|min:0',
-            'jumlah_izin' => 'required|integer|min:0',
-            'jumlah_sakit' => 'required|integer|min:0',
-            'jumlah_alpha' => 'required|integer|min:0',
+            'nis' => 'required',
+            'kelas_id' => 'required',
+            'tanggal' => 'required|date',
+            'status' => 'required|in:hadir,izin,sakit,alpha',
             'tahun_ajar_id' => 'required|exists:tahun_ajars,id_tahun_ajar',
-            'kelas_id' => 'required|exists:kelas,id_kelas',
         ]);
 
-        // Cari data absensi berdasarkan ID
-        $absensi = Absensi::findOrFail($id);
-
-        // Jika data tidak ditemukan, kembalikan pesan error
-        if (!$absensi) {
-            return redirect()->route('absensi.index')->with('error', 'Data absensi tidak ditemukan.');
-        }
-
-        // Cek apakah ada data absensi lain dengan nis, bulan, minggu_per_bulan, dan kelas_id yang sama
+        // Cek apakah data absensi sudah ada
         $existingAbsensi = Absensi::where('nis', $request->nis)
-            ->where('bulan', $request->bulan)
-            ->where('minggu_per_bulan', $request->minggu_per_bulan)
-            ->where('kelas_id', $request->kelas_id)
+            ->where('tanggal', $request->tanggal)
             ->where('tahun_ajar_id', $request->tahun_ajar_id)
             ->first();
 
-        // Jika data sudah ada, kembalikan pesan error
         if ($existingAbsensi) {
-            return redirect()->back()->with('alert', 'Data absensi yang sama sudah ada.');
+            // Update absensi yang sudah ada
+            $existingAbsensi->status = $request->status;
+            $existingAbsensi->save();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Absensi berhasil diperbarui'
+            ]);
+        } else {
+            // Buat absensi baru
+            Absensi::create([
+                'nis' => $request->nis,
+                'kelas_id' => $request->kelas_id,
+                'tanggal' => $request->tanggal,
+                'status' => $request->status,
+                'tahun_ajar_id' => $request->tahun_ajar_id,
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Absensi berhasil disimpan'
+            ]);
+        }
+    }
+
+    public function bulkStore(Request $request)
+    {
+        // Validasi input
+        $request->validate([
+            'tanggal' => 'required|date',
+            'kelas_id' => 'required',
+            'tahun_ajar_id' => 'required',
+            'status' => 'required|array',
+            'status.*' => 'required|in:hadir,izin,sakit,alpha',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            foreach ($request->status as $nis => $status) {
+                // Cek apakah data absensi sudah ada
+                $existingAbsensi = Absensi::where('nis', $nis)
+                    ->where('tanggal', $request->tanggal)
+                    ->where('tahun_ajar_id', $request->tahun_ajar_id)
+                    ->first();
+
+                if ($existingAbsensi) {
+                    // Update absensi yang sudah ada
+                    $existingAbsensi->status = $status;
+                    $existingAbsensi->save();
+                } else {
+                    // Buat absensi baru
+                    Absensi::create([
+                        'nis' => $nis,
+                        'kelas_id' => $request->kelas_id,
+                        'tanggal' => $request->tanggal,
+                        'status' => $status,
+                        'tahun_ajar_id' => $request->tahun_ajar_id,
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Absensi kelas berhasil disimpan');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan: ' . $e->getMessage());
+        }
+    }
+
+    public function laporan(Request $request)
+    {
+        // Mendapatkan tahun dan bulan saat ini
+        $currentYear = $request->tahun ?? Carbon::now()->year;
+        $currentMonth = $request->bulan ?? Carbon::now()->month;
+
+        // Mendapatkan tahun ajar aktif jika tidak ada filter
+        $tahunAjar = null;
+        if ($request->tahun_ajar) {
+            $tahunAjar = TahunAjar::find($request->tahun_ajar);
+        } else {
+            $tahunAjar = TahunAjar::where('status', 'aktif')->first();
         }
 
-        // Update data absensi
-        $absensi->update($request->all());
+        if (!$tahunAjar) {
+            return redirect()->back()->with('error', 'Tahun Ajar tidak ditemukan');
+        }
 
-        // Redirect ke halaman index dengan pesan sukses
-        return redirect()->route('absensi.index')->with('success', 'Data absensi berhasil diperbarui.');
+        // Filter santri berdasarkan kelas jika ada
+        $kelasId = $request->kelas ?? null;
+        $namaSantri = $request->nama ?? '';
+
+        // Mendapatkan data kelas dan tahun ajar untuk filter
+        $kelas = Kelas::all();
+        $tahunAjars = TahunAjar::all();
+
+        // Mendapatkan jumlah hari dalam bulan
+        $daysInMonth = Carbon::createFromDate($currentYear, $currentMonth)->daysInMonth;
+
+        // Query dasar untuk mendapatkan santri
+        $santriQuery = Santri::query()->where('status', 'aktif');
+
+        // Filter berdasarkan nama santri
+        if (!empty($namaSantri)) {
+            $santriQuery->where('nama_santri', 'like', '%' . $namaSantri . '%');
+        }
+
+        // Filter santri berdasarkan kelas yang dipilih
+        if ($kelasId) {
+            // Mengambil santri berdasarkan kelas melalui relasi riwayat kelas (asumsi ada relasi)
+            $santriIds = DB::table('riwayat_kelas')
+                ->where('kelas_id', $kelasId)
+                ->where('tahun_ajar_id', $tahunAjar->id_tahun_ajar)
+                ->pluck('santri_id');
+
+            $santriQuery->whereIn('id_santri', $santriIds);
+        }
+
+        $santris = $santriQuery->get();
+
+        // Mendapatkan data rekapitulasi absensi untuk tiap santri
+        $rekapitulasi = [];
+
+        foreach ($santris as $santri) {
+            $absensiSantri = Absensi::where('nis', $santri->nis)
+                ->whereMonth('tanggal', $currentMonth)
+                ->whereYear('tanggal', $currentYear)
+                ->where('tahun_ajar_id', $tahunAjar->id_tahun_ajar)
+                ->get();
+
+            $rekap = [
+                'hadir' => $absensiSantri->where('status', 'hadir')->count(),
+                'izin' => $absensiSantri->where('status', 'izin')->count(),
+                'sakit' => $absensiSantri->where('status', 'sakit')->count(),
+                'alpha' => $absensiSantri->where('status', 'alpha')->count(),
+                'total' => $absensiSantri->count(),
+            ];
+
+            $rekapitulasi[$santri->nis] = $rekap;
+        }
+
+        // Mendapatkan daftar bulan untuk filter
+        $months = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
+        ];
+
+        // Mendapatkan range tahun untuk filter
+        $years = range(Carbon::now()->year - 5, Carbon::now()->year + 5);
+
+        return view('absensi.laporan', compact(
+            'santris',
+            'rekapitulasi',
+            'currentMonth',
+            'currentYear',
+            'daysInMonth',
+            'kelas',
+            'kelasId',
+            'namaSantri',
+            'tahunAjar',
+            'tahunAjars',
+            'months',
+            'years'
+        ));
     }
 
-    public function destroy($id)
-    {
-        $absensi = Absensi::findOrFail($id);
-        $absensi->delete();
+    // public function exportPdf(Request $request)
+    // {
+    //     // Mendapatkan tahun dan bulan saat ini
+    //     $currentYear = $request->tahun ?? Carbon::now()->year;
+    //     $currentMonth = $request->bulan ?? Carbon::now()->month;
 
-        return redirect()->route('absensi.index')->with('alert', 'Data absensi berhasil dihapus.');
-    }
+    //     // Mendapatkan tahun ajar
+    //     $tahunAjar = TahunAjar::find($request->tahun_ajar) ?? TahunAjar::where('status', 'aktif')->first();
 
+    //     // Filter berdasarkan kelas
+    //     $kelasId = $request->kelas ?? null;
+    //     $kelas = $kelasId ? Kelas::find($kelasId) : null;
 
+    //     // Filter santri berdasarkan nama jika ada
+    //     $namaSantri = $request->nama ?? '';
 
+    //     // Query dasar untuk mendapatkan santri
+    //     $santriQuery = Santri::query()->where('status', 'aktif');
 
+    //     // Filter berdasarkan nama santri
+    //     if (!empty($namaSantri)) {
+    //         $santriQuery->where('nama_santri', 'like', '%' . $namaSantri . '%');
+    //     }
 
+    //     // Filter santri berdasarkan kelas yang dipilih
+    //     if ($kelasId) {
+    //         $santriIds = DB::table('riwayat_kelas')
+    //             ->where('kelas_id', $kelasId)
+    //             ->where('tahun_ajar_id', $tahunAjar->id_tahun_ajar)
+    //             ->pluck('santri_id');
 
+    //         $santriQuery->whereIn('id_santri', $santriIds);
+    //     }
+
+    //     $santris = $santriQuery->get();
+
+    //     // Mendapatkan jumlah hari dalam bulan
+    //     $daysInMonth = Carbon::createFromDate($currentYear, $currentMonth)->daysInMonth;
+
+    //     // Mendapatkan data absensi untuk santri terpilih dalam bulan ini
+    //     $absensis = Absensi::whereMonth('tanggal', $currentMonth)
+    //         ->whereYear('tanggal', $currentYear)
+    //         ->where('tahun_ajar_id', $tahunAjar->id_tahun_ajar)
+    //         ->when($kelasId, function ($query) use ($kelasId) {
+    //             return $query->where('kelas_id', $kelasId);
+    //         })
+    //         ->get()
+    //         ->groupBy('nis')
+    //         ->map(function ($items) {
+    //             return $items->keyBy(function ($item) {
+    //                 return Carbon::parse($item->tanggal)->format('d');
+    //             });
+    //         });
+
+    //     // Mendapatkan nama bulan
+    //     $months = [
+    //         1 => 'Januari',
+    //         2 => 'Februari',
+    //         3 => 'Maret',
+    //         4 => 'April',
+    //         5 => 'Mei',
+    //         6 => 'Juni',
+    //         7 => 'Juli',
+    //         8 => 'Agustus',
+    //         9 => 'September',
+    //         10 => 'Oktober',
+    //         11 => 'November',
+    //         12 => 'Desember'
+    //     ];
+
+    //     $monthName = $months[$currentMonth];
+
+    //     $namakelas = $kelas ? $kelas->nama_kelas : 'Semua Kelas';
+
+    //     $pdf = \PDF::loadView('absensi.export', compact(
+    //         'santris',
+    //         'absensis',
+    //         'daysInMonth',
+    //         'currentMonth',
+    //         'currentYear',
+    //         'namakelas',
+    //         'tahunAjar',
+    //         'monthName'
+    //     ));
+
+    //     return $pdf->download('Rekap-Absensi-' . $namakelas . '-' . $monthName . '-' . $currentYear . '.pdf');
+    // }
 }

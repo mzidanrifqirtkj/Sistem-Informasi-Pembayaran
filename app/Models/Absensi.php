@@ -34,13 +34,4 @@ class Absensi extends Model
     {
         return $this->belongsTo(Kelas::class, 'kelas_id', 'id_kelas');
     }
-
-    public function scopeFilterByBulanMinggu($query, $bulan, $minggu)
-    {
-        return $query->where('bulan', $bulan)
-            ->where('minggu_per_bulan', $minggu);
-    }
-
-
-
 }
