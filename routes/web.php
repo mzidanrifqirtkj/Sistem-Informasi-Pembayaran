@@ -53,9 +53,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('user', [UserController::class, 'store'])->name('user.store')->middleware('permission:create_user');
     Route::get('user/import', [UserController::class, 'importForm'])->name('user.importForm')->middleware('permission:import_user');
     Route::post('user/import', [UserController::class, 'import'])->name('user.import')->middleware('permission:import_user');
-    Route::get('user/{id}/edit', [UserController::class, 'edit'])->name('user.edit')->middleware('permission:edit_user');
-    Route::put('user/{id}', [UserController::class, 'update'])->name('user.update')->middleware('permission:edit_user');
-    Route::delete('user/{id}', [UserController::class, 'destroy'])->name('user.destroy')->middleware('permission:delete_user');
+    Route::get('user/{user}/edit', [UserController::class, 'edit'])->name('user.edit')->middleware('permission:edit_user');
+    Route::patch('user/{user}', [UserController::class, 'update'])->name('user.update')->middleware('permission:edit_user');
+    Route::delete('user/{user}', [UserController::class, 'destroy'])->name('user.destroy')->middleware('permission:delete_user');
+    Route::get('/user/create', [UserController::class, 'create'])->name('user.create');
+    Route::post('/user/store', [UserController::class, 'store'])->name('user.store');
 
     // Kategori Santri
     Route::get('kategori-santri', [KategoriSantriController::class, 'index'])->name('kategori.index')->middleware('permission:view_kategori_santri');
