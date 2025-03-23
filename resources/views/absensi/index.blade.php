@@ -1,6 +1,81 @@
 @extends('layouts.home')
 @section('title_page', 'Absensi Santri')
 
+@section('css_inline')
+    <style>
+        /* Sticky columns */
+        .sticky-col {
+            position: sticky;
+            left: 0;
+            background-color: white;
+            z-index: 1;
+        }
+
+        .sticky-col-no {
+            left: 0;
+            min-width: 50px;
+        }
+
+        .sticky-col-nis {
+            left: 50px;
+            min-width: 100px;
+        }
+
+        .sticky-col-nama {
+            left: 150px;
+            min-width: 200px;
+        }
+
+        /* Warna untuk status absensi */
+        .badge-hadir {
+            background-color: #28a745;
+            /* Hijau */
+            color: white;
+        }
+
+        .badge-izin {
+            background-color: #ffc107;
+            /* Kuning */
+            color: black;
+        }
+
+        .badge-sakit {
+            background-color: #17a2b8;
+            /* Biru */
+            color: white;
+        }
+
+        .badge-alpha {
+            background-color: #dc3545;
+            /* Merah */
+            color: white;
+        }
+
+        .badge-secondary {
+            background-color: #6c757d;
+            /* Abu-abu */
+            color: white;
+        }
+
+        .badge-weekend {
+            background-color: #f8f9fa;
+            /* Light gray */
+            color: black;
+        }
+
+        .badge-light {
+            background-color: #f8f9fa;
+            /* Light gray */
+            color: black;
+        }
+
+        /* Scroll horizontal */
+        .table-responsive {
+            overflow-x: auto;
+        }
+    </style>
+@endsection
+
 @section('content')
     <div class="container-fluid">
         <div class="row">
@@ -113,14 +188,14 @@
                                                             <td>
                                                                 @php
                                                                     $kelasNama =
-                                                                        DB::table('riwayat_kelas')
+                                                                        DB::table('absensis')
                                                                             ->join(
                                                                                 'kelas',
-                                                                                'riwayat_kelas.kelas_id',
+                                                                                'id_kelas',
                                                                                 '=',
-                                                                                'kelas.id_kelas',
+                                                                                'absensis.kelas_id',
                                                                             )
-                                                                            ->where('santri_id', $santri->id_santri)
+                                                                            ->where('nis', $santri->nis)
                                                                             ->where(
                                                                                 'tahun_ajar_id',
                                                                                 $tahunAjar->id_tahun_ajar,
@@ -200,9 +275,12 @@
                                         <table class="table table-bordered table-striped">
                                             <thead>
                                                 <tr>
-                                                    <th rowspan="2" style="vertical-align: middle;">No</th>
-                                                    <th rowspan="2" style="vertical-align: middle;">NIS</th>
-                                                    <th rowspan="2" style="vertical-align: middle;">Nama Santri</th>
+                                                    <th class="sticky-col sticky-col-no" rowspan="2"
+                                                        style="vertical-align: middle;">No</th>
+                                                    <th class="sticky-col sticky-col-nis" rowspan="2"
+                                                        style="vertical-align: middle;">NIS</th>
+                                                    <th class="sticky-col sticky-col-nama" rowspan="2"
+                                                        style="vertical-align: middle;">Nama Santri</th>
                                                     <th colspan="{{ $daysInMonth }}" class="text-center">Tanggal</th>
                                                 </tr>
                                                 <tr>
@@ -214,31 +292,35 @@
                                             <tbody>
                                                 @foreach ($santris as $key => $santri)
                                                     <tr>
-                                                        <td>{{ $key + 1 }}</td>
-                                                        <td>{{ $santri->nis }}</td>
-                                                        <td>{{ $santri->nama_santri }}</td>
+                                                        <td class="sticky-col sticky-col-no">{{ $key + 1 }}</td>
+                                                        <td class="sticky-col sticky-col-nis">{{ $santri->nis }}</td>
+                                                        <td class="sticky-col sticky-col-nama">{{ $santri->nama_santri }}
+                                                        </td>
 
                                                         @for ($i = 1; $i <= $daysInMonth; $i++)
+                                                            @php
+                                                                $day = str_pad($i, 2, '0', STR_PAD_LEFT); // Format hari menjadi 2 digit (01, 02, dst.)
+                                                            @endphp
                                                             <td class="text-center">
-                                                                @if (isset($absensis[$santri->nis][$i]))
+                                                                @if (isset($absensis[$santri->nis][$day]))
                                                                     @php
-                                                                        $status = $absensis[$santri->nis][$i]->status;
+                                                                        $status = $absensis[$santri->nis][$day]->status;
                                                                         if ($status == 'hadir') {
-                                                                            $badge = 'success';
+                                                                            $badge = 'badge-hadir';
                                                                             $text = 'H';
                                                                         } elseif ($status == 'izin') {
-                                                                            $badge = 'warning';
+                                                                            $badge = 'badge-izin';
                                                                             $text = 'I';
                                                                         } elseif ($status == 'sakit') {
-                                                                            $badge = 'info';
+                                                                            $badge = 'badge-sakit';
                                                                             $text = 'S';
                                                                         } else {
-                                                                            $badge = 'danger';
+                                                                            $badge = 'badge-alpha';
                                                                             $text = 'A';
                                                                         }
                                                                     @endphp
                                                                     <span
-                                                                        class="badge badge-{{ $badge }}">{{ $text }}</span>
+                                                                        class="badge {{ $badge }}">{{ $text }}</span>
                                                                 @else
                                                                     @php
                                                                         $date = \Carbon\Carbon::createFromDate(
@@ -286,53 +368,53 @@
             </div>
         </div>
     </div>
+@endsection
 
-    @push('scripts')
-        <script>
-            $(document).ready(function() {
-                // Inisialisasi tooltip
-                $('[data-toggle="tooltip"]').tooltip();
+@section('script')
+    <script>
+        $(document).ready(function() {
+            // Inisialisasi tooltip
+            $('[data-toggle="tooltip"]').tooltip();
 
-                // Tombol untuk mengisi absensi per tanggal tertentu
-                $('.btn-isi-absensi').on('click', function() {
-                    let tanggal = $(this).data('tanggal');
-                    $('#modalTanggal').text(tanggal);
-                    $('#inputTanggal').val(tanggal);
-                    $('#modalAbsensi').modal('show');
-                });
+            // Tombol untuk mengisi absensi per tanggal tertentu
+            $('.btn-isi-absensi').on('click', function() {
+                let tanggal = $(this).data('tanggal');
+                $('#modalTanggal').text(tanggal);
+                $('#inputTanggal').val(tanggal);
+                $('#modalAbsensi').modal('show');
+            });
 
-                // Ajax untuk menyimpan absensi
-                $(document).on('change', '.radioAbsensi', function() {
-                    let nis = $(this).data('nis');
-                    let status = $(this).val();
-                    let tanggal = $(this).data('tanggal');
-                    let kelas_id = $('#kelas').val() || $(this).data('kelas');
-                    let tahun_ajar_id = $('#tahun_ajar').val();
+            // Ajax untuk menyimpan absensi
+            $(document).on('change', '.radioAbsensi', function() {
+                let nis = $(this).data('nis');
+                let status = $(this).val();
+                let tanggal = $(this).data('tanggal');
+                let kelas_id = $('#kelas').val() || $(this).data('kelas');
+                let tahun_ajar_id = $('#tahun_ajar').val();
 
-                    $.ajax({
-                        url: "{{ route('absensi.store') }}",
-                        type: "POST",
-                        data: {
-                            _token: "{{ csrf_token() }}",
-                            nis: nis,
-                            kelas_id: kelas_id,
-                            tanggal: tanggal,
-                            status: status,
-                            tahun_ajar_id: tahun_ajar_id
-                        },
-                        success: function(response) {
-                            if (response.status === 'success') {
-                                toastr.success(response.message);
-                            } else {
-                                toastr.error(response.message);
-                            }
-                        },
-                        error: function(xhr) {
-                            toastr.error('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                $.ajax({
+                    url: "{{ route('absensi.store') }}",
+                    type: "POST",
+                    data: {
+                        _token: "{{ csrf_token() }}",
+                        nis: nis,
+                        kelas_id: kelas_id,
+                        tanggal: tanggal,
+                        status: status,
+                        tahun_ajar_id: tahun_ajar_id
+                    },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            toastr.success(response.message);
+                        } else {
+                            toastr.error(response.message);
                         }
-                    });
+                    },
+                    error: function(xhr) {
+                        toastr.error('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                    }
                 });
             });
-        </script>
-    @endpush
+        });
+    </script>
 @endsection

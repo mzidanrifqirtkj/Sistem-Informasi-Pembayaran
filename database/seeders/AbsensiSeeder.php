@@ -6,54 +6,65 @@ use App\Models\Kelas;
 use App\Models\Santri;
 use App\Models\TahunAjar;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class AbsensiSeeder extends Seeder
 {
     public function run(): void
     {
-        // Ambil data santri, kelas, dan tahun ajar
-        $santri = Santri::first(); // Ambil santri pertama
-        $kelas = Kelas::first(); // Ambil kelas pertama
-        $tahunAjar = TahunAjar::first(); // Ambil tahun ajar pertama
+        // Ambil semua santri
+        $santris = Santri::all();
 
-        // Data absensi contoh
-        $absensis = [
-            [
-                'nis' => $santri->nis,
-                'kelas_id' => $kelas->id_kelas,
-                'tanggal' => '2023-10-01',
-                'status' => 'hadir',
-                'tahun_ajar_id' => $tahunAjar->id_tahun_ajar,
-            ],
-            [
-                'nis' => $santri->nis,
-                'kelas_id' => $kelas->id_kelas,
-                'tanggal' => '2023-10-02',
-                'status' => 'izin',
-                'tahun_ajar_id' => $tahunAjar->id_tahun_ajar,
-            ],
-            [
-                'nis' => $santri->nis,
-                'kelas_id' => $kelas->id_kelas,
-                'tanggal' => '2023-10-03',
-                'status' => 'sakit',
-                'tahun_ajar_id' => $tahunAjar->id_tahun_ajar,
-            ],
-            [
-                'nis' => $santri->nis,
-                'kelas_id' => $kelas->id_kelas,
-                'tanggal' => '2023-10-04',
-                'status' => 'alpa',
-                'tahun_ajar_id' => $tahunAjar->id_tahun_ajar,
-            ],
-        ];
+        // Ambil semua kelas dan tahun ajar
+        $kelasList = Kelas::all();
+        $tahunAjarList = TahunAjar::all();
 
-        // Insert data ke tabel absensis
-        foreach ($absensis as $absensi) {
-            Absensi::create($absensi);
+        if ($santris->isEmpty() || $kelasList->isEmpty() || $tahunAjarList->isEmpty()) {
+            $this->command->error('Data santri, kelas, atau tahun ajar tidak ditemukan.');
+            return;
         }
 
-        $this->command->info('Data absensi berhasil ditambahkan!');
+        // Loop setiap santri dan buat data absensi
+        foreach ($santris as $santri) {
+            $kelas1 = $kelasList->random(); // Pilih kelas secara acak
+            $kelas2 = $kelasList->random(); // Pilih kelas lain secara acak
+            $tahunAjar1 = $tahunAjarList->random(); // Pilih tahun ajar secara acak
+            $tahunAjar2 = $tahunAjarList->random(); // Pilih tahun ajar lain secara acak
+
+            $absensis = [
+                [
+                    'nis' => $santri->nis,
+                    'kelas_id' => $kelas1->id_kelas,
+                    'tanggal' => '2025-03-01',
+                    'status' => 'hadir',
+                    'tahun_ajar_id' => $tahunAjar1->id_tahun_ajar,
+                ],
+                [
+                    'nis' => $santri->nis,
+                    'kelas_id' => $kelas2->id_kelas,
+                    'tanggal' => '2025-03-02',
+                    'status' => 'izin',
+                    'tahun_ajar_id' => $tahunAjar2->id_tahun_ajar,
+                ],
+                [
+                    'nis' => $santri->nis,
+                    'kelas_id' => $kelas1->id_kelas,
+                    'tanggal' => '2025-03-03',
+                    'status' => 'sakit',
+                    'tahun_ajar_id' => $tahunAjar1->id_tahun_ajar,
+                ],
+                [
+                    'nis' => $santri->nis,
+                    'kelas_id' => $kelas2->id_kelas,
+                    'tanggal' => '2025-03-04',
+                    'status' => 'alpa',
+                    'tahun_ajar_id' => $tahunAjar2->id_tahun_ajar,
+                ],
+            ];
+
+            // Insert data ke tabel absensis
+            Absensi::insert($absensis);
+        }
+
+        $this->command->info('Data absensi untuk semua santri berhasil ditambahkan!');
     }
 }

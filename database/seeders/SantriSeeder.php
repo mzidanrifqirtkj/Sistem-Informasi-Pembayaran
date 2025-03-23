@@ -18,8 +18,13 @@ class SantriSeeder extends Seeder
         $user = User::firstOrCreate([
             // 'name' => 'Santri User',
             'email' => 'santri@gmail.com',
-            'password' => bcrypt('password'),
+            'password' => bcrypt('12345678'),
         ]);
+
+        $userZidan = User::firstOrCreate(
+            ['email' => 'zidan@gmail.com'],
+            ['password' => bcrypt('12345678')]
+        );
 
         $kategoriSantri = KategoriSantri::firstOrCreate([
             'nama_kategori' => 'Santri Baru',
@@ -66,6 +71,40 @@ class SantriSeeder extends Seeder
                 'tanggal_lahir_wali' => null,
                 'status' => 'Aktif',
                 'tabungan' => 0,
+            ],
+            [
+                'nama_santri' => 'Zidan',
+                'nis' => '201002',
+                'nik' => '2233445566778899',
+                'no_kk' => '9988776655443322',
+                'jenis_kelamin' => 'Laki-laki',
+                'tanggal_lahir' => '2011-05-15',
+                'tempat_lahir' => 'Bandung',
+                'no_hp' => '081298765432',
+                'alamat' => 'Jl. Cendana No. 7',
+                'golongan_darah' => 'B',
+                'pendidikan_formal' => 'SMP',
+                'pendidikan_non_formal' => 'Ponpes',
+                'foto' => null,
+                'foto_kk' => null,
+                'tanggal_masuk' => '2023-08-10',
+                'is_ustadz' => false,
+                'user_id' => $userZidan->id_user,
+                'kategori_santri_id' => $kategoriSantri->id_kategori_santri,
+                'nama_ayah' => 'Ayah Zidan',
+                'no_hp_ayah' => '081212345678',
+                'pekerjaan_ayah' => 'Pegawai Negeri',
+                'tempat_lahir_ayah' => 'Bandung',
+                'tanggal_lahir_ayah' => '1982-03-10',
+                'alamat_ayah' => 'Jl. Cendana No. 7',
+                'nama_ibu' => 'Ibu Zidan',
+                'no_hp_ibu' => '081234567123',
+                'pekerjaan_ibu' => 'Guru',
+                'alamat_ibu' => 'Jl. Cendana No. 7',
+                'tempat_lahir_ibu' => 'Bandung',
+                'tanggal_lahir_ibu' => '1986-09-21',
+                'status' => 'Aktif',
+                'tabungan' => 50000,
             ],
         ];
 

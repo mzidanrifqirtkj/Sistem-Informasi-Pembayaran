@@ -18,20 +18,20 @@ class Kelas extends Model
         return $this->hasMany(Absensi::class, 'kelas_id', 'id_kelas');
     }
 
-    public function riwayatKelas()
-    {
-        return $this->hasMany(RiwayatKelas::class, 'kelas_id', 'id_kelas');
-    }
+    // public function riwayatKelas()
+    // {
+    //     return $this->hasMany(RiwayatKelas::class, 'kelas_id', 'id_kelas');
+    // }
 
-    public function mapelKelas()
-    {
-        return $this->hasMany(MapelKelas::class, 'kelas_id', 'id_kelas');
-    }
+    // public function mapelKelas()
+    // {
+    //     return $this->hasMany(MapelKelas::class, 'kelas_id', 'id_kelas');
+    // }
 
-    public function waliKelas()
-    {
-        return $this->hasOne(WaliKelas::class, 'kelas_id');
-    }
+    // public function waliKelas()
+    // {
+    //     return $this->hasOne(WaliKelas::class, 'kelas_id');
+    // }
 
 
 }
