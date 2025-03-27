@@ -14,10 +14,8 @@
             <thead>
                 <tr align="center">
                     <th width="5%">No</th>
-                    <th>Nis</th>
                     <th>Nama Santri</th>
                     <th>Email</th>
-                    <th>Role</th>
                     <th width="13%">Action</th>
                 </tr>
             </thead>
@@ -33,9 +31,9 @@
 
 <?php $__env->startSection('modal'); ?>
     <!-- Modal Delete -->
-    <div class="modal fade" id="deleteSuratModal" tabindex="-1" role="dialog">
+    <div class="modal fade" id="deleteUserModal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
-            <form action="javascript:void(0)" id="deleteForm" method="post">
+            <form id="deleteForm" method="post">
                 <?php echo method_field('DELETE'); ?>
                 <?php echo csrf_field(); ?>
                 <div class="modal-content">
@@ -76,14 +74,6 @@
                         name: 'santri'
                     },
                     {
-                        data: 'nis',
-                        name: 'nis'
-                    },
-                    {
-                        data: 'role',
-                        name: 'role'
-                    },
-                    {
                         data: 'email',
                         name: 'email'
                     },
@@ -97,17 +87,19 @@
             });
         });
 
-
         function viewFile(data) {
             let url = window.location.origin + '/storage/in-mail/' + data;
             $('#embed-file').attr('src', url);
         }
 
-        function deleteData(id) {
-            let url = '<?php echo e(route('user.destroy', ':id')); ?>';
-            url = url.replace(':id', id);
+        function deleteData(user) {
+            let url = '<?php echo e(route('user.destroy', ':user')); ?>';
+            url = url.replace(':user', user);
             $("#deleteForm").attr('action', url);
+            $("#deleteUserModal").modal('show');
         }
+
+
 
         function formSubmit() {
             $("#deleteForm").submit();
