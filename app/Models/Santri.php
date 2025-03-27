@@ -106,4 +106,14 @@ class Santri extends Model
     {
         return $this->hasMany(QoriKelas::class, 'ustadz_id', 'id_santri');
     }
+
+    public function kelas()
+    {
+        return $this->belongsTo(Kelas::class);
+    }
+
+    public function absensiMataPelajaran()
+    {
+        return $this->hasMany(AbsensiSetiapMapel::class);
+    }
 }

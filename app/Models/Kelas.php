@@ -18,6 +18,16 @@ class Kelas extends Model
         return $this->hasMany(Absensi::class, 'kelas_id', 'id_kelas');
     }
 
+    public function santri()
+    {
+        return $this->hasMany(Santri::class);
+    }
+
+    public function mataPelajaranKelas()
+    {
+        return $this->hasMany(MapelKelas::class);
+    }
+
     // public function riwayatKelas()
     // {
     //     return $this->hasMany(RiwayatKelas::class, 'kelas_id', 'id_kelas');

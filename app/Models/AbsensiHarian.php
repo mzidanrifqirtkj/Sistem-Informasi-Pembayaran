@@ -12,13 +12,16 @@ class AbsensiHarian extends Model
     protected $table = 'absensi_harian';
 
     protected $primaryKey = 'id';
-    protected $fillable = [
-        'santri_id',
-        'tanggal_hari',
-    ];
+    protected $fillable = ['tanggal', 'tahun_ajar_id'];
 
-    public function santri()
+
+    public function tahunAjar()
     {
-        return $this->belongsTo(Santri::class, 'santri_id', 'id_santri');
+        return $this->belongsTo(TahunAjar::class);
+    }
+
+    public function absensiSetiapMapel()
+    {
+        return $this->hasMany(AbsensiSetiapMapel::class, 'absensi_harian_id');
     }
 }

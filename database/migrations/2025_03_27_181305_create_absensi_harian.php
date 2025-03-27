@@ -12,11 +12,10 @@ return new class extends Migration {
     {
         Schema::create('absensi_harian', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('santri_id');
-            $table->date('tanggal_hari');
+            $table->date('tanggal');
+            $table->unsignedBigInteger('tahun_ajar_id');
+            $table->foreign('tahun_ajar_id')->references('id_tahun_ajar')->on('tahun_ajars')->onDelete('cascade');
             $table->timestamps();
-
-            $table->foreign('santri_id')->references('id_santri')->on('santris')->onDelete('cascade');
         });
     }
 
