@@ -2,16 +2,10 @@
 
 namespace Database\Seeders;
 
-<<<<<<< HEAD
-use App\Models\Santri;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-=======
 use Illuminate\Database\Seeder;
 use App\Models\Santri;
 use App\Models\User;
 use App\Models\KategoriSantri;
->>>>>>> f0ecd003136d68cfa209bb43aa1778bffe5ed284
 
 class SantriSeeder extends Seeder
 {
@@ -20,54 +14,19 @@ class SantriSeeder extends Seeder
      */
     public function run(): void
     {
-<<<<<<< HEAD
-        Santri::create([
-            'nama_santri' => 'Ahmad Ubaidillah',
-            'nis' => '2025001',
-            'nik' => '3210010101010001',
-            'no_kk' => '3210010101010001',
-            'jenis_kelamin' => 'Laki-laki',
-            'tanggal_lahir' => '2001-04-13',
-            'tempat_lahir' => 'Cirebon',
-            'no_hp' => '081234567890',
-            'alamat' => 'Yogyakarta',
-            'golongan_darah' => 'O',
-            'pendidikan_formal' => 'S1',
-            'pendidikan_non_formal' => 'Tahfidz',
-            'foto' => null,
-            'foto_kk' => null,
-            'tanggal_masuk' => '2025-01-01',
-            'is_ustadz' => false,
-            'user_id' => null, // Sesuaikan nanti setelah user dibuat
-            'kategori_santri_id' => 1,
-            'nama_ayah' => 'Bapak Ahmad',
-            'no_hp_ayah' => '081234567891',
-            'pekerjaan_ayah' => 'Petani',
-            'tempat_lahir_ayah' => 'Cirebon',
-            'tanggal_lahir_ayah' => '1975-05-10',
-            'alamat_ayah' => 'Cirebon',
-            'nama_ibu' => 'Ibu Ahmad',
-            'no_hp_ibu' => '081234567892',
-            'pekerjaan_ibu' => 'Ibu Rumah Tangga',
-            'alamat_ibu' => 'Cirebon',
-            'tempat_lahir_ibu' => 'Cirebon',
-            'tanggal_lahir_ibu' => '1980-08-15',
-            'nama_wali' => 'Pak Wali',
-            'no_hp_wali' => '081234567893',
-            'pekerjaan_wali' => 'Guru',
-            'alamat_wali' => 'Yogyakarta',
-            'tempat_lahir_wali' => 'Cirebon',
-            'tanggal_lahir_wali' => '1970-03-20',
-            'status' => 'Aktif',
-            'tabungan' => 500000,
-        ]);
-=======
+
+
         // Ambil atau buat user dan kategori santri
         $user = User::firstOrCreate([
             // 'name' => 'Santri User',
             'email' => 'santri@gmail.com',
-            'password' => bcrypt('password'),
+            'password' => bcrypt('12345678'),
         ]);
+
+        $userZidan = User::firstOrCreate(
+            ['email' => 'zidan@gmail.com'],
+            ['password' => bcrypt('12345678')]
+        );
 
         $kategoriSantri = KategoriSantri::firstOrCreate([
             'nama_kategori' => 'Santri Baru',
@@ -115,6 +74,40 @@ class SantriSeeder extends Seeder
                 'status' => 'Aktif',
                 'tabungan' => 0,
             ],
+            [
+                'nama_santri' => 'Zidan',
+                'nis' => '201002',
+                'nik' => '2233445566778899',
+                'no_kk' => '9988776655443322',
+                'jenis_kelamin' => 'Laki-laki',
+                'tanggal_lahir' => '2011-05-15',
+                'tempat_lahir' => 'Bandung',
+                'no_hp' => '081298765432',
+                'alamat' => 'Jl. Cendana No. 7',
+                'golongan_darah' => 'B',
+                'pendidikan_formal' => 'SMP',
+                'pendidikan_non_formal' => 'Ponpes',
+                'foto' => null,
+                'foto_kk' => null,
+                'tanggal_masuk' => '2023-08-10',
+                'is_ustadz' => false,
+                'user_id' => $userZidan->id_user,
+                'kategori_santri_id' => $kategoriSantri->id_kategori_santri,
+                'nama_ayah' => 'Ayah Zidan',
+                'no_hp_ayah' => '081212345678',
+                'pekerjaan_ayah' => 'Pegawai Negeri',
+                'tempat_lahir_ayah' => 'Bandung',
+                'tanggal_lahir_ayah' => '1982-03-10',
+                'alamat_ayah' => 'Jl. Cendana No. 7',
+                'nama_ibu' => 'Ibu Zidan',
+                'no_hp_ibu' => '081234567123',
+                'pekerjaan_ibu' => 'Guru',
+                'alamat_ibu' => 'Jl. Cendana No. 7',
+                'tempat_lahir_ibu' => 'Bandung',
+                'tanggal_lahir_ibu' => '1986-09-21',
+                'status' => 'Aktif',
+                'tabungan' => 50000,
+            ],
         ];
 
         // Insert data ke tabel santris
@@ -123,6 +116,6 @@ class SantriSeeder extends Seeder
         }
 
         $this->command->info('Data santri berhasil ditambahkan!');
->>>>>>> f0ecd003136d68cfa209bb43aa1778bffe5ed284
+
     }
 }

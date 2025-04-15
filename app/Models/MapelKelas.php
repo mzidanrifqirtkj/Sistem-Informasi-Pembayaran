@@ -12,12 +12,15 @@ class MapelKelas extends Model
     protected $fillable = [
         'kelas_id',
         'mapel_id',
-        'tahun_ajar_id'
+        'tahun_ajar_id',
+        'qori_id',
+        'jam_mulai',
+        'jam_selesai'
     ];
 
     public function kelas()
     {
-        return $this->belongsTo(Kelas::class, 'kelas_id',  'id_kelas');
+        return $this->belongsTo(Kelas::class, 'kelas_id', 'id_kelas');
     }
 
     public function mataPelajaran()
@@ -32,6 +35,11 @@ class MapelKelas extends Model
 
     public function qoriKelas()
     {
-        return $this->hasMany(QoriKelas::class, 'mapel_kelas_id', 'id_mapel_kelas');
+        return $this->hasMany(QoriKelas::class, 'qori_id', 'id_qori_kelas');
+    }
+
+    public function absensiSetiapMapel()
+    {
+        return $this->hasMany(AbsensiSetiapMapel::class);
     }
 }

@@ -140,7 +140,7 @@
 
             <li class="menu-header">Madrasah Diniyah</li>
 
-            {{-- <!-- Menu Kurikulum -->
+            <!-- Menu Kurikulum -->
             @canany(['view_mapel_kelas', 'view_kelas', 'view_tahun_ajar', 'view_mapel'])
                 <li
                     class="dropdown {{ request()->routeIs('mapel*') || request()->routeIs('kelas*') || request()->routeIs('mapel_kelas*') ? 'active' : '' }}">
@@ -191,7 +191,7 @@
                         @endcan
                     </ul>
                 </li>
-            @endcanany --}}
+            @endcanany
 
             <!-- Menu Absensi -->
             @can('view_absensi')
