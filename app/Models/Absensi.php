@@ -11,26 +11,11 @@ class Absensi extends Model
     protected $table = 'absensis';
     protected $primaryKey = 'id_absensi';
     protected $fillable = [
-        'santri_id',
         'nis',
-        'nama_santri',
-        'jumlah_hadir',
-        'jumlah_izin',
-        'jumlah_sakit',
-        'jumlah_alpha',
-        'bulan',
-        'minggu_per_bulan',
-        'tahun_ajar_id',
         'kelas_id',
-    ];
-
-    protected $casts = [
-        'jumlah_hadir' => 'integer',
-        'jumlah_izin' => 'integer',
-        'jumlah_sakit' => 'integer',
-        'jumlah_alpha' => 'integer',
-        'bulan' => 'string',
-        'minggu_per_bulan' => 'string',
+        'tanggal',
+        'status',
+        'tahun_ajar_id',
     ];
 
     public $timestamps = false;

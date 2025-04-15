@@ -1,25 +1,13 @@
-<!--
-  PROJECT: Pesantren CMS
-  AUTHOR: Muhammad Iqbal (dibaliqaja)
-  GITHUB: https://github.com/dibaliqaja/pesantren-cms
-  TWITTER: https://twitter.com/dibaliqaja
-  FACEBOOK: https://facebook.com/dibaliqaja
-  LINKEDIN: https://linkedin.com/in/dibaliqaja
-  EMAIL: dibaliqaja@gmail.com
--->
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title_page')</title>
 
     <!-- Favicon -->
-    <link rel="favicon icon" href="{{ asset('assets/img/logo.ico') }}" type="image/x-icon">
+    <link rel="icon" href="{{ asset('assets/img/logo.ico') }}" type="image/x-icon">
 
     <!-- General CSS Files -->
     <link rel="stylesheet" href="{{ asset('assets/modules/bootstrap/css/bootstrap.min.css') }}">
@@ -36,22 +24,14 @@
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/components.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/ponpes-style.css') }}">
+
     <!-- DataTables CSS -->
-    {{-- <link href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css" rel="stylesheet">
-
-    <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script> --}}
-
-
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
-    <script src="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.js"></script>
-
-
 
     <!-- CSS Custom -->
     <style>
         #cash-table tbody tr td {
-            text-align: center
+            text-align: center;
         }
     </style>
 
@@ -106,7 +86,6 @@
                     <div class="section-body">
                         <div class="card">
                             <div class="p-3">
-
                                 @yield('content')
                             </div>
                         </div>
@@ -115,30 +94,11 @@
             </div>
             <!-- End Main Content -->
 
-
-
             @include('layouts.footer')
-
         </div>
     </div>
 
     @yield('modal')
-    <script>
-        // Inisialisasi DataTables untuk semua tabel
-        $(document).ready(function() {
-            $('table').DataTable({
-                paging: true, // Menambahkan pagination
-                searching: true, // Menambahkan fitur pencarian
-                lengthChange: false, // Menonaktifkan perubahan jumlah data per halaman
-                pageLength: 10, // Menentukan jumlah data per halaman
-                order: [
-                    [0, 'asc']
-                ], // Mengurutkan berdasarkan kolom pertama
-                responsive: true, // Membuat tabel responsif
-                autoWidth: false // Menonaktifkan auto width
-            });
-        });
-    </script>
 
     <!-- General JS Scripts -->
     <script src="{{ asset('assets/modules/jquery.min.js') }}"></script>
@@ -153,23 +113,19 @@
     <script src="{{ asset('assets/modules/datatables/Select-1.2.4/js/dataTables.select.min.js') }}"></script>
     <script src="{{ asset('assets/modules/jquery-ui/jquery-ui.min.js') }}"></script>
 
-    <!-- JS Libraies -->
-    <script src="{{ asset('assets/js/page/modules-datatables.js') }}"></script>
-
-    <!-- Data Tables -->
+    <!-- DataTables JS -->
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-
 
     <!-- Page Specific JS File -->
     @yield('script')
 
-    <script>
-        $('.alert').alert()
-    </script>
-
     <!-- Template JS File -->
     <script src="{{ asset('assets/js/scripts.js') }}"></script>
     <script src="{{ asset('assets/js/custom.js') }}"></script>
+
+    <script>
+        $('.alert').alert();
+    </script>
 </body>
 
 </html>

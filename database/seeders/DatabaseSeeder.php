@@ -20,9 +20,17 @@ class DatabaseSeeder extends Seeder
 
 
         $this->call([
-            PendidikanSeeder::class,
+                // PendidikanSeeder::class,
+            KategoriSantriSeeder::class,
             BasePembayaranSeeder::class,
-            // UserSeeder::class, // jika ingin membuat dummy user
+            RolePermissionSeeder::class,
+            UserSeeder::class,
+            TahunAjarSeeder::class,
+            SantriSeeder::class,
+            KelasSeeder::class,
+            AbsensiSeeder::class,
+
+
         ]);
 
         // jika ingin membuat dummy santri

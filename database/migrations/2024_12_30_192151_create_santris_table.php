@@ -14,7 +14,7 @@ return new class extends Migration {
             //data pribadi
             $table->id('id_santri');
             $table->string('nama_santri', 100);
-            $table->integer('nis')->unique();
+            $table->string('nis')->unique();
             $table->string('nik')->unique();
             $table->string('no_kk');
             $table->string('jenis_kelamin')->enum("Laki-laki", "Perempuan");
