@@ -138,7 +138,7 @@
                 </li>
             @endcanany
 
-            <li class="menu-header">Madrasah Diniyah</li>
+            {{-- <li class="menu-header">Madrasah Diniyah</li>
 
             <!-- Menu Kurikulum -->
             @canany(['view_mapel_kelas', 'view_kelas', 'view_tahun_ajar', 'view_mapel'])
@@ -205,7 +205,7 @@
                         </li>
                     </ul>
                 </li>
-            @endcan
+            @endcan --}}
         </ul>
     </aside>
 </div>

@@ -12,44 +12,57 @@ class BiayaTerjadwalController extends Controller
 {
     public function index()
     {
-        $biayaTerjadwals = BiayaTerjadwal::all();
+        $biayaTerjadwals = BiayaTerjadwal::orderBy('periode', 'desc')->get();
         $kategoriSantri = KategoriSantri::all();
         return view('biaya-terjadwal.index', compact('biayaTerjadwals', 'kategoriSantri'));
     }
+
     public function create()
     {
-        return view('biaya-terjadwal.create');
+        $periodeOptions = [
+            'Tahunan' => 'Dana Tahunan',
+            'Sekali' => 'Dana Eksidental'
+        ];
+        return view('biaya-terjadwal.create', compact('periodeOptions'));
     }
+
     public function store(Request $request)
     {
         try {
             $request->validate([
                 'nama_biaya' => 'required|string|max:255',
-                'periode' => 'required|string|max:255',
+                'periode' => 'required|in:Tahunan,Sekali',
                 'nominal' => 'required|numeric|min:0',
             ]);
 
-            // dd($request->all());
             BiayaTerjadwal::create([
                 'nama_biaya' => $request->nama_biaya,
                 'periode' => $request->periode,
                 'nominal' => $request->nominal,
             ]);
 
-            return redirect()->route('biaya_terjadwal.index')->with('alert', 'Biaya terjadwal berhasil ditambahkan.');
+            return redirect()->route('biaya_terjadwal.index')
+                ->with('success', 'Biaya terjadwal berhasil ditambahkan.');
+
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Gagal menambahkan biaya: ' . $e->getMessage());
         }
     }
+
     public function edit($id)
     {
         try {
             $data = BiayaTerjadwal::findOrFail($id);
-            return view('biaya-terjadwal.edit', compact('data'));
-        }
-        // catch error
-        catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            $periodeOptions = [
+                'Tahunan' => 'Dana Tahunan',
+                'Sekali' => 'Dana Eksidental'
+            ];
+            return view('biaya-terjadwal.edit', compact('data', 'periodeOptions'));
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Data tidak ditemukan: ' . $e->getMessage());
         }
     }
 
@@ -58,18 +71,39 @@ class BiayaTerjadwalController extends Controller
         try {
             $request->validate([
                 'nama_biaya' => 'required|string|max:255',
-                'periode' => 'required|in:tahunan,sekali',
+                'periode' => 'required|in:Tahunan,Sekali',
                 'nominal' => 'required|numeric|min:0',
             ]);
+
             $biaya_terjadwal = BiayaTerjadwal::findOrFail($id);
             $biaya_terjadwal->update([
                 'nama_biaya' => $request->nama_biaya,
                 'periode' => $request->periode,
                 'nominal' => $request->nominal,
             ]);
-            return redirect()->route('biaya_terjadwal.index')->with('alert', 'Data berhasil diperbarui');
+
+            return redirect()->route('biaya_terjadwal.index')
+                ->with('success', 'Data biaya berhasil diperbarui');
+
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Gagal memperbarui data: ' . $e->getMessage());
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $biaya = BiayaTerjadwal::findOrFail($id);
+            $biaya->delete();
+
+            return redirect()->route('biaya_terjadwal.index')
+                ->with('success', 'Biaya berhasil dihapus');
+
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Gagal menghapus biaya: ' . $e->getMessage());
         }
     }
 }

@@ -170,11 +170,14 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('ustadz/penugasan/mustahiq', [PenugasanUstadzController::class, 'storeMustahiq'])->name('ustadz.penugasan.mustahiq.store')->middleware('permission:store_mustahiq');
 
     // Absensi
-    Route::get('/absensi', [App\Http\Controllers\AbsensiController::class, 'index'])->name('absensi.index');
-    Route::post('/absensi', [App\Http\Controllers\AbsensiController::class, 'store'])->name('absensi.store');
-    Route::post('/absensi/bulk', [App\Http\Controllers\AbsensiController::class, 'bulkStore'])->name('absensi.bulk.store');
-    Route::get('/absensi/laporan', [App\Http\Controllers\AbsensiController::class, 'laporan'])->name('absensi.laporan');
-    Route::get('/absensi/export', [App\Http\Controllers\AbsensiController::class, 'exportPdf'])->name('absensi.export');
+    Route::get('absensi', [AbsensiController::class, 'index'])->name('absensi.index')->middleware('permission:view_absensi');
+    Route::get('absensi/import', [AbsensiController::class, 'importForm'])->name('absensi.importForm')->middleware('permission:import_absensi');
+    Route::post('absensi/import', [AbsensiController::class, 'import'])->name('absensi.import')->middleware('permission:import_absensi');
+    Route::get('absensi/data', [AbsensiController::class, 'getAbsensi'])->name('absensi.data')->middleware('permission:view_absensi');
+    Route::get('absensi/{id}/edit', [AbsensiController::class, 'edit'])->name('absensi.edit')->middleware('permission:edit_absensi');
+    Route::put('absensi/{id}', [AbsensiController::class, 'update'])->name('absensi.update')->middleware('permission:edit_absensi');
+    Route::delete('absensi/{id}', [AbsensiController::class, 'destroy'])->name('absensi.destroy')->middleware('permission:delete_absensi');
+    Route::get('santri/list', [AbsensiController::class, 'getSantriList'])->name('santri.list')->middleware('permission:get_santri_list');
 
     Route::get('absensi/create', [AbsensiController::class, 'create'])->name('absensi.create')->middleware('permission:create_absensi');
     Route::post('absensi', [AbsensiController::class, 'store'])->name('absensi.store')->middleware('permission:create_absensi');

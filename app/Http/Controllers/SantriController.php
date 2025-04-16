@@ -18,22 +18,13 @@ class SantriController extends Controller
     public function index(Request $request)
     {
         $santris = Santri::select('*')
-            ->addSelect([
-                'total_aktif' => Santri::selectRaw('COUNT(*)')
-                    ->where('status', 'aktif')
-            ])
-            ->orderBy('created_at', 'desc')
-            ->paginate(5);
-        // $santris       = Santri::latest()->paginate(10);
+            ->orderBy('created_at', 'desc');
         $keyword = $request->keyword;
         if ($keyword)
             $santris = Santri::where('nama_santri', 'LIKE', "%$keyword%")
                 ->orWhere('alamat', 'LIKE', "%$keyword%")
                 ->orWhere('no_hp', 'LIKE', "%$keyword%")
-                ->latest()
-                ->paginate(5);
-
-        // $santris = Santri::orderBy('user_id', 'asc')->with(['user', 'kategoriSantri'])->get();
+                ->latest();
         return view('santri.index', compact('santris'));
     }
 
