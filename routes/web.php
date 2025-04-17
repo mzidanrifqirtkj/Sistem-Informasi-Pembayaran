@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AbsensiController;
+use App\Http\Controllers\RiwayatKelasController;
 use App\Http\Controllers\Santri\DashboardController as SantriDashboardController;
 use App\Http\Controllers\DashboardController as AdminDashboardController;
 use App\Http\Controllers\ProfileController;
@@ -182,6 +183,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('absensi/create', [AbsensiController::class, 'create'])->name('absensi.create')->middleware('permission:create_absensi');
     Route::post('absensi', [AbsensiController::class, 'store'])->name('absensi.store')->middleware('permission:create_absensi');
     Route::get('absensi/{absensi}', [AbsensiController::class, 'show'])->name('absensi.show')->middleware('permission:view_absensi');
+
+    //Riwayat Kelas
+    // Route::get('riwayat-kelas', [RiwayatKelasController::class, 'index'])->name('riwayat-kelas.index')->middleware('permission:view_riwayat_kelas');
 });
 
 // Route untuk admin dan santri

@@ -168,6 +168,11 @@
                                 <a class="nav-link" href="{{ route('mapel.index') }}">Daftar Mapel</a>
                             </li>
                         @endcan
+                        @can('view_mapel')
+                            <li class="{{ request()->routeIs('riwayat*') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('riwayat.index') }}">Riwayat Kelas</a>
+                            </li>
+                        @endcan
                     </ul>
                 </li>
             @endcanany
