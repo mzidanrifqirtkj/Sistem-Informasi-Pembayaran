@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\AbsensiController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RiwayatKelasController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\Santri\DashboardController as SantriDashboardController;
 use App\Http\Controllers\DashboardController as AdminDashboardController;
 use App\Http\Controllers\ProfileController;
@@ -183,6 +185,14 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('absensi/create', [AbsensiController::class, 'create'])->name('absensi.create')->middleware('permission:create_absensi');
     Route::post('absensi', [AbsensiController::class, 'store'])->name('absensi.store')->middleware('permission:create_absensi');
     Route::get('absensi/{absensi}', [AbsensiController::class, 'show'])->name('absensi.show')->middleware('permission:view_absensi');
+
+    // Roles & Permission Management
+    Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+    Route::get('/roles/create', [RoleController::class, 'create'])->name('roles.create');
+    Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
+    Route::get('/roles/{role}/edit', [RoleController::class, 'edit'])->name('roles.edit');
+    Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+    Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
 
     //Riwayat Kelas
     // Route::get('riwayat-kelas', [RiwayatKelasController::class, 'index'])->name('riwayat-kelas.index')->middleware('permission:view_riwayat_kelas');
