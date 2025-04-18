@@ -37,21 +37,22 @@
                 @endif
             @endcan
 
-            @can('view_roles')
-            @endcan
-
-
-            <!-- Menu Data Pengguna -->
-            @can('view_roles')
-            @endcan
-
             <li class="menu-header">Roles & Permissions</li>
-            <li class="{{ request()->routeIs('roles.*') ? 'active' : '' }}">
-                <a href="{{ route('roles.index') }}" class="nav-link">
-                    <i class="fas fa-user-cog"></i><span>Roles & Permissions</span>
-                </a>
-            </li>
+            @can('view_role')
+                <li class="{{ request()->routeIs('roles.*') ? 'active' : '' }}">
+                    <a href="{{ route('roles.index') }}" class="nav-link">
+                        <i class="fas fa-user-cog"></i><span>Roles</span>
+                    </a>
+                </li>
+            @endcan
 
+            @can('view_permission')
+                <li class="{{ request()->routeIs('permissions.*') ? 'active' : '' }}">
+                    <a href="{{ route('permissions.index') }}" class="nav-link">
+                        <i class="fas fa-key"></i><span>Permissions</span>
+                    </a>
+                </li>
+            @endcan
 
             @can('view_user')
                 <li class="menu-header">User</li>
