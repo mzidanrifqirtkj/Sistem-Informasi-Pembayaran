@@ -12,9 +12,10 @@ return new class extends Migration {
     {
         Schema::create('qori_kelas', function (Blueprint $table) {
             $table->id('id_qori_kelas');
-            $table->unsignedBigInteger('santri_id');
-            $table->foreign('santri_id')->references('id_santri')->on('santris')->onDelete('cascade')->where('is_ustadz', true);
-            $table->unique(['santri_id']);
+            $table->enum('status', ['aktif', 'tidak aktif'])->default('aktif');
+            $table->unsignedBigInteger('nis');
+            $table->foreign('nis')->references('id_santri')->on('santris')->onDelete('cascade')->where('is_ustadz', true);
+            $table->unique(['nis']);
             $table->timestamps();
         });
     }

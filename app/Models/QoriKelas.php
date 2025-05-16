@@ -12,13 +12,13 @@ class QoriKelas extends Model
     protected $table = 'qori_kelas';
     protected $primaryKey = 'id_qori_kelas';
     protected $fillable = [
-        'santri_di',
-        'mapel_kelas_id',
+        'nis',
+        'status'
     ];
 
     public function santri()
     {
-        return $this->belongsTo(Santri::class, 'santri_id', 'id_santri');
+        return $this->belongsTo(Santri::class, 'nis', 'nis');
     }
 
     public function mapelKelas()

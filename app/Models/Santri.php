@@ -104,7 +104,7 @@ class Santri extends Model
 
     public function qoriKelas()
     {
-        return $this->hasMany(QoriKelas::class, 'ustadz_id', 'id_santri');
+        return $this->hasMany(QoriKelas::class, 'nis', 'nis');
     }
 
     public function kelas()

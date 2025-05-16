@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\AbsensiController;
 use App\Http\Controllers\PermissionController;
-use App\Http\Controllers\QoriController;
+use App\Http\Controllers\QoriKelasController;
 use App\Http\Controllers\RiwayatKelasController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\Santri\DashboardController as SantriDashboardController;
@@ -203,13 +203,19 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::put('/permissions/{permission}', [PermissionController::class, 'update'])->name('permissions.update');
     Route::delete('/permissions/{permission}', [PermissionController::class, 'destroy'])->name('permissions.destroy');
 
-    //Qori
-    Route::get('/qori', [QoriController::class, 'index'])->name('qori.index');
-    Route::get('/qori/create', [QoriController::class, 'create'])->name('qori.create');
-    Route::post('/qori', [PermissionController::class, 'store'])->name('qori.store');
-    Route::get('/qori/{id}/edit', [PermissionController::class, 'edit'])->name('qori.edit');
-    Route::put('/qori/{id}', [PermissionController::class, 'update'])->name('qori.update');
-    Route::delete('/qori/{id}', [PermissionController::class, 'destroy'])->name('qori.destroy');
+    //Qori Kelas
+    Route::get('/qori_kelas', [QoriKelasController::class, 'index'])->name('qori_kelas.index');
+    Route::get('/qori_kelas/create', [QoriKelasController::class, 'create'])->name('qori_kelas.create');
+    Route::post('/qori_kelas', [QoriKelasController::class, 'store'])->name('qori_kelas.store');
+    Route::get('/qori_kelas/{id}/edit', [QoriKelasController::class, 'edit'])->name('qori_kelas.edit');
+    Route::put('/qori_kelas/{id}', [QoriKelasController::class, 'update'])->name('qori_kelas.update');
+    Route::delete('qori_kelas/{id}', [QoriKelasController::class, 'destroy'])
+        ->name('qori_kelas.destroy');
+    Route::post('/qori_kelas/generate', [QoriKelasController::class, 'generateFromSantri'])->name('qori_kelas.generate');
+    Route::post('qori_kelas/{id}/toggle-status', [QoriKelasController::class, 'toggleStatus'])
+        ->name('qori_kelas.toggle-status');
+
+
 
     //Riwayat Kelas
     // Route::get('riwayat-kelas', [RiwayatKelasController::class, 'index'])->name('riwayat-kelas.index')->middleware('permission:view_riwayat_kelas');

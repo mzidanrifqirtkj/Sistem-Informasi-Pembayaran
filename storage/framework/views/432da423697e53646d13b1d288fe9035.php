@@ -38,21 +38,21 @@
             <?php endif; ?>
 
             <li class="menu-header">Roles & Permissions</li>
-            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_role')): ?>
-                <li class="<?php echo e(request()->routeIs('roles.*') ? 'active' : ''); ?>">
-                    <a href="<?php echo e(route('roles.index')); ?>" class="nav-link">
-                        <i class="fas fa-user-cog"></i><span>Roles</span>
-                    </a>
-                </li>
-            <?php endif; ?>
 
-            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_permission')): ?>
-                <li class="<?php echo e(request()->routeIs('permissions.*') ? 'active' : ''); ?>">
-                    <a href="<?php echo e(route('permissions.index')); ?>" class="nav-link">
-                        <i class="fas fa-key"></i><span>Permissions</span>
-                    </a>
-                </li>
-            <?php endif; ?>
+            <li class="<?php echo e(request()->routeIs('roles.*') ? 'active' : ''); ?>">
+                <a href="<?php echo e(route('roles.index')); ?>" class="nav-link">
+                    <i class="fas fa-user-cog"></i><span>Roles</span>
+                </a>
+            </li>
+
+
+
+            <li class="<?php echo e(request()->routeIs('permissions.*') ? 'active' : ''); ?>">
+                <a href="<?php echo e(route('permissions.index')); ?>" class="nav-link">
+                    <i class="fas fa-key"></i><span>Permissions</span>
+                </a>
+            </li>
+
 
             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_user')): ?>
                 <li class="menu-header">User</li>
@@ -187,7 +187,7 @@
                         <?php endif; ?>
 
                         <li class="<?php echo e(request()->routeIs('mapel*') ? 'active' : ''); ?>">
-                            <a class="nav-link" href="<?php echo e(route('qori.index')); ?>">Qori Kelas</a>
+                            <a class="nav-link" href="<?php echo e(route('qori_kelas.index')); ?>">Qori Kelas</a>
                         </li>
 
                         

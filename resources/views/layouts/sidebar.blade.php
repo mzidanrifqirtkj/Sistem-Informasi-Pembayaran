@@ -38,21 +38,21 @@
             @endcan
 
             <li class="menu-header">Roles & Permissions</li>
-            @can('view_role')
-                <li class="{{ request()->routeIs('roles.*') ? 'active' : '' }}">
-                    <a href="{{ route('roles.index') }}" class="nav-link">
-                        <i class="fas fa-user-cog"></i><span>Roles</span>
-                    </a>
-                </li>
-            @endcan
 
-            @can('view_permission')
-                <li class="{{ request()->routeIs('permissions.*') ? 'active' : '' }}">
-                    <a href="{{ route('permissions.index') }}" class="nav-link">
-                        <i class="fas fa-key"></i><span>Permissions</span>
-                    </a>
-                </li>
-            @endcan
+            <li class="{{ request()->routeIs('roles.*') ? 'active' : '' }}">
+                <a href="{{ route('roles.index') }}" class="nav-link">
+                    <i class="fas fa-user-cog"></i><span>Roles</span>
+                </a>
+            </li>
+
+
+
+            <li class="{{ request()->routeIs('permissions.*') ? 'active' : '' }}">
+                <a href="{{ route('permissions.index') }}" class="nav-link">
+                    <i class="fas fa-key"></i><span>Permissions</span>
+                </a>
+            </li>
+
 
             @can('view_user')
                 <li class="menu-header">User</li>
@@ -187,7 +187,7 @@
                         @endcan
 
                         <li class="{{ request()->routeIs('mapel*') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('qori.index') }}">Qori Kelas</a>
+                            <a class="nav-link" href="{{ route('qori_kelas.index') }}">Qori Kelas</a>
                         </li>
 
                         {{-- @can('view_mapel')
