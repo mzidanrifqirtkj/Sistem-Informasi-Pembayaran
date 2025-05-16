@@ -155,6 +155,46 @@
                 </li>
             <?php endif; ?>
 
+            <li class="menu-header">Madrasah Diniyah</li>
+
+            <!-- Menu Kurikulum -->
+            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['view_mapel_kelas', 'view_kelas', 'view_tahun_ajar', 'view_mapel'])): ?>
+                <li
+                    class="dropdown <?php echo e(request()->routeIs('mapel*') || request()->routeIs('kelas*') || request()->routeIs('mapel_kelas*') ? 'active' : ''); ?>">
+                    <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
+                        <i class="fas fa-file-invoice"></i> <span>Kurikulum</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_mapel_kelas')): ?>
+                            <li class="<?php echo e(request()->routeIs('mapel_kelas*') ? 'active' : ''); ?>">
+                                <a class="nav-link" href="<?php echo e(route('mapel_kelas.index')); ?>">Mapel Kelas</a>
+                            </li>
+                        <?php endif; ?>
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_kelas')): ?>
+                            <li class="<?php echo e(request()->routeIs('kelas*') ? 'active' : ''); ?>">
+                                <a class="nav-link" href="<?php echo e(route('kelas.index')); ?>">Kelas</a>
+                            </li>
+                        <?php endif; ?>
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_tahun_ajar')): ?>
+                            <li class="<?php echo e(request()->routeIs('tahun_ajar*') ? 'active' : ''); ?>">
+                                <a class="nav-link" href="<?php echo e(route('tahun_ajar.index')); ?>">Tahun Ajar</a>
+                            </li>
+                        <?php endif; ?>
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_mapel')): ?>
+                            <li class="<?php echo e(request()->routeIs('mapel*') ? 'active' : ''); ?>">
+                                <a class="nav-link" href="<?php echo e(route('mapel.index')); ?>">Mata Pelajaran</a>
+                            </li>
+                        <?php endif; ?>
+
+                        <li class="<?php echo e(request()->routeIs('mapel*') ? 'active' : ''); ?>">
+                            <a class="nav-link" href="<?php echo e(route('qori.index')); ?>">Qori Kelas</a>
+                        </li>
+
+                        
+                    </ul>
+                </li>
+            <?php endif; ?>
+
             
         </ul>
     </aside>

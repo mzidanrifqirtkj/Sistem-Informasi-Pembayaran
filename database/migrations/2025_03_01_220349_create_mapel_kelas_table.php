@@ -22,7 +22,7 @@ return new class extends Migration {
             $table->foreign('qori_id')->references('id_qori_kelas')->on('qori_kelas')->onDelete('cascade');
             $table->time('jam_mulai');
             $table->time('jam_selesai');
-            $table->unique(['kelas_id', 'mapel_id', 'tahun_ajar_id']);
+            $table->unique(['kelas_id', 'mapel_id', 'tahun_ajar_id', 'qori_id']);
             $table->timestamps();
         });
     }

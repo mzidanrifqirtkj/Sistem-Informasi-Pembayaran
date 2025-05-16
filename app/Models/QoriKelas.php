@@ -12,18 +12,18 @@ class QoriKelas extends Model
     protected $table = 'qori_kelas';
     protected $primaryKey = 'id_qori_kelas';
     protected $fillable = [
-        'ustadz_id',
+        'santri_di',
         'mapel_kelas_id',
     ];
 
-    public function ustadz()
+    public function santri()
     {
-        return $this->belongsTo(Santri::class, 'ustadz_id', 'id_santri');
+        return $this->belongsTo(Santri::class, 'santri_id', 'id_santri');
     }
 
     public function mapelKelas()
     {
-        return $this->belongsTo(MapelKelas::class, 'mapel_kelas_id', 'id_mapel_kelas');
+        return $this->hasMany(MapelKelas::class);
     }
 
     public function penilaianSantri()

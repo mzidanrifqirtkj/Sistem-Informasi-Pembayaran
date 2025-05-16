@@ -2,7 +2,6 @@
 @section('title_page', 'Data Mapel Kelas')
 @section('content')
 
-
     <div class="row">
         <div class="col-md-2">
             <a href="{{ route('mapel_kelas.create') }}" class="btn btn-primary">Tambah Mapel Kelas</a><br><br>
@@ -30,7 +29,11 @@
                 <tr align="center">
                     <th width="5%">No</th>
                     <th>Mata Pelajaran</th>
+                    <th>Qori</th>
                     <th>Kelas</th>
+                    <th>Tahun Ajar</th>
+                    <th>Jam Mulai</th>
+                    <th>Jam Selesai</th>
                     <th width="13%">Action</th>
                 </tr>
             </thead>
@@ -38,35 +41,31 @@
                 @forelse ($mapelKelas as $mapel)
                     <tr>
                         <td>{{ $loop->iteration }}</td>
-                        <td>{{ $mapel->mataPelajaran->nama_mapel }}</td>
-                        <td>{{ $mapel->kelas->nama_kelas }}</td>
+                        <td>{{ $mapel->mataPelajaran->nama_mapel ?? '-' }}</td>
+                        <td>{{ $mapel->qoriKelas->santri->nama_santri ?? '-' }}</td>
+                        <td>{{ $mapel->kelas->nama_kelas ?? '-' }}</td>
+                        <td>{{ $mapel->tahunAjar->tahun_ajar ?? '-' }}</td>
+                        <td>{{ \Carbon\Carbon::parse($mapel->jam_mulai)->format('H:i') }}</td>
+                        <td>{{ \Carbon\Carbon::parse($mapel->jam_selesai)->format('H:i') }}</td>
                         <td align="center">
-                            {{-- @if (Auth::mapel()->role == 'Pengurus')
-                            <small class="text-warning">No Action</small>
-                        @else --}}
-                            {{-- <a href="{{ route('mapel_kelas.edit', $mapel) }}" type="button" class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a> --}}
-
-                            <a href="{{ route('mapel_kelas.edit', $mapel) }}" type="button" class="btn btn-sm btn-info"><i
-                                    class="fas fa-pen"></i></a>
+                            <a href="{{ route('mapel_kelas.edit', $mapel->id_mapel_kelas) }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-pen"></i>
+                            </a>
                             <a href="javascript:void(0)" id="btn-delete" class="btn btn-sm btn-danger"
-                                onclick="deleteData('{{ $mapel->id_mapel }}')" data-toggle="modal"
-                                data-target="#deleteModal"><i class="fas fa-trash"></i></a>
-                            {{-- @endif --}}
+                                onclick="deleteData('{{ $mapel->id_mapel_kelas }}')" data-toggle="modal"
+                                data-target="#deleteModal">
+                                <i class="fas fa-trash"></i>
+                            </a>
                         </td>
                     </tr>
-
                 @empty
                     <tr>
-                        <td colspan="4">Tidak ada data.</td>
+                        <td colspan="8">Tidak ada data.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
-
-    {{-- <div class="mt-3 float-right">
-    {{ $mapel->links('pagination::bootstrap-5') }}
-</div> --}}
 
 @endsection
 
@@ -79,7 +78,7 @@
                 @csrf
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h4 class="modal-title" id="vcenter">Hapus Kelas</h4>
+                        <h4 class="modal-title">Hapus Mapel Kelas</h4>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>

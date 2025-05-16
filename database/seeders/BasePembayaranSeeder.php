@@ -28,18 +28,18 @@ class BasePembayaranSeeder extends Seeder
         ]);
 
 
-        KategoriSantri::create([
-            'nama_kategori' => 'Reguler',
-            'nominal_syahriyah' => 250000,
-        ]);
-        KategoriSantri::create([
-            'nama_kategori' => 'Fauqo',
-            'nominal_syahriyah' => 165000,
-        ]);
-        KategoriSantri::create([
-            'nama_kategori' => 'Cuti',
-            'nominal_syahriyah' => 125000,
-        ]);
+        // KategoriSantri::create([
+        //     'nama_kategori' => 'Reguler',
+        //     'nominal_syahriyah' => 250000,
+        // ]);
+        // KategoriSantri::create([
+        //     'nama_kategori' => 'Fauqo',
+        //     'nominal_syahriyah' => 165000,
+        // ]);
+        // KategoriSantri::create([
+        //     'nama_kategori' => 'Cuti',
+        //     'nominal_syahriyah' => 125000,
+        // ]);
 
         // Buat data biaya terjadwal
         BiayaTerjadwal::create([

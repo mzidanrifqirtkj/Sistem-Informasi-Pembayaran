@@ -112,8 +112,8 @@ class Santri extends Model
         return $this->belongsTo(Kelas::class);
     }
 
-    public function absensiMataPelajaran()
-    {
-        return $this->hasMany(AbsensiSetiapMapel::class);
-    }
+    // public function absensiMataPelajaran()
+    // {
+    //     return $this->hasMany(AbsensiSetiapMapel::class);
+    // }
 }

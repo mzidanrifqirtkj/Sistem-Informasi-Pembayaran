@@ -12,11 +12,9 @@ return new class extends Migration {
     {
         Schema::create('qori_kelas', function (Blueprint $table) {
             $table->id('id_qori_kelas');
-            $table->unsignedBigInteger('ustadz_id');
-            $table->unsignedBigInteger('mapel_kelas_id');
-            $table->foreign('ustadz_id')->references('id_santri')->on('santris')->onDelete('cascade')->where('is_ustadz', true);
-            $table->foreign('mapel_kelas_id')->references('id_mapel_kelas')->on('mapel_kelas')->onDelete('cascade');
-            $table->unique(['ustadz_id', 'mapel_kelas_id']);
+            $table->unsignedBigInteger('santri_id');
+            $table->foreign('santri_id')->references('id_santri')->on('santris')->onDelete('cascade')->where('is_ustadz', true);
+            $table->unique(['santri_id']);
             $table->timestamps();
         });
     }

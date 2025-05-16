@@ -16,9 +16,8 @@ class MapelKelasController extends Controller
      */
     public function index()
     {
-        $tahu_ajar_aktif = TahunAjar::where('status', 'aktif')->first();
-        $mapelKelas = MapelKelas::where('tahun_ajar_id', $tahu_ajar_aktif->id_tahun_ajar)->with('kelas', 'mataPelajaran', 'tahunAjar')->get();
-        // $mapelKelas = MapelKelas::where('')->with('kelas', 'mataPelajaran', 'tahunAjar')->get();
+        $tahun_ajar_aktif = TahunAjar::where('status', 'aktif')->pluck('id_tahun_ajar');
+        $mapelKelas = MapelKelas::whereIn('tahun_ajar_id', $tahun_ajar_aktif)->with(['kelas', 'mataPelajaran', 'tahunAjar', 'qoriKelass'])->get();
         return view('mapel-kelas.index', compact('mapelKelas'));
     }
 
@@ -45,7 +44,9 @@ class MapelKelasController extends Controller
             $request->validate([
                 'id_kelas' => 'required|exists:kelas,id_kelas',
                 'id_tahun_ajar' => 'required|exists:tahun_ajars,id_tahun_ajar',
-                'id_mapel.*' => 'required|exists:mata_pelajarans,id_mapel', // Array pelajaran
+                'id_mapel.*' => 'required|exists:mata_pelajarans,id_mapel',
+                'jam_mulai' => 'required|date_format:H:i',
+                'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
             ]);
 
             foreach ($request->id_mapel as $mapel) {
@@ -55,7 +56,10 @@ class MapelKelasController extends Controller
                         'tahun_ajar_id' => $request->id_tahun_ajar,
                         'mapel_id' => $mapel
                     ],
-                    [] // Update tidak perlu data tambahan
+                    [
+                        'jam_mulai' => $request->jam_mulai,
+                        'jam_selesai' => $request->jam_selesai
+                    ]
                 );
             }
 

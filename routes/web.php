@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AbsensiController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\QoriController;
 use App\Http\Controllers\RiwayatKelasController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\Santri\DashboardController as SantriDashboardController;
@@ -202,6 +203,13 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::put('/permissions/{permission}', [PermissionController::class, 'update'])->name('permissions.update');
     Route::delete('/permissions/{permission}', [PermissionController::class, 'destroy'])->name('permissions.destroy');
 
+    //Qori
+    Route::get('/qori', [QoriController::class, 'index'])->name('qori.index');
+    Route::get('/qori/create', [QoriController::class, 'create'])->name('qori.create');
+    Route::post('/qori', [PermissionController::class, 'store'])->name('qori.store');
+    Route::get('/qori/{id}/edit', [PermissionController::class, 'edit'])->name('qori.edit');
+    Route::put('/qori/{id}', [PermissionController::class, 'update'])->name('qori.update');
+    Route::delete('/qori/{id}', [PermissionController::class, 'destroy'])->name('qori.destroy');
 
     //Riwayat Kelas
     // Route::get('riwayat-kelas', [RiwayatKelasController::class, 'index'])->name('riwayat-kelas.index')->middleware('permission:view_riwayat_kelas');

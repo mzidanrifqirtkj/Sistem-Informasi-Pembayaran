@@ -155,7 +155,7 @@
                 </li>
             @endcanany
 
-            {{-- <li class="menu-header">Madrasah Diniyah</li>
+            <li class="menu-header">Madrasah Diniyah</li>
 
             <!-- Menu Kurikulum -->
             @canany(['view_mapel_kelas', 'view_kelas', 'view_tahun_ajar', 'view_mapel'])
@@ -182,19 +182,24 @@
                         @endcan
                         @can('view_mapel')
                             <li class="{{ request()->routeIs('mapel*') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('mapel.index') }}">Daftar Mapel</a>
+                                <a class="nav-link" href="{{ route('mapel.index') }}">Mata Pelajaran</a>
                             </li>
                         @endcan
-                        @can('view_mapel')
+
+                        <li class="{{ request()->routeIs('mapel*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('qori.index') }}">Qori Kelas</a>
+                        </li>
+
+                        {{-- @can('view_mapel')
                             <li class="{{ request()->routeIs('riwayat*') ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('riwayat.index') }}">Riwayat Kelas</a>
                             </li>
-                        @endcan
+                        @endcan --}}
                     </ul>
                 </li>
             @endcanany
 
-            <!-- Menu Ustadz -->
+            {{-- <!-- Menu Ustadz -->
             @canany(['view_ustadz', 'view_penugasan_ustadz'])
                 <li class="dropdown {{ request()->routeIs('ustadz*') ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">

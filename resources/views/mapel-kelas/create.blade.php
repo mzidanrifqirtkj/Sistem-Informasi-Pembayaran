@@ -2,11 +2,9 @@
 @section('title_page', 'Mapel Kelas')
 @section('content')
     <div class="container">
-        <h1 class="text-center mb-4">Kelola Pelajaran Per Kelas</h1>
-
         <form action="{{ route('mapel_kelas.store') }}" method="POST">
             @csrf
-            @method('POST')
+
             <!-- Pilih Tahun Ajar -->
             <div class="mb-3">
                 <label for="tahunAjar" class="form-label">Tahun Ajar</label>
@@ -29,6 +27,19 @@
                 </select>
             </div>
 
+
+            <!-- Jam Mulai -->
+            <div class="mb-3">
+                <label for="jam_mulai" class="form-label">Jam Mulai</label>
+                <input type="time" id="jam_mulai" name="jam_mulai" class="form-control" required>
+            </div>
+
+            <!-- Jam Selesai -->
+            <div class="mb-3">
+                <label for="jam_selesai" class="form-label">Jam Selesai</label>
+                <input type="time" id="jam_selesai" name="jam_selesai" class="form-control" required>
+            </div>
+
             <!-- Pilih Pelajaran -->
             <div class="mb-3">
                 <label class="form-label">Pilih Pelajaran</label>
@@ -43,7 +54,9 @@
                         </div>
                     @endforeach
                 </div>
-                <button type="submit" class="btn btn-primary">Simpan Pelajaran</button>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Simpan Pelajaran</button>
         </form>
     </div>
 @endsection

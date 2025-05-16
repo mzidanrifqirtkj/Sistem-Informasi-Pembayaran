@@ -28,6 +28,8 @@ class Kelas extends Model
         return $this->hasMany(MapelKelas::class);
     }
 
+
+
     // public function riwayatKelas()
     // {
     //     return $this->hasMany(RiwayatKelas::class, 'kelas_id', 'id_kelas');

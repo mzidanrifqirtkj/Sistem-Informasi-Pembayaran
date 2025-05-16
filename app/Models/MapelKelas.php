@@ -13,7 +13,6 @@ class MapelKelas extends Model
         'kelas_id',
         'mapel_id',
         'tahun_ajar_id',
-        'qori_id',
         'jam_mulai',
         'jam_selesai'
     ];
@@ -35,11 +34,7 @@ class MapelKelas extends Model
 
     public function qoriKelas()
     {
-        return $this->hasMany(QoriKelas::class, 'qori_id', 'id_qori_kelas');
+        return $this->belongsTo(QoriKelas::class, 'qori_id', 'id_qori_kelas');
     }
 
-    public function absensiSetiapMapel()
-    {
-        return $this->hasMany(AbsensiSetiapMapel::class);
-    }
 }
