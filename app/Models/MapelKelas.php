@@ -12,6 +12,7 @@ class MapelKelas extends Model
     protected $fillable = [
         'kelas_id',
         'mapel_id',
+        'qori_id',
         'tahun_ajar_id',
         'jam_mulai',
         'jam_selesai'

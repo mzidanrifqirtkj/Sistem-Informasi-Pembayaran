@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Kelas;
 use App\Models\MapelKelas;
 use App\Models\MataPelajaran;
+use App\Models\QoriKelas;
 use App\Models\TahunAjar;
 use Illuminate\Http\Request;
 
@@ -17,7 +18,7 @@ class MapelKelasController extends Controller
     public function index()
     {
         $tahun_ajar_aktif = TahunAjar::where('status', 'aktif')->pluck('id_tahun_ajar');
-        $mapelKelas = MapelKelas::whereIn('tahun_ajar_id', $tahun_ajar_aktif)->with(['kelas', 'mataPelajaran', 'tahunAjar', 'qoriKelass'])->get();
+        $mapelKelas = MapelKelas::whereIn('tahun_ajar_id', $tahun_ajar_aktif)->with(['kelas', 'mataPelajaran', 'tahunAjar', 'qoriKelas'])->get();
         return view('mapel-kelas.index', compact('mapelKelas'));
     }
 
@@ -29,7 +30,8 @@ class MapelKelasController extends Controller
         $kelas = Kelas::all();
         $mapel = MataPelajaran::all();
         $tahunAjar = TahunAjar::all();
-        return view('mapel-kelas.create', compact('kelas', 'mapel', 'tahunAjar'));
+        $qoriKelas = QoriKelas::where('status', 'Aktif')->get();
+        return view('mapel-kelas.create', compact('kelas', 'mapel', 'tahunAjar', 'qoriKelas'));
     }
 
     /**
@@ -37,35 +39,29 @@ class MapelKelasController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->all());
-
+        $request->validate([
+            'kelas_id' => 'required|exists:kelas,id_kelas',
+            'tahun_ajar_id' => 'required|exists:tahun_ajars,id_tahun_ajar',
+            'mapel_id' => 'required|exists:mata_pelajarans,id_mapel',
+            'qori_id' => 'required|exists:qori_kelas,id_qori_kelas',
+            'jam_mulai' => 'required|date_format:H:i',
+            'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
+        ]);
 
         try {
-            $request->validate([
-                'id_kelas' => 'required|exists:kelas,id_kelas',
-                'id_tahun_ajar' => 'required|exists:tahun_ajars,id_tahun_ajar',
-                'id_mapel.*' => 'required|exists:mata_pelajarans,id_mapel',
-                'jam_mulai' => 'required|date_format:H:i',
-                'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
+            MapelKelas::create([
+                'kelas_id' => $request->kelas_id,
+                'tahun_ajar_id' => $request->tahun_ajar_id,
+                'qori_id' => $request->qori_id,
+                'mapel_id' => $request->mapel_id,
+                'jam_mulai' => $request->jam_mulai,
+                'jam_selesai' => $request->jam_selesai
             ]);
 
-            foreach ($request->id_mapel as $mapel) {
-                MapelKelas::updateOrCreate(
-                    [
-                        'kelas_id' => $request->id_kelas,
-                        'tahun_ajar_id' => $request->id_tahun_ajar,
-                        'mapel_id' => $mapel
-                    ],
-                    [
-                        'jam_mulai' => $request->jam_mulai,
-                        'jam_selesai' => $request->jam_selesai
-                    ]
-                );
-            }
-
-            return redirect()->route('mapel_kelas.index')->with('alert', 'Pelajaran berhasil ditambahkan ke kelas!');
+            return redirect()->route('mapel_kelas.index')
+                ->with('success', 'Pelajaran berhasil ditambahkan ke kelas!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Pelajaran gagal ditambahkan ke kelas!' . $e->getMessage());
+            return back()->with('error', 'Gagal menambahkan: ' . $e->getMessage());
         }
     }
 
@@ -82,22 +78,60 @@ class MapelKelasController extends Controller
      */
     public function edit(MapelKelas $mapelKelas)
     {
-        //
+        $qoriKelas = QoriKelas::with('santri')
+            ->where('status', 'Aktif')
+            ->has('santri') // Hanya yang punya relasi santri
+            ->get();
+        $tahunAjar = TahunAjar::all();
+        $kelas = Kelas::all();
+        $mapel = MataPelajaran::all();
+
+        return view('mapel-kelas.edit', compact(
+            'mapelKelas',
+            'qoriKelas',
+            'tahunAjar',
+            'kelas',
+            'mapel'
+        ));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, MapelKelas $mapelKelas)
     {
-        //
+        $request->validate([
+            'qori_id' => 'required|exists:qori_kelas,id_qori_kelas',
+            'tahun_ajar_id' => 'required|exists:tahun_ajars,id_tahun_ajar',
+            'kelas_id' => 'required|exists:kelas,id_kelas',
+            'mapel_id' => 'required|exists:mata_pelajarans,id_mapel',
+            'jam_mulai' => 'required|date_format:H:i',
+            'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
+        ]);
+
+        $data = $request->only([
+            'qori_id',
+            'tahun_ajar_id',
+            'kelas_id',
+            'mapel_id',
+            'jam_mulai',
+            'jam_selesai'
+        ]);
+
+        $updated = $mapelKelas->update($data);
+
+        if (!$updated) {
+            return back()->with('error', 'Gagal memperbarui data');
+        }
+
+        return redirect()->route('mapel_kelas.index')
+            ->with('success', 'Data berhasil diperbarui!');
     }
+
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(MapelKelas $mapelKelas)
     {
-        //
+        $mapelKelas->delete();
+        return redirect()->route('mapel_kelas.index')->with('alert', 'Data berhasil dihapus.');
     }
 }

@@ -1,17 +1,34 @@
 @extends('layouts.home')
-@section('title_page', 'Mapel Kelas')
+@section('title_page', 'Tambah Mapel Kelas')
 @section('content')
     <div class="container">
         <form action="{{ route('mapel_kelas.store') }}" method="POST">
             @csrf
 
+            <!-- Pilih Qori -->
+            <div class="mb-3">
+                <label for="qoriKelas" class="form-label">Qori</label>
+                <select id="qoriKelas" name="qori_id" class="form-control" required>
+                    <option value="">-- Pilih Qori --</option>
+                    @foreach ($qoriKelas as $qori)
+                        @if ($qori->santri)
+                            <option value="{{ $qori->id_qori_kelas }}">
+                                {{ $qori->santri->nama_santri }}
+                            </option>
+                        @endif
+                    @endforeach
+                </select>
+            </div>
+
             <!-- Pilih Tahun Ajar -->
             <div class="mb-3">
                 <label for="tahunAjar" class="form-label">Tahun Ajar</label>
-                <select id="tahunAjar" name="id_tahun_ajar" class="form-control" required>
-                    <option value="" disabled selected>Pilih Tahun Ajar</option>
+                <select id="tahunAjar" name="tahun_ajar_id" class="form-control" required>
+                    <option value="">-- Pilih Tahun Ajar --</option>
                     @foreach ($tahunAjar as $tahun)
-                        <option value="{{ $tahun->id_tahun_ajar }}">{{ $tahun->tahun_ajar }}</option>
+                        <option value="{{ $tahun->id_tahun_ajar }}">
+                            {{ $tahun->tahun_ajar }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -19,14 +36,15 @@
             <!-- Pilih Kelas -->
             <div class="mb-3">
                 <label for="kelas" class="form-label">Kelas</label>
-                <select id="kelas" name="id_kelas" class="form-control" required>
-                    <option value="" disabled selected>Pilih Kelas</option>
+                <select id="kelas" name="kelas_id" class="form-control" required>
+                    <option value="">-- Pilih Kelas --</option>
                     @foreach ($kelas as $k)
-                        <option value="{{ $k->id_kelas }}">{{ $k->nama_kelas }}</option>
+                        <option value="{{ $k->id_kelas }}">
+                            {{ $k->nama_kelas }}
+                        </option>
                     @endforeach
                 </select>
             </div>
-
 
             <!-- Jam Mulai -->
             <div class="mb-3">
@@ -42,21 +60,19 @@
 
             <!-- Pilih Pelajaran -->
             <div class="mb-3">
-                <label class="form-label">Pilih Pelajaran</label>
-                <div>
+                <label for="mapel_id" class="form-label">Pilih Pelajaran</label>
+                <select id="mapel_id" name="mapel_id" class="form-control" required>
+                    <option value="">-- Pilih Mata Pelajaran --</option>
                     @foreach ($mapel as $m)
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="mapel{{ $m->id_mapel }}" name="id_mapel[]"
-                                value="{{ $m->id_mapel }}">
-                            <label class="form-check-label" for="mapel{{ $m->id_mapel }}">
-                                {{ $m->nama_mapel }}
-                            </label>
-                        </div>
+                        <option value="{{ $m->id_mapel }}">
+                            {{ $m->nama_mapel }}
+                        </option>
                     @endforeach
-                </div>
+                </select>
             </div>
 
-            <button type="submit" class="btn btn-primary">Simpan Pelajaran</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+            <a href="{{ route('mapel_kelas.index') }}" class="btn btn-secondary">Batal</a>
         </form>
     </div>
 @endsection
