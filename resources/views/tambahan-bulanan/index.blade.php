@@ -1,8 +1,6 @@
 @extends('layouts.home')
-@section('title_page', 'Biaya Pembayaran')
+@section('title_page', 'Biaya Tambahan Bulanan')
 @section('content')
-
-    <h2 class="text-center my-4">Biaya Tambahan Bulanan</h2>
     <div class="row">
         <div class="col-md-2 mb-3">
             {{-- @if (auth()->user()->role == 'Administrator') --}}

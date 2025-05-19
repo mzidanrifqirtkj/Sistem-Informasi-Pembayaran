@@ -1,9 +1,8 @@
 @extends('layouts.home')
-@section('title_page', 'Biaya Pembayaran')
+@section('title_page', 'Biaya Terjadwal')
 @section('content')
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Biaya Terjadwal</h2>
         <a href="{{ route('biaya_terjadwal.create') }}" class="btn btn-primary">
             <i class="fas fa-plus-circle"></i> Tambah Biaya
         </a>

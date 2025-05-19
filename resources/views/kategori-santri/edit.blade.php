@@ -11,7 +11,7 @@
         </div>
     @endif
 
-    <form action="{{ route('kategori.store') }}" method="post">
+    <form action="{{ route('kategori.update', $data->id_kategori_santri) }}" method="post">
         @csrf
         @method('PUT')
         <div class="container">
