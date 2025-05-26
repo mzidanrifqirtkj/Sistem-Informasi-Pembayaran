@@ -73,7 +73,7 @@
             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['view_biaya_terjadwal', 'view_kategori'])): ?>
                 <li class="dropdown <?php echo e(request()->routeIs('biaya_terjadwal*') ? 'active' : ''); ?>">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
-                        <i class="fas fa-file-invoice"></i> <span>Biaya</span>
+                        <i class="fas fa-file-invoice"></i> <span>List Biaya</span>
                     </a>
                     <ul class="dropdown-menu">
                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_biaya_terjadwal')): ?>
