@@ -76,16 +76,20 @@
                         <i class="fas fa-file-invoice"></i> <span>List Biaya</span>
                     </a>
                     <ul class="dropdown-menu">
-                        @can('view_biaya_terjadwal')
-                            <li class="{{ request()->routeIs('biaya_terjadwal*') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('biaya_terjadwal.index') }}">Biaya Terjadwal</a>
-                            </li>
-                        @endcan
-                        @can('view_kategori')
-                            <li class="{{ request()->routeIs('kategori*') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('kategori.index') }}">Biaya Bulanan</a>
-                            </li>
-                        @endcan
+
+                        <li class="{{ request()->routeIs('biaya-santris*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('biaya-santris.index') }}">Biaya Santri</a>
+                        </li>
+
+
+                        <li class="{{ request()->routeIs('daftar-biayas*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('daftar-biayas.index') }}">Daftar Biaya</a>
+                        </li>
+
+                        <li class="{{ request()->routeIs('kategori-biayas*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('kategori-biayas.index') }}">Kategori Biaya</a>
+                        </li>
+
                     </ul>
                 </li>
             @endcanany

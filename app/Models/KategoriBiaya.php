@@ -14,6 +14,7 @@ class KategoriBiaya extends Model
 
     protected $fillable = [
         'nama_kategori',
+        'status'
     ];
 
     public function daftarBiayas()

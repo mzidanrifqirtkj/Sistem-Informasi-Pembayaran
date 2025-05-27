@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\AbsensiController;
+use App\Http\Controllers\BiayaSantriController;
+use App\Http\Controllers\DaftarBiayaController;
+use App\Http\Controllers\KategoriBiayaController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\QoriKelasController;
 use App\Http\Controllers\RiwayatKelasController;
@@ -64,12 +67,12 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/user/store', [UserController::class, 'store'])->name('user.store');
 
     // Kategori Santri
-    Route::get('kategori-santri', [KategoriSantriController::class, 'index'])->name('kategori.index')->middleware('permission:view_kategori_santri');
-    Route::get('kategori-santri/create', [KategoriSantriController::class, 'create'])->name('kategori.create')->middleware('permission:create_kategori_santri');
-    Route::post('kategori-santri', [KategoriSantriController::class, 'store'])->name('kategori.store')->middleware('permission:create_kategori_santri');
-    Route::get('kategori-santri/{id}/edit', [KategoriSantriController::class, 'edit'])->name('kategori.edit')->middleware('permission:edit_kategori_santri');
-    Route::put('kategori-santri/{id}', [KategoriSantriController::class, 'update'])->name('kategori.update')->middleware('permission:edit_kategori_santri');
-    Route::delete('kategori-santri/{id}', [KategoriSantriController::class, 'destroy'])->name('kategori.destroy')->middleware('permission:delete_kategori_santri');
+    // Route::get('kategori-santri', [KategoriSantriController::class, 'index'])->name('kategori.index')->middleware('permission:view_kategori_santri');
+    // Route::get('kategori-santri/create', [KategoriSantriController::class, 'create'])->name('kategori.create')->middleware('permission:create_kategori_santri');
+    // Route::post('kategori-santri', [KategoriSantriController::class, 'store'])->name('kategori.store')->middleware('permission:create_kategori_santri');
+    // Route::get('kategori-santri/{id}/edit', [KategoriSantriController::class, 'edit'])->name('kategori.edit')->middleware('permission:edit_kategori_santri');
+    // Route::put('kategori-santri/{id}', [KategoriSantriController::class, 'update'])->name('kategori.update')->middleware('permission:edit_kategori_santri');
+    // Route::delete('kategori-santri/{id}', [KategoriSantriController::class, 'destroy'])->name('kategori.destroy')->middleware('permission:delete_kategori_santri');
 
     // Tagihan Terjadwal
     Route::get('tagihan-terjadwal', [TagihanTerjadwalController::class, 'index'])->name('tagihan_terjadwal.index')->middleware('permission:view_tagihan_terjadwal');
@@ -114,12 +117,12 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::delete('pembayaran/{id}', [PembayaranController::class, 'destroy'])->name('pembayaran.destroy')->middleware('permission:delete_pembayaran');
 
     // Biaya Terjadwal
-    Route::get('biaya-terjadwal', [BiayaTerjadwalController::class, 'index'])->name('biaya_terjadwal.index')->middleware('permission:view_biaya_terjadwal');
-    Route::get('biaya-terjadwal/create', [BiayaTerjadwalController::class, 'create'])->name('biaya_terjadwal.create')->middleware('permission:create_biaya_terjadwal');
-    Route::post('biaya-terjadwal', [BiayaTerjadwalController::class, 'store'])->name('biaya_terjadwal.store')->middleware('permission:create_biaya_terjadwal');
-    Route::get('biaya-terjadwal/{id}/edit', [BiayaTerjadwalController::class, 'edit'])->name('biaya_terjadwal.edit')->middleware('permission:edit_biaya_terjadwal');
-    Route::put('biaya-terjadwal/{id}', [BiayaTerjadwalController::class, 'update'])->name('biaya_terjadwal.update')->middleware('permission:edit_biaya_terjadwal');
-    Route::delete('biaya-terjadwal/{id}', [BiayaTerjadwalController::class, 'destroy'])->name('biaya_terjadwal.destroy')->middleware('permission:delete_biaya_terjadwal');
+    // Route::get('biaya-terjadwal', [BiayaTerjadwalController::class, 'index'])->name('biaya_terjadwal.index')->middleware('permission:view_biaya_terjadwal');
+    // Route::get('biaya-terjadwal/create', [BiayaTerjadwalController::class, 'create'])->name('biaya_terjadwal.create')->middleware('permission:create_biaya_terjadwal');
+    // Route::post('biaya-terjadwal', [BiayaTerjadwalController::class, 'store'])->name('biaya_terjadwal.store')->middleware('permission:create_biaya_terjadwal');
+    // Route::get('biaya-terjadwal/{id}/edit', [BiayaTerjadwalController::class, 'edit'])->name('biaya_terjadwal.edit')->middleware('permission:edit_biaya_terjadwal');
+    // Route::put('biaya-terjadwal/{id}', [BiayaTerjadwalController::class, 'update'])->name('biaya_terjadwal.update')->middleware('permission:edit_biaya_terjadwal');
+    // Route::delete('biaya-terjadwal/{id}', [BiayaTerjadwalController::class, 'destroy'])->name('biaya_terjadwal.destroy')->middleware('permission:delete_biaya_terjadwal');
 
     // Kelas
     Route::get('kelas', [KelasController::class, 'index'])->name('kelas.index')->middleware('permission:view_kelas');
@@ -215,6 +218,30 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('qori_kelas/{id}/toggle-status', [QoriKelasController::class, 'toggleStatus'])
         ->name('qori_kelas.toggle-status');
 
+    // Biaya Santri
+    Route::get('/biaya-santris', [BiayaSantriController::class, 'index'])->name('biaya-santris.index');
+    Route::get('/biaya-santris/create', [BiayaSantriController::class, 'create'])->name('biaya-santris.create');
+    Route::post('/biaya-santris', [BiayaSantriController::class, 'store'])->name('biaya-santris.store');
+    Route::get('/biaya-santris/{id}/edit', [BiayaSantriController::class, 'edit'])->name('biaya-santris.edit');
+    Route::put('/biaya-santris/{id}', [BiayaSantriController::class, 'update'])->name('biaya-santris.update');
+    Route::delete('/biaya-santris/{id}', [BiayaSantriController::class, 'destroy'])->name('biaya-santris.destroy');
+
+    Route::get('/daftar-biayas', [DaftarBiayaController::class, 'index'])->name('daftar-biayas.index');
+    Route::get('/daftar-biayas/create', [DaftarBiayaController::class, 'create'])->name('daftar-biayas.create');
+    Route::post('/daftar-biayas', [DaftarBiayaController::class, 'store'])->name('daftar-biayas.store');
+    Route::get('/daftar-biayas/{id}/edit', [DaftarBiayaController::class, 'edit'])->name('daftar-biayas.edit');
+    Route::put('/daftar-biayas/{id}', [DaftarBiayaController::class, 'update'])->name('daftar-biayas.update');
+    Route::delete('/daftar-biayas/{id}', [DaftarBiayaController::class, 'destroy'])->name('daftar-biayas.destroy');
+    Route::get('daftar-biayas/data', [DaftarBiayaController::class, 'data'])->name('daftar-biayas.data');
+    Route::get('daftar-biayas/get-categories', [DaftarBiayaController::class, 'getCategoriesByStatus'])->name('daftar-biayas.get-categories');
+
+    // Kategori Biaya
+    Route::get('/kategori-biayas', [KategoriBiayaController::class, 'index'])->name('kategori-biayas.index');
+    Route::get('/kategori-biayas/create', [KategoriBiayaController::class, 'create'])->name('kategori-biayas.create');
+    Route::post('/kategori-biayas', [KategoriBiayaController::class, 'store'])->name('kategori-biayas.store');
+    Route::get('/kategori-biayas/{id}/edit', [KategoriBiayaController::class, 'edit'])->name('kategori-biayas.edit');
+    Route::put('/kategori-biayas/{id}', [KategoriBiayaController::class, 'update'])->name('kategori-biayas.update');
+    Route::delete('/kategori-biayas/{id}', [KategoriBiayaController::class, 'destroy'])->name('kategori-biayas.destroy');
 
 
     //Riwayat Kelas

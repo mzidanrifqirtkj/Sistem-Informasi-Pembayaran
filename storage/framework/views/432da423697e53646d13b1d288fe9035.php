@@ -76,16 +76,20 @@
                         <i class="fas fa-file-invoice"></i> <span>List Biaya</span>
                     </a>
                     <ul class="dropdown-menu">
-                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_biaya_terjadwal')): ?>
-                            <li class="<?php echo e(request()->routeIs('biaya_terjadwal*') ? 'active' : ''); ?>">
-                                <a class="nav-link" href="<?php echo e(route('biaya_terjadwal.index')); ?>">Biaya Terjadwal</a>
-                            </li>
-                        <?php endif; ?>
-                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_kategori')): ?>
-                            <li class="<?php echo e(request()->routeIs('kategori*') ? 'active' : ''); ?>">
-                                <a class="nav-link" href="<?php echo e(route('kategori.index')); ?>">Biaya Bulanan</a>
-                            </li>
-                        <?php endif; ?>
+
+                        <li class="<?php echo e(request()->routeIs('biaya-santris*') ? 'active' : ''); ?>">
+                            <a class="nav-link" href="<?php echo e(route('biaya-santris.index')); ?>">Biaya Santri</a>
+                        </li>
+
+
+                        <li class="<?php echo e(request()->routeIs('daftar-biayas*') ? 'active' : ''); ?>">
+                            <a class="nav-link" href="<?php echo e(route('daftar-biayas.index')); ?>">Daftar Biaya</a>
+                        </li>
+
+                        <li class="<?php echo e(request()->routeIs('kategori-biayas*') ? 'active' : ''); ?>">
+                            <a class="nav-link" href="<?php echo e(route('kategori-biayas.index')); ?>">Kategori Biaya</a>
+                        </li>
+
                     </ul>
                 </li>
             <?php endif; ?>
