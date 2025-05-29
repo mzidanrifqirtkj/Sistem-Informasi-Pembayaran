@@ -112,6 +112,10 @@ class Santri extends Model
         return $this->belongsTo(Kelas::class);
     }
 
+    public function biayaSantris()
+    {
+        return $this->hasMany(BiayaSantri::class, 'santri_id', 'id_santri');
+    }
     // public function absensiMataPelajaran()
     // {
     //     return $this->hasMany(AbsensiSetiapMapel::class);

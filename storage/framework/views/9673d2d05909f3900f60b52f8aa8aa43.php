@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="<?php echo e(asset('assets/css/ponpes-style.css')); ?>">
 
     <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    
 
     <!-- CSS Custom -->
     <style>
@@ -36,6 +36,14 @@
             text-align: center;
         }
     </style>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tokenfield/0.12.0/css/bootstrap-tokenfield.min.css"
+        rel="stylesheet">
+
+    
+
+    
+    
 
     <?php echo $__env->yieldContent('css_inline'); ?>
 </head>
@@ -119,7 +127,7 @@
     <script src="<?php echo e(asset('assets/modules/jquery-ui/jquery-ui.min.js')); ?>"></script>
 
     <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    
 
     <!-- Page Specific JS File -->
     <?php echo $__env->yieldContent('script'); ?>
@@ -131,6 +139,13 @@
     <script>
         $('.alert').alert();
     </script>
+    
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tokenfield/0.12.0/bootstrap-tokenfield.min.js"></script>
+    
+    
+
 </body>
 
 </html>

@@ -219,13 +219,26 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ->name('qori_kelas.toggle-status');
 
     // Biaya Santri
-    Route::get('/biaya-santris', [BiayaSantriController::class, 'index'])->name('biaya-santris.index');
-    Route::get('/biaya-santris/create', [BiayaSantriController::class, 'create'])->name('biaya-santris.create');
-    Route::post('/biaya-santris', [BiayaSantriController::class, 'store'])->name('biaya-santris.store');
-    Route::get('/biaya-santris/{id}/edit', [BiayaSantriController::class, 'edit'])->name('biaya-santris.edit');
-    Route::put('/biaya-santris/{id}', [BiayaSantriController::class, 'update'])->name('biaya-santris.update');
-    Route::delete('/biaya-santris/{id}', [BiayaSantriController::class, 'destroy'])->name('biaya-santris.destroy');
+    Route::get('biaya-santris', [BiayaSantriController::class, 'index'])->name('biaya-santris.index');
+    Route::get('biaya-santris/create', [BiayaSantriController::class, 'create'])->name('biaya-santris.create');
+    Route::post('biaya-santris', [BiayaSantriController::class, 'store'])->name('biaya-santris.store');
+    Route::get('biaya-santris/{id}', [BiayaSantriController::class, 'show'])->name('biaya-santris.show');
+    Route::get('biaya-santris/{id}/edit', [BiayaSantriController::class, 'edit'])->name('biaya-santris.edit');
+    Route::put('biaya-santris/{id}', [BiayaSantriController::class, 'update'])->name('biaya-santris.update');
+    Route::delete('biaya-santris/{id}', [BiayaSantriController::class, 'destroy'])->name('biaya-santris.destroy');
 
+    Route::get('/search-santri', [BiayaSantriController::class, 'searchSantri'])->name('biaya-santris.search-santri');
+    Route::get('/search-biaya', [BiayaSantriController::class, 'searchBiaya'])->name('biaya-santris.search-biaya');
+    // Route::post('/add-biaya', [BiayaSantriController::class, 'addBiaya'])->name('add-biaya');
+    // Route::post('/remove-biaya', [BiayaSantriController::class, 'removeBiaya'])->name('remove-biaya');
+    // Route::post('/update-biaya', [BiayaSantriController::class, 'updateBiaya'])->name('update-biaya');
+    // Route::post('/clear-biaya', [BiayaSantriController::class, 'clearBiaya'])->name('clear-biaya');
+    // Route::get('biaya-santris/ajax/search-santri', [BiayaSantriController::class, 'searchSantri'])->name('biaya-santris.search-santri');
+    // Route::get('biaya-santris/ajax/get-daftar-biaya', [BiayaSantriController::class, 'getDaftarBiaya'])->name('biaya-santris.get-daftar-biaya');
+    // Route::get('/api/santri/search', [BiayaSantriController::class, 'searchSantri'])->name('api.santri.search');
+
+
+    // Daftar Biaya
     Route::get('/daftar-biayas', [DaftarBiayaController::class, 'index'])->name('daftar-biayas.index');
     Route::get('/daftar-biayas/create', [DaftarBiayaController::class, 'create'])->name('daftar-biayas.create');
     Route::post('/daftar-biayas', [DaftarBiayaController::class, 'store'])->name('daftar-biayas.store');

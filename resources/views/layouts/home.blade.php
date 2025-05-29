@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="{{ asset('assets/css/ponpes-style.css') }}">
 
     <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    {{-- <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css"> --}}
 
     <!-- CSS Custom -->
     <style>
@@ -36,6 +36,16 @@
             text-align: center;
         }
     </style>
+    {{-- Ajax --}}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tokenfield/0.12.0/css/bootstrap-tokenfield.min.css"
+        rel="stylesheet">
+
+    {{-- <link rel="stylesheet" <link
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tokenfield/0.12.0/css/bootstrap-tokenfield.min.css"
+        rel="stylesheet"> --}}
+
+    {{-- Select2 --}}
+    {{-- <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /> --}}
 
     @yield('css_inline')
 </head>
@@ -116,7 +126,7 @@
     <script src="{{ asset('assets/modules/jquery-ui/jquery-ui.min.js') }}"></script>
 
     <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    {{-- <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script> --}}
 
     <!-- Page Specific JS File -->
     @yield('script')
@@ -128,6 +138,13 @@
     <script>
         $('.alert').alert();
     </script>
+    {{-- select2 --}}
+    {{-- <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> --}}
+    {{-- Ajax --}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tokenfield/0.12.0/bootstrap-tokenfield.min.js"></script>
+    {{-- JQuery --}}
+    {{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> --}}
+
 </body>
 
 </html>
