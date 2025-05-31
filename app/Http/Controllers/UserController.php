@@ -91,7 +91,7 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'santri_id' => 'nullable|exists:santris,id_santri|unique:users,id_user',
+            'santri_id' => 'nullable|exists:santris,id_santri',
             'email' => 'nullable|email|unique:users,email',
             'password' => 'required|min:6',
             'roles' => 'required|array',
@@ -110,10 +110,10 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
         ];
 
-        // Jika ada santri_id, gunakan sebagai id_user
-        if ($request->filled('santri_id')) {
-            $userData['id_user'] = $request->santri_id;
-        }
+        // // Jika ada santri_id, gunakan sebagai id_user
+        // if ($request->filled('santri_id')) {
+        //     $userData['id_user'] = $request->santri_id;
+        // }
 
         // Jika ada email, tambahkan ke data user
         if ($request->filled('email')) {
