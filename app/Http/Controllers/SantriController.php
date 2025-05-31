@@ -17,6 +17,7 @@ class SantriController extends Controller
 {
     public function index(Request $request)
     {
+
         $santris = Santri::select('*')
             ->orderBy('created_at', 'desc');
         $keyword = $request->keyword;
@@ -78,7 +79,7 @@ class SantriController extends Controller
      */
     public function create()
     {
-        $kategori_santris = KategoriSantri::all();
+        $kategori_santris = \App\Models\KategoriBiaya::where('status', 'jalur')->get();
         $users = User::all();
         return view('santri.create', compact('kategori_santris', 'users'));
     }
@@ -88,50 +89,56 @@ class SantriController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'nama_santri' => 'required|max:100',
-            'nis' => 'required|integer|unique:santris',
-            'nik' => 'required|string|unique:santris',
-            'no_kk' => 'required|string',
-            'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
-            'tanggal_lahir' => 'required|date',
-            'tempat_lahir' => 'required|string',
-            'no_hp' => 'required|string',
-            'alamat' => 'required|string',
-            'golongan_darah' => 'required|string',
-            'pendidikan_formal' => 'required|string',
-            'pendidikan_non_formal' => 'required|string',
-            'foto' => 'nullable|image',
-            'foto_kk' => 'nullable|image',
-            'tanggal_masuk' => 'required|date',
-            'is_ustadz' => 'required|boolean',
-            'user_id' => 'required|exists:users,id_user|unique:santris',
-            'kategori_santri_id' => 'required|exists:kategori_santris,id_kategori_santri',
-            'status' => 'required|in:Aktif,Nonaktif',
-            'nama_ayah' => 'required|string',
-            'no_hp_ayah' => 'required|string',
-            'pekerjaan_ayah' => 'required|string',
-            'tempat_lahir_ayah' => 'required|string',
-            'tanggal_lahir_ayah' => 'required|date',
-            'alamat_ayah' => 'required|string',
-            'nama_ibu' => 'required|string',
-            'no_hp_ibu' => 'required|string',
-            'pekerjaan_ibu' => 'required|string',
-            'alamat_ibu' => 'required|string',
-            'tempat_lahir_ibu' => 'required|string',
-            'tanggal_lahir_ibu' => 'required|date',
-            'nama_wali' => 'nullable|string',
-            'no_hp_wali' => 'nullable|string',
-            'pekerjaan_wali' => 'nullable|string',
-            'alamat_wali' => 'nullable|string',
-            'tempat_lahir_wali' => 'nullable|string',
-            'tanggal_lahir_wali' => 'nullable|date',
-        ]);
+        try {
+            // dd($request->all()); // Debugging - hapus setelah selesai
+            $validated = $request->validate([
+                'nama_santri' => 'required|max:100',
+                'nis' => 'required|integer|unique:santris',
+                'nik' => 'required|string|unique:santris',
+                'no_kk' => 'required|string',
+                'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
+                'tanggal_lahir' => 'required|date',
+                'tempat_lahir' => 'required|string',
+                'no_hp' => 'required|string',
+                'alamat' => 'required|string',
+                'golongan_darah' => 'required|string',
+                'pendidikan_formal' => 'required|string',
+                'pendidikan_non_formal' => 'required|string',
+                'foto' => 'nullable|image',
+                'foto_kk' => 'nullable|image',
+                'tanggal_masuk' => 'required|date',
+                'is_ustadz' => 'required|boolean',
+                // 'user_id' => 'required|exists:users,id_user|unique:santris',
+                //kategori_santri
+                'kategori_santri_id' => 'required|exists:kategori_santris,id_kategori_santri',
+                // 'status' => 'required|in:Aktif,Nonaktif',
+                'nama_ayah' => 'required|string',
+                'no_hp_ayah' => 'required|string',
+                'pekerjaan_ayah' => 'required|string',
+                'tempat_lahir_ayah' => 'required|string',
+                'tanggal_lahir_ayah' => 'required|date',
+                'alamat_ayah' => 'required|string',
+                'nama_ibu' => 'required|string',
+                'no_hp_ibu' => 'required|string',
+                'pekerjaan_ibu' => 'required|string',
+                'alamat_ibu' => 'required|string',
+                'tempat_lahir_ibu' => 'required|string',
+                'tanggal_lahir_ibu' => 'required|date',
+                'nama_wali' => 'nullable|string',
+                'no_hp_wali' => 'nullable|string',
+                'pekerjaan_wali' => 'nullable|string',
+                'alamat_wali' => 'nullable|string',
+                'tempat_lahir_wali' => 'nullable|string',
+                'tanggal_lahir_wali' => 'nullable|date',
+            ]);
 
-        Santri::create($validated);
-        // ketika baru di create, buat tagihan pendaftaran
+            Santri::create($validated);
+            // ketika baru di create, buat tagihan pendaftaran
 
-        return redirect()->route('santri.index')->with('alert', 'Santri created successfully.');
+            return redirect()->route('santri.index')->with('success', 'Data berhasil disimpan');
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', 'Error: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -148,8 +155,9 @@ class SantriController extends Controller
      */
     public function edit(Santri $santri)
     {
+        $kategori_santris = \App\Models\KategoriBiaya::where('status', 'jalur')->get();
         $users = User::all();
-        $kategori_santris = KategoriSantri::all();
+        // $kategori_santris = KategoriSantri::all();
         return view('santri.edit', compact('santri', 'kategori_santris', 'users'));
     }
 
@@ -176,7 +184,7 @@ class SantriController extends Controller
                 'foto_kk' => 'nullable|image',
                 'tanggal_masuk' => 'required|date',
                 'is_ustadz' => 'required|boolean',
-                'user_id' => 'required|exists:users,id_user|unique:santris,user_id,' . $santri->id_santri . ',id_santri',
+                // 'user_id' => 'required|exists:users,id_user|unique:santris,user_id,' . $santri->id_santri . ',id_santri',
                 'kategori_santri_id' => 'nullable|exists:kategori_santris,id_kategori_santri',
                 'nama_ayah' => 'required|string',
                 'no_hp_ayah' => 'required|string',

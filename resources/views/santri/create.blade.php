@@ -224,7 +224,7 @@
                         @enderror
                     </div>
                 </div>
-                <div class="col-sm">
+                {{-- <div class="col-sm">
                     <div class="form-group">
                         <label for="user_id">User Santri (Berdasar Nama)</label>
                         <select class="form-control @error('user_id') is-invalid @enderror" name="user_id">
@@ -243,19 +243,18 @@
                             </span>
                         @enderror
                     </div>
-                </div>
+                </div> --}}
                 <div class="col-sm">
                     <div class="form-group">
                         <label for="kategori_santri_id">Kategori Santri</label>
                         <select class="form-control @error('kategori_santri_id') is-invalid @enderror"
                             name="kategori_santri_id">
-                            <!-- Replace with dynamic categories -->
                             <option value="" selected disabled>Pilih Kategori</option>
                             @foreach ($kategori_santris as $kategori)
-                                <<option value="{{ $kategori->id_kategori_santri }}"
-                                    {{ old('user_id') == $kategori->id_kategori_santri ? 'selected' : '' }}>
+                                <option value="{{ $kategori->id_kategori_biaya }}"
+                                    {{ old('kategori_santri_id') == $kategori->id_kategori_biaya ? 'selected' : '' }}>
                                     {{ $kategori->nama_kategori }}
-                                    </option>
+                                </option>
                             @endforeach
                         </select>
                         @error('kategori_santri_id')
@@ -265,6 +264,7 @@
                         @enderror
                     </div>
                 </div>
+
             </div>
 
             {{-- data orang tua --}}

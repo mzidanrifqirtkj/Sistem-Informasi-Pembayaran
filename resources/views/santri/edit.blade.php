@@ -232,14 +232,31 @@
                 </div>
                 <div class="col-sm">
                     <div class="form-group">
-                        <label for="user_id">User Santri (Berdasar Email)</label>
-                        <select class="form-control @error('user_id') is-invalid @enderror" name="user_id">
-                            <!-- Replace with dynamic categories -->
-                            <option value="" selected disabled>Pilih User</option>
-                            @foreach ($users as $user)
-                                <option value="{{ $user->id_user }}"
-                                    {{ old('user_id', $santri->user_id) == $user->id_user ? 'selected' : '' }}>
-                                    {{ $user->email }}
+                        <label for="user_email">User Email Santri</label>
+                        <input type="text" class="form-control @error('user_email') is-invalid @enderror"
+                            name="user_email" id="user_email"
+                            value="{{ old('user_email', optional($santri->user)->email) }}" readonly>
+                        @error('user_email')
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="col-sm">
+                    <div class="form-group">
+                        <label for="kategori_santri_id">Kategori Santri</label>
+                        <select class="form-control @error('kategori_santri_id') is-invalid @enderror"
+                            name="kategori_santri_id" id="kategori_santri_id">
+                            <option value="" disabled
+                                {{ old('kategori_santri_id', $santri->kategori_santri_id) ? '' : 'selected' }}>
+                                Pilih Kategori
+                            </option>
+                            @foreach ($kategori_santris as $kategori)
+                                <option value="{{ $kategori->id_kategori_biaya }}"
+                                    {{ old('kategori_santri_id', $santri->kategori_santri_id) == $kategori->id_kategori_biaya ? 'selected' : '' }}>
+                                    {{ $kategori->nama_kategori }}
                                 </option>
                             @endforeach
                         </select>
@@ -250,27 +267,7 @@
                         @enderror
                     </div>
                 </div>
-                <div class="col-sm">
-                    <div class="form-group">
-                        <label for="kategori_santri_id">Kategori Santri</label>
-                        <select class="form-control @error('kategori_santri_id') is-invalid @enderror"
-                            name="kategori_santri_id">
-                            <!-- Replace with dynamic categories -->
-                            <option value="" selected disabled>Pilih Kategori</option>
-                            @foreach ($kategori_santris as $kategori)
-                                <<option value="{{ $kategori->id_kategori_santri }}"
-                                    {{ old('kategori_santri_id', $santri->kategori_santri_id) == $kategori->id_kategori_santri ? 'selected' : '' }}>
-                                    {{ $kategori->nama_kategori }}
-                                    </option>
-                            @endforeach
-                        </select>
-                        @error('kategori_santri_id')
-                            <span class="invalid-feedback" role="alert">
-                                <strong>{{ $message }}</strong>
-                            </span>
-                        @enderror
-                    </div>
-                </div>
+
                 <div class="col-sm">
                     <div class="form-group">
                         <label for="status">Status</label>

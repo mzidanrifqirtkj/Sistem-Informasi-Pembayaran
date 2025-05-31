@@ -116,6 +116,18 @@ class Santri extends Model
     {
         return $this->hasMany(BiayaSantri::class, 'santri_id', 'id_santri');
     }
+
+    public function kategoriBiayaJalur()
+    {
+        return $this->hasManyThrough(
+            KategoriBiaya::class,
+            DaftarBiaya::class,
+            'id_daftar_biaya',       // Foreign key di DaftarBiaya yang terkait dengan BiayaSantri
+            'id_kategori_biaya',     // Foreign key di KategoriBiaya
+            'id_santri',             // Local key di Santri
+            'daftar_biaya_id'        // Foreign key di BiayaSantri yang mengacu ke DaftarBiaya
+        )->where('kategori_biayas.status', 'jalur');
+    }
     // public function absensiMataPelajaran()
     // {
     //     return $this->hasMany(AbsensiSetiapMapel::class);

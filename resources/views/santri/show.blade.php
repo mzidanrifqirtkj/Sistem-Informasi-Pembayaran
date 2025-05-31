@@ -79,8 +79,8 @@
             </div>
             <div class="col-sm-8">
                 <div class="form-group">
-                    <label for="school_address_current">User Santri</label>
-                    <h4>{{ $santri->user->email }}</h4>
+                    <label for="school_address_current">Email</label>
+                    <h4>{{ optional($santri->user)->email ?? '-' }}</h4>
                 </div>
             </div>
         </div>
