@@ -39,7 +39,12 @@ Route::get('/', function () {
 Route::middleware(['auth', 'role:admin'])->group(function () {
     // Dashboard
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard')->middleware('permission:view_dashboard');
+
+    //Profile
     Route::get('profile', [ProfileController::class, 'index'])->name('profile')->middleware('permission:view_profile');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update_password');
 
     // Santri
     Route::get('santri', [SantriController::class, 'index'])->name('santri.index')->middleware('permission:view_santri');

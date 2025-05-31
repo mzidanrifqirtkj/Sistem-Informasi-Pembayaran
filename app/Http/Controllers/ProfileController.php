@@ -6,13 +6,45 @@ use App\Http\Controllers\Controller;
 use Auth;
 use Hash;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
     public function edit()
     {
-        return view('profile.edit');
+        $user = Auth::user();
+        $user->load('santri'); // Load relasi santri jika ada
 
+        return view('profile.edit', compact('user'));
+    }
+
+    public function update(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'email' => [
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('users')->ignore($user->id_user, 'id_user')
+            ],
+        ]);
+
+        $dataToUpdate = [];
+
+        // Update email jika diisi dan berbeda dari yang sekarang
+        if ($request->filled('email') && $request->email !== $user->email) {
+            $dataToUpdate['email'] = $request->email;
+        }
+
+        // Update data jika ada perubahan
+        if (!empty($dataToUpdate)) {
+            $user->update($dataToUpdate);
+            return back()->with('status', 'Profil berhasil diperbarui!');
+        }
+
+        return back()->with('info', 'Tidak ada perubahan yang disimpan.');
     }
 
     public function updatePassword(Request $request)
