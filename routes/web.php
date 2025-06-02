@@ -261,9 +261,15 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::put('/kategori-biayas/{id}', [KategoriBiayaController::class, 'update'])->name('kategori-biayas.update');
     Route::delete('/kategori-biayas/{id}', [KategoriBiayaController::class, 'destroy'])->name('kategori-biayas.destroy');
 
-
     //Riwayat Kelas
-    // Route::get('riwayat-kelas', [RiwayatKelasController::class, 'index'])->name('riwayat-kelas.index')->middleware('permission:view_riwayat_kelas');
+    Route::get('riwayat-kelas', [RiwayatKelasController::class, 'index'])->name('riwayat-kelas.index');
+    Route::get('/riwayat-kelas/create', [RiwayatKelasController::class, 'create'])->name('riwayat-kelas.create');
+    Route::post('/riwayat-kelas/store', [RiwayatKelasController::class, 'store'])->name('riwayat-kelas.store');
+    Route::get('/riwayat-kelas/{id}/edit', [RiwayatKelasController::class, 'edit'])->name('riwayat-kelas.edit');
+    Route::put('/riwayat-kelas/{id}', [RiwayatKelasController::class, 'update'])->name('riwayat-kelas.update');
+    Route::delete('/riwayat-kelas/{id}', [RiwayatKelasController::class, 'destroy'])->name('riwayat-kelas.destroy');
+    Route::get('/riwayat-kelas/data', [RiwayatKelasController::class, 'getData'])->name('riwayat-kelas.data');
+
 });
 
 // Route untuk admin dan santri

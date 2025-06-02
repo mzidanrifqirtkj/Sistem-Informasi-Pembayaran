@@ -11,12 +11,10 @@ class CreateRiwayatKelasTable extends Migration
             $table->id('id_riwayat_kelas');
 
             $table->unsignedBigInteger('santri_id');
-            $table->unsignedBigInteger('kelas_id');
-            $table->unsignedBigInteger('tahun_ajar_id');
-            
+            $table->unsignedBigInteger('mapel_kelas_id');
+
             $table->foreign('santri_id')->references('id_santri')->on('santris')->onDelete('cascade');
-            $table->foreign('kelas_id')->references('id_kelas')->on('kelas')->onDelete('cascade');
-            $table->foreign('tahun_ajar_id')->references('id_tahun_ajar')->on('tahun_ajars')->onDelete('cascade');
+            $table->foreign('mapel_kelas_id')->references('id_mapel_kelas')->on('mapel_kelas')->onDelete('cascade');
 
             $table->timestamps();
         });

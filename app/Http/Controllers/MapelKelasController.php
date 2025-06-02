@@ -61,7 +61,7 @@ class MapelKelasController extends Controller
             return redirect()->route('mapel_kelas.index')
                 ->with('success', 'Pelajaran berhasil ditambahkan ke kelas!');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menambahkan: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Gagal menambahkan: ' . $e->getMessage());
         }
     }
 

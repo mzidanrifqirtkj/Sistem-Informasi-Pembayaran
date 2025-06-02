@@ -95,26 +95,7 @@
             <?php endif; ?>
 
             <!-- Menu Tambahan Bulanan -->
-            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['view_tambahan_bulanan', 'view_item_santri'])): ?>
-                <li class="dropdown <?php echo e(request()->routeIs('tambahan_bulanan*') ? 'active' : ''); ?>">
-                    <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
-                        <i class="fas fa-file-invoice"></i> <span>Tambahan Bulanan</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_tambahan_bulanan')): ?>
-                            <li class="<?php echo e(request()->routeIs('tambahan_bulanan.index') ? 'active' : ''); ?>">
-                                <a class="nav-link" href="<?php echo e(route('tambahan_bulanan.index')); ?>">Item Tambahan</a>
-                            </li>
-                        <?php endif; ?>
-                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_item_santri')): ?>
-                            <li class="<?php echo e(request()->routeIs('tambahan_bulanan.item_santri*') ? 'active' : ''); ?>">
-                                <a class="nav-link" href="<?php echo e(route('tambahan_bulanan.item_santri')); ?>">Item Tambahan
-                                    Santri</a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </li>
-            <?php endif; ?>
+            
 
             <!-- Menu Tagihan -->
             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['view_tagihan_terjadwal', 'view_tagihan_bulanan'])): ?>
@@ -169,6 +150,9 @@
                         <i class="fas fa-file-invoice"></i> <span>Kurikulum</span>
                     </a>
                     <ul class="dropdown-menu">
+                        <li class="<?php echo e(request()->routeIs('riwayat-kelas*') ? 'active' : ''); ?>">
+                            <a class="nav-link" href="<?php echo e(route('riwayat-kelas.index')); ?>">Riwayat Kelas</a>
+                        </li>
                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_mapel_kelas')): ?>
                             <li class="<?php echo e(request()->routeIs('mapel_kelas*') ? 'active' : ''); ?>">
                                 <a class="nav-link" href="<?php echo e(route('mapel_kelas.index')); ?>">Mapel Kelas</a>

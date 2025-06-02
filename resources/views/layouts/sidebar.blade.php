@@ -95,7 +95,7 @@
             @endcanany
 
             <!-- Menu Tambahan Bulanan -->
-            @canany(['view_tambahan_bulanan', 'view_item_santri'])
+            {{-- @canany(['view_tambahan_bulanan', 'view_item_santri'])
                 <li class="dropdown {{ request()->routeIs('tambahan_bulanan*') ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-file-invoice"></i> <span>Tambahan Bulanan</span>
@@ -114,7 +114,7 @@
                         @endcan
                     </ul>
                 </li>
-            @endcanany
+            @endcanany --}}
 
             <!-- Menu Tagihan -->
             @canany(['view_tagihan_terjadwal', 'view_tagihan_bulanan'])
@@ -169,6 +169,9 @@
                         <i class="fas fa-file-invoice"></i> <span>Kurikulum</span>
                     </a>
                     <ul class="dropdown-menu">
+                        <li class="{{ request()->routeIs('riwayat-kelas*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('riwayat-kelas.index') }}">Riwayat Kelas</a>
+                        </li>
                         @can('view_mapel_kelas')
                             <li class="{{ request()->routeIs('mapel_kelas*') ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('mapel_kelas.index') }}">Mapel Kelas</a>

@@ -8,12 +8,12 @@ class RiwayatKelas extends Model
 {
     protected $table = 'riwayat_kelas';
     protected $primaryKey = 'id_riwayat_kelas';
-    protected $fillable = ['kelas_id', 'santri_id', 'tahun_ajar_id'];
+    protected $fillable = ['mapel_kelas_id', 'santri_id'];
     public $timestamps = true;
 
-    public function kelas()
+    public function mapelKelas()
     {
-        return $this->belongsTo(Kelas::class, 'kelas_id', 'id_kelas');
+        return $this->belongsTo(MapelKelas::class, 'mapel_kelas_id', 'id_mapel_kelas');
     }
 
     public function santri()
@@ -21,8 +21,4 @@ class RiwayatKelas extends Model
         return $this->belongsTo(Santri::class, 'santri_id', 'id_santri');
     }
 
-    public function tahunAjar()
-    {
-        return $this->belongsTo(TahunAjar::class, 'tahun_ajar_id', 'id_tahun_ajar');
-    }
 }
