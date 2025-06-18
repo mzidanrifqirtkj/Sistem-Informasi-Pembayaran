@@ -8,7 +8,7 @@
     <title>Bukti Pembayaran Pendaftaran Santri Baru</title>
 
     <!-- Favicon -->
-    <link rel="favicon icon" href="/assets/img/ponpes.ico" type="image/x-icon">  
+    <link rel="favicon icon" href="/assets/img/ponpes.ico" type="image/x-icon">
 
     <!-- Invoice styling -->
     <style>
@@ -127,12 +127,13 @@
                     <table>
                         <tr>
                             <td class="title">
-                                <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('assets/img/ponpes.png'))) }}" alt="logo" style="width: 60px;" />
+                                <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('assets/img/ponpes.png'))) }}"
+                                    alt="logo" style="width: 60px;" />
                             </td>
 
                             <td>
                                 <h3><b>Pondok Pesantren</b><br>
-                                Jalan Raya Daendels, Kasembon, Madani (62000)</h3>
+                                    Jalan Raya Daendels, Kasembon, Madani (62000)</h3>
                             </td>
                         </tr>
                     </table>

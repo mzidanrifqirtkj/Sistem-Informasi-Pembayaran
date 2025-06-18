@@ -80,14 +80,23 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     // Route::delete('kategori-santri/{id}', [KategoriSantriController::class, 'destroy'])->name('kategori.destroy')->middleware('permission:delete_kategori_santri');
 
     // Tagihan Terjadwal
-    Route::get('tagihan-terjadwal', [TagihanTerjadwalController::class, 'index'])->name('tagihan_terjadwal.index')->middleware('permission:view_tagihan_terjadwal');
-    Route::get('tagihan-terjadwal/create', [TagihanTerjadwalController::class, 'create'])->name('tagihan_terjadwal.create')->middleware('permission:create_tagihan_terjadwal');
-    Route::post('tagihan-terjadwal', [TagihanTerjadwalController::class, 'store'])->name('tagihan_terjadwal.store')->middleware('permission:create_tagihan_terjadwal');
-    Route::get('tagihan-terjadwal/bulk-generate', [TagihanTerjadwalController::class, 'createBulkTagihanTerjadwal'])->name('tagihan_terjadwal.createBulkTerjadwal')->middleware('permission:bulk_generate_tagihan_terjadwal');
-    Route::post('tagihan-terjadwal/bulk-generate', [TagihanTerjadwalController::class, 'generateBulkTagihanTerjadwal'])->name('tagihan_terjadwal.bulkTerjadwal')->middleware('permission:bulk_generate_tagihan_terjadwal');
-    Route::get('tagihan-terjadwal/{id}/edit', [TagihanTerjadwalController::class, 'edit'])->name('tagihan_terjadwal.edit')->middleware('permission:edit_tagihan_terjadwal');
-    Route::put('tagihan-terjadwal/{id}', [TagihanTerjadwalController::class, 'update'])->name('tagihan_terjadwal.update')->middleware('permission:edit_tagihan_terjadwal');
-    Route::delete('tagihan-terjadwal/{id}', [TagihanTerjadwalController::class, 'destroy'])->name('tagihan_terjadwal.destroy')->middleware('permission:delete_tagihan_terjadwal');
+    Route::resource('tagihan_terjadwal', TagihanTerjadwalController::class);
+    // Additional routes for TagihanTerjadwal
+    Route::get('tagihan-terjadwal/biaya-santri/by-santri', [TagihanTerjadwalController::class, 'getBiayaSantriBySantriId'])
+        ->name('tagihan_terjadwal.getBiayaSantriBySantriId');
+
+    Route::get('tagihan-terjadwal/bulk/create', [TagihanTerjadwalController::class, 'createBulkTagihanTerjadwal'])
+        ->name('tagihan_terjadwal.createBulkTerjadwal');
+
+    Route::post('tagihan-terjadwal/bulk/generate', [TagihanTerjadwalController::class, 'generateBulkTagihanTerjadwal'])
+        ->name('tagihan_terjadwal.generateBulkTerjadwal');
+
+    Route::get('tagihan-terjadwal/bulk/progress', [TagihanTerjadwalController::class, 'getBulkProgress'])
+        ->name('tagihan_terjadwal.getBulkProgress');
+
+    Route::get('tagihan-terjadwal/export', [TagihanTerjadwalController::class, 'export'])
+        ->name('tagihan_terjadwal.export');
+
 
     // Tambahan Bulanan
     Route::get('tambahan-bulanan', [TambahanBulananController::class, 'index'])->name('tambahan_bulanan.index')->middleware('permission:view_tambahan_bulanan');
@@ -102,14 +111,41 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::put('tambahan-bulanan/item-santri/{item}', [TambahanBulananController::class, 'updateItemSantri'])->name('tambahan_bulanan.item_santri.update')->middleware('permission:edit_item_santri');
 
     // Tagihan Bulanan
-    Route::get('tagihan-bulanan', [TagihanBulananController::class, 'index'])->name('tagihan_bulanan.index')->middleware('permission:view_tagihan_bulanan');
-    Route::get('tagihan-bulanan/create', [TagihanBulananController::class, 'create'])->name('tagihan_bulanan.create')->middleware('permission:create_tagihan_bulanan');
-    Route::post('tagihan-bulanan', [TagihanBulananController::class, 'store'])->name('tagihan_bulanan.store')->middleware('permission:create_tagihan_bulanan');
-    Route::get('tagihan-bulanan/bulk-generate', [TagihanBulananController::class, 'createBulkBulanan'])->name('tagihan_bulanan.createBulkBulanan')->middleware('permission:bulk_generate_tagihan_bulanan');
-    Route::post('tagihan-bulanan/bulk-generate', [TagihanBulananController::class, 'generateBulkBulanan'])->name('tagihan_bulanan.bulkBulanan')->middleware('permission:bulk_generate_tagihan_bulanan');
-    Route::get('tagihan-bulanan/{id}/edit', [TagihanBulananController::class, 'edit'])->name('tagihan_bulanan.edit')->middleware('permission:edit_tagihan_bulanan');
-    Route::put('tagihan-bulanan/{id}', [TagihanBulananController::class, 'update'])->name('tagihan_bulanan.update')->middleware('permission:edit_tagihan_bulanan');
-    Route::delete('tagihan-bulanan/{id}', [TagihanBulananController::class, 'destroy'])->name('tagihan_bulanan.destroy')->middleware('permission:delete_tagihan_bulanan');
+    Route::get('tagihan-bulanan', [TagihanBulananController::class, 'index'])
+        ->name('tagihan_bulanan.index');
+    Route::get('tagihan-bulanan/create', [TagihanBulananController::class, 'create'])
+        ->name('tagihan_bulanan.create');
+    Route::post('tagihan-bulanan', [TagihanBulananController::class, 'store'])
+        ->name('tagihan_bulanan.store');
+    Route::get('tagihan-bulanan/{id}', [TagihanBulananController::class, 'show'])
+        ->name('tagihan_bulanan.show');
+    Route::get('tagihan-bulanan/{id}/edit', [TagihanBulananController::class, 'edit'])
+        ->name('tagihan_bulanan.edit');
+    Route::put('tagihan-bulanan/{id}', [TagihanBulananController::class, 'update'])
+        ->name('tagihan_bulanan.update');
+    Route::delete('tagihan-bulanan/{id}', [TagihanBulananController::class, 'destroy'])
+        ->name('tagihan_bulanan.destroy');
+    // Bulk Operations
+    Route::get('tagihan-bulanan/bulk/create', [TagihanBulananController::class, 'createBulkBulanan'])
+        ->name('tagihan_bulanan.createBulkBulanan');
+    Route::post('tagihan-bulanan/bulk/generate', [TagihanBulananController::class, 'generateBulkBulanan'])
+        ->name('tagihan_bulanan.bulkBulanan');
+    // AJAX Routes
+    Route::get('tagihan-bulanan/santri/biaya-info', [TagihanBulananController::class, 'getSantriBiayaInfo'])
+        ->name('tagihan_bulanan.getSantriBiayaInfo');
+    Route::get('tagihan-bulanan/available/months', [TagihanBulananController::class, 'getAvailableMonths'])
+        ->name('tagihan_bulanan.getAvailableMonths');
+    // Payment Routes
+    Route::post('tagihan-bulanan/{id}/payment', [TagihanBulananController::class, 'createPayment'])
+        ->name('tagihan_bulanan.createPayment');
+    Route::post('tagihan-bulanan/payment/overpayment', [TagihanBulananController::class, 'handleOverpayment'])
+        ->name('tagihan_bulanan.handleOverpayment');
+    // Export Route
+    Route::get('tagihan-bulanan/export/excel', [TagihanBulananController::class, 'export'])
+        ->name('tagihan_bulanan.export');
+    // Dashboard Route
+    Route::get('tagihan/dashboard', [TagihanBulananController::class, 'dashboard'])
+        ->name('tagihan.dashboard');
 
     // Pembayaran
     Route::get('pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index')->middleware('permission:view_pembayaran');
@@ -122,12 +158,12 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::delete('pembayaran/{id}', [PembayaranController::class, 'destroy'])->name('pembayaran.destroy')->middleware('permission:delete_pembayaran');
 
     // Biaya Terjadwal
-    // Route::get('biaya-terjadwal', [BiayaTerjadwalController::class, 'index'])->name('biaya_terjadwal.index')->middleware('permission:view_biaya_terjadwal');
-    // Route::get('biaya-terjadwal/create', [BiayaTerjadwalController::class, 'create'])->name('biaya_terjadwal.create')->middleware('permission:create_biaya_terjadwal');
-    // Route::post('biaya-terjadwal', [BiayaTerjadwalController::class, 'store'])->name('biaya_terjadwal.store')->middleware('permission:create_biaya_terjadwal');
-    // Route::get('biaya-terjadwal/{id}/edit', [BiayaTerjadwalController::class, 'edit'])->name('biaya_terjadwal.edit')->middleware('permission:edit_biaya_terjadwal');
-    // Route::put('biaya-terjadwal/{id}', [BiayaTerjadwalController::class, 'update'])->name('biaya_terjadwal.update')->middleware('permission:edit_biaya_terjadwal');
-    // Route::delete('biaya-terjadwal/{id}', [BiayaTerjadwalController::class, 'destroy'])->name('biaya_terjadwal.destroy')->middleware('permission:delete_biaya_terjadwal');
+    Route::get('biaya-terjadwal', [BiayaTerjadwalController::class, 'index'])->name('biaya_terjadwal.index')->middleware('permission:view_biaya_terjadwal');
+    Route::get('biaya-terjadwal/create', [BiayaTerjadwalController::class, 'create'])->name('biaya_terjadwal.create')->middleware('permission:create_biaya_terjadwal');
+    Route::post('biaya-terjadwal', [BiayaTerjadwalController::class, 'store'])->name('biaya_terjadwal.store')->middleware('permission:create_biaya_terjadwal');
+    Route::get('biaya-terjadwal/{id}/edit', [BiayaTerjadwalController::class, 'edit'])->name('biaya_terjadwal.edit')->middleware('permission:edit_biaya_terjadwal');
+    Route::put('biaya-terjadwal/{id}', [BiayaTerjadwalController::class, 'update'])->name('biaya_terjadwal.update')->middleware('permission:edit_biaya_terjadwal');
+    Route::delete('biaya-terjadwal/{id}', [BiayaTerjadwalController::class, 'destroy'])->name('biaya_terjadwal.destroy')->middleware('permission:delete_biaya_terjadwal');
 
     // Kelas
     Route::get('kelas', [KelasController::class, 'index'])->name('kelas.index')->middleware('permission:view_kelas');

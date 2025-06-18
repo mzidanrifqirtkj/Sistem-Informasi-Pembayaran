@@ -16,8 +16,22 @@ class Pembayaran extends Model
         'nominal_pembayaran',
         'tanggal_pembayaran',
         'created_by_id',
+        'payment_type', // Add this
+        'total_allocations' // Add this
     ];
-    
+
+    // Add relationship
+    public function paymentAllocations()
+    {
+        return $this->hasMany(PaymentAllocation::class, 'pembayaran_id', 'id_pembayaran');
+    }
+
+    // Add accessor
+    public function getIsAllocatedAttribute()
+    {
+        return $this->payment_type === 'allocated';
+    }
+
     public function tagihanBulanan()
     {
         return $this->belongsTo(TagihanBulanan::class, 'tagihan_bulanan_id', 'id_tagihan_bulanan');

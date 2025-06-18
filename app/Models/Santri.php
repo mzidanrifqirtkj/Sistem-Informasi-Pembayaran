@@ -54,6 +54,10 @@ class Santri extends Model
         'tabungan'
     ];
 
+    protected $casts = [
+        'monthly_status' => 'array',
+    ];
+
     // Verifikasi password untuk Santri berdasarkan user
     public function verifyPassword($password)
     {
@@ -128,6 +132,36 @@ class Santri extends Model
             'daftar_biaya_id'        // Foreign key di BiayaSantri yang mengacu ke DaftarBiaya
         )->where('kategori_biayas.status', 'jalur');
     }
+
+    /**
+     * Get kelas aktif santri melalui riwayat kelas
+     */
+    public function getKelasAktifAttribute()
+    {
+        $riwayatTerbaru = $this->riwayatKelas()
+            ->with('mapelKelas.kelas')
+            ->latest()
+            ->first();
+
+        return $riwayatTerbaru?->mapelKelas?->kelas;
+    }
+
+    /**
+     * Get nama kelas aktif
+     */
+    public function getNamaKelasAktifAttribute()
+    {
+        return $this->kelasAktif?->nama_kelas ?? 'Tanpa Kelas';
+    }
+
+    /**
+     * Relationship ke riwayat kelas
+     */
+    public function riwayatKelas()
+    {
+        return $this->hasMany(RiwayatKelas::class, 'santri_id', 'id_santri');
+    }
+
     // public function absensiMataPelajaran()
     // {
     //     return $this->hasMany(AbsensiSetiapMapel::class);

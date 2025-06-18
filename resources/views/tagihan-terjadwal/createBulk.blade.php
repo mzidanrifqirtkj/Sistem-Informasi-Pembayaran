@@ -1,96 +1,648 @@
 @extends('layouts.home')
-@section('title_page', 'Bayar Pendaftaran Santri')
+@section('title_page', 'Generate Tagihan Massal')
+
 @section('content')
-
-    <form action="{{ route('tagihan_terjadwal.bulkTerjadwal') }}" method="post">
-        @csrf
-        @method('POST')
-        <div class="row">
-            <div class="col-sm">
-                <div class="form-group">
-                    <label for="biaya_terjadwal_id">Biaya Terjadwal</label>
-                    <select class="form-control select2 @error('biaya_terjadwal_id') is-invalid @enderror"
-                        name="biaya_terjadwal_id" required>
-                        <option selected disabled>Pilih Biaya</option>
-                        @foreach ($biayaTerjadwals as $biaya)
-                            <option value="{{ $biaya->id_biaya_terjadwal }}">{{ $biaya->nama_biaya }}</option>
-                        @endforeach
-                    </select>
-
-                    @error('biaya_terjadwal_id')
-                        <span class="invalid-feedback" role="alert">
-                            <strong>{{ $message }}</strong>
-                        </span>
-                    @enderror
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-sm">
-                <div class="form-group">
-                    <button class="btn btn-primary">Buat Tagihan</button>
-                    <a href="{{ route('tagihan_terjadwal.index') }}" class="btn btn-secondary">Kembali</a>
+    <div class="container">
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">Generate Tagihan Massal</h2>
+                    <a href="{{ route('tagihan_terjadwal.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Kembali ke Daftar
+                    </a>
                 </div>
             </div>
         </div>
 
-    </form>
+        <!-- Alert Messages -->
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        @endif
 
+        @if ($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle"></i> <strong>Terjadi kesalahan:</strong>
+                <ul class="mb-0 mt-2">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        @endif
+
+        <!-- Warning Info -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="alert alert-info">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-info-circle"></i> Informasi Generate Tagihan Massal
+                    </h5>
+                    <p class="mb-2">Generate tagihan massal akan membuat tagihan untuk <strong>semua santri</strong> yang
+                        memiliki alokasi biaya sesuai filter yang dipilih.</p>
+                    <p class="mb-2">
+                        <strong>Kategori yang tersedia:</strong>
+                        <span class="badge badge-primary ml-1">Tahunan</span>
+                        <span class="badge badge-success ml-1">Insidental</span>
+                    </p>
+                    <p class="mb-2">
+                        <strong>Pilihan Filter:</strong><br>
+                        <small>
+                            • <strong>Kategori Biaya:</strong> Generate untuk semua jenis biaya dalam kategori<br>
+                            • <strong>Jenis Biaya Tertentu:</strong> Generate hanya untuk jenis biaya yang dipilih<br>
+                            • Pilih minimal salah satu filter
+                        </small>
+                    </p>
+                    <hr>
+                    <p class="mb-0">
+                        <small>
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                            Tagihan yang sudah ada dengan kombinasi yang sama tidak akan dibuat ulang.
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Section -->
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-layer-group"></i> Form Generate Tagihan Massal
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="generateBulkForm" method="POST"
+                            action="{{ route('tagihan_terjadwal.generateBulkTerjadwal') }}">
+                            @csrf
+
+                            <!-- Filter Section -->
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="alert alert-warning">
+                                        <h6 class="mb-2">
+                                            <i class="fas fa-filter"></i> Pilihan Filter (Pilih minimal salah satu)
+                                        </h6>
+                                        <small>Anda dapat memilih berdasarkan kategori biaya (semua jenis) atau jenis biaya
+                                            tertentu.</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <!-- Kategori Biaya Status -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="kategori_biaya_status">Filter Kategori Biaya</label>
+                                        <select name="kategori_biaya_status" id="kategori_biaya_status"
+                                            class="form-control">
+                                            <option value="">-- Semua Kategori --</option>
+                                            @foreach ($kategoriBiayaStatus as $status)
+                                                <option value="{{ $status }}"
+                                                    {{ old('kategori_biaya_status') == $status ? 'selected' : '' }}>
+                                                    {{ ucwords(str_replace('_', ' ', $status)) }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <small class="form-text text-muted">
+                                            Generate untuk semua jenis biaya dalam kategori ini.
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- Jenis Biaya Tertentu -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="jenis_biaya_id">Filter Jenis Biaya Tertentu</label>
+                                        <select name="jenis_biaya_id" id="jenis_biaya_id" class="form-control">
+                                            <option value="">-- Semua Jenis Biaya --</option>
+                                            @foreach ($jenisBiayaOptions as $jenisBiaya)
+                                                <option value="{{ $jenisBiaya->id_kategori_biaya }}"
+                                                    {{ old('jenis_biaya_id') == $jenisBiaya->id_kategori_biaya ? 'selected' : '' }}>
+                                                    {{ $jenisBiaya->nama_kategori }}
+                                                    <small class="text-muted">[{{ ucfirst($jenisBiaya->status) }}]</small>
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <small class="form-text text-muted">
+                                            Generate hanya untuk jenis biaya ini saja.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <!-- Tahun -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="tahun" class="required">Tahun</label>
+                                        <select name="tahun" id="tahun" class="form-control" required>
+                                            <option value="">-- Pilih Tahun --</option>
+                                            @for ($year = $currentYear - 2; $year <= $currentYear + 2; $year++)
+                                                <option value="{{ $year }}"
+                                                    {{ old('tahun', $currentYear) == $year ? 'selected' : '' }}>
+                                                    {{ $year }}
+                                                </option>
+                                            @endfor
+                                        </select>
+                                        <small class="form-text text-muted">
+                                            Tahun untuk tagihan yang akan dibuat.
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- Tahun Ajar -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="tahun_ajar_id">Tahun Ajar (Opsional)</label>
+                                        <select name="tahun_ajar_id" id="tahun_ajar_id" class="form-control">
+                                            <option value="">-- Tidak Ada --</option>
+                                            @foreach ($tahunAjars as $tahunAjar)
+                                                <option value="{{ $tahunAjar->id_tahun_ajar }}"
+                                                    {{ old('tahun_ajar_id') == $tahunAjar->id_tahun_ajar ? 'selected' : '' }}>
+                                                    {{ $tahunAjar->tahun_ajar }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <small class="form-text text-muted">
+                                            Opsional: Pilih tahun ajar jika diperlukan.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Buttons -->
+                            <div class="form-group mt-4">
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" onclick="window.history.back()" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Batal
+                                    </button>
+                                    <button type="submit" class="btn btn-primary" id="generateBtn">
+                                        <i class="fas fa-cogs"></i> Generate Tagihan Massal
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
+@section('script')
+    <script>
+        $(document).ready(function() {
+            let progressInterval;
+            let isProcessing = false;
 
-{{-- <div class="container">
-        <div class="row">
-            <div class="col-sm">
-                <div class="form-group">
-                    <label for="santri_id">Nama Santri</label>
-                    <select class="form-control select2 @error('santri_id') is-invalid @enderror" name="santri_id" required>
-                        <option selected disabled>Pilih Santri</option>
-                        @foreach ($data as $santri)
-                        <option value="{{ $santri->id }}"
-                            @if (\App\Models\RegistrationCost::where('santri_id', $santri->id)->exists())
-                            disabled
-                            @endif>{{ $santri->name }}</option>
-                        @endforeach
-                    </select>
+            $('#generateBulkForm').on('submit', function(e) {
+                e.preventDefault();
 
-                    @error('santri_id')
-                    <span class="invalid-feedback" role="alert">
-                        <strong>{{ $message }}</strong>
-                    </span>
-                    @enderror
+                const kategoriStatus = $('#kategori_biaya_status').val();
+                const jenisBiayaId = $('#jenis_biaya_id').val();
+                const tahun = $('#tahun').val();
+
+                console.log('Form submitted with:', {
+                    kategoriStatus: kategoriStatus,
+                    jenisBiayaId: jenisBiayaId,
+                    tahun: tahun
+                });
+
+                if (!tahun) {
+                    alert('Mohon pilih tahun.');
+                    return false;
+                }
+
+                if (!kategoriStatus && !jenisBiayaId) {
+                    alert('Mohon pilih minimal salah satu: Kategori Biaya atau Jenis Biaya tertentu.');
+                    return false;
+                }
+
+                // Build confirm message
+                let filterText = '';
+                if (kategoriStatus && jenisBiayaId) {
+                    filterText =
+                        `Kategori: ${kategoriStatus} & Jenis: ${$('#jenis_biaya_id option:selected').text()}`;
+                } else if (kategoriStatus) {
+                    filterText = `Kategori: ${kategoriStatus}`;
+                } else {
+                    filterText = `Jenis Biaya: ${$('#jenis_biaya_id option:selected').text()}`;
+                }
+
+                // Confirm before starting
+                const confirmMessage =
+                    `Apakah Anda yakin ingin generate tagihan massal untuk:\n\n${filterText}\nTahun: ${tahun}\n\nProses ini mungkin memakan waktu beberapa menit.`;
+
+                if (!confirm(confirmMessage)) {
+                    return false;
+                }
+
+                // Start the process
+                startBulkGenerate();
+            });
+
+            function startBulkGenerate() {
+                // Disable form
+                $('#generateBtn').prop('disabled', true);
+
+                // Show progress modal
+                $('#progressModal').modal('show');
+
+                // Send request to start bulk generate
+                $.ajax({
+                    url: '{{ route('tagihan_terjadwal.generateBulkTerjadwal') }}',
+                    type: 'POST',
+                    data: $('#generateBulkForm').serialize(),
+                    success: function(response) {
+                        if (response.success) {
+                            // Start monitoring progress
+                            startProgressMonitoring();
+                        } else {
+                            showError(response.message || 'Terjadi kesalahan saat memulai proses.');
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'Terjadi kesalahan saat memulai proses.';
+
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            errorMessage = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                        }
+
+                        showError(errorMessage);
+                    }
+                });
+            }
+
+            function startProgressMonitoring() {
+                progressInterval = setInterval(function() {
+                    $.ajax({
+                        url: '{{ route('tagihan_terjadwal.getBulkProgress') }}',
+                        type: 'GET',
+                        success: function(progress) {
+                            updateProgress(progress);
+
+                            if (progress.status === 'completed' || progress.status ===
+                                'failed') {
+                                clearInterval(progressInterval);
+                                showResult(progress);
+                            }
+                        },
+                        error: function() {
+                            // Continue monitoring even if one request fails
+                            console.error('Failed to get progress update');
+                        }
+                    });
+                }, 1000); // Check every second
+            }
+
+            function updateProgress(progress) {
+                if (progress.status === 'not_found') {
+                    $('#progressText').text('Proses tidak ditemukan...');
+                    return;
+                }
+
+                const current = progress.current || 0;
+                const total = progress.total || 1;
+                const percentage = Math.round((current / total) * 100);
+
+                // Update progress bar
+                $('.progress-bar')
+                    .css('width', percentage + '%')
+                    .attr('aria-valuenow', percentage)
+                    .text(percentage + '%');
+
+                // Update text
+                $('#progressText').text(`Memproses ${current} dari ${total} data...`);
+
+                if (progress.status === 'processing') {
+                    $('#progressDetail').text('Sedang membuat tagihan...');
+                } else if (progress.status === 'initializing') {
+                    $('#progressDetail').text('Mempersiapkan data...');
+                }
+            }
+
+            function showResult(progress) {
+                $('#progressModal').modal('hide');
+
+                // Force remove modal backdrop
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
+                $('body').css('padding-right', '');
+
+                let title, body, titleClass = 'text-success';
+
+                if (progress.status === 'completed') {
+                    title = '<i class="fas fa-check-circle text-success"></i> Generate Berhasil';
+                    body = `
+                    <div class="alert alert-success">
+                        <h6 class="alert-heading">Proses selesai!</h6>
+                        <p class="mb-2">
+                            <strong>${progress.processed || 0}</strong> tagihan berhasil dibuat<br>
+                            <strong>${progress.failed || 0}</strong> tagihan gagal dibuat
+                        </p>
+                    </div>
+                `;
+
+                    if (progress.errors && progress.errors.length > 0) {
+                        body += `
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading">Ada beberapa error:</h6>
+                            <ul class="mb-0">
+                    `;
+                        progress.errors.slice(0, 5).forEach(function(error) {
+                            body += `<li>${error}</li>`;
+                        });
+                        if (progress.errors.length > 5) {
+                            body += `<li>... dan ${progress.errors.length - 5} error lainnya</li>`;
+                        }
+                        body += `</ul></div>`;
+                    }
+                } else {
+                    title = '<i class="fas fa-exclamation-circle text-danger"></i> Generate Gagal';
+                    titleClass = 'text-danger';
+                    body = `
+                    <div class="alert alert-danger">
+                        <h6 class="alert-heading">Proses gagal!</h6>
+                        <p class="mb-0">Terjadi kesalahan saat generate tagihan massal.</p>
+                    </div>
+                `;
+                }
+
+                $('#resultModalTitle').html(title);
+                $('#resultModalBody').html(body);
+                $('#resultModal').modal('show');
+
+                // Re-enable form and reset it
+                $('#generateBtn').prop('disabled', false).html(
+                    '<i class="fas fa-cogs"></i> Generate Tagihan Massal');
+
+                // Reset form after successful generation
+                if (progress.status === 'completed') {
+                    resetForm();
+
+                    // Auto close modal after 5 seconds for successful completion
+                    setTimeout(function() {
+                        if ($('#resultModal').hasClass('show')) {
+                            $('#resultModal').modal('hide');
+                        }
+                    }, 5000);
+                }
+            }
+
+            function showError(message) {
+                $('#progressModal').modal('hide');
+
+                // Force remove modal backdrop
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
+                $('body').css('padding-right', '');
+
+                $('#resultModalTitle').html('<i class="fas fa-exclamation-circle text-danger"></i> Error');
+                $('#resultModalBody').html(`
+                <div class="alert alert-danger">
+                    <h6 class="alert-heading">Terjadi kesalahan!</h6>
+                    <p class="mb-0">${message}</p>
                 </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-sm">
-                <div class="form-group">
-                    <label for="construction">Biaya Pembangunan</label>
-                    <h5>Rp. {{ number_format($cost->construction, 2, ',', '.') }}</h5>
-                    <input type="text" hidden class="form-control" name="construction" value="{{ $cost->construction }}" readonly>
+            `);
+                $('#resultModal').modal('show');
+
+                // Re-enable form
+                $('#generateBtn').prop('disabled', false).html(
+                    '<i class="fas fa-cogs"></i> Generate Tagihan Massal');
+
+                // Clear interval if running
+                if (progressInterval) {
+                    clearInterval(progressInterval);
+                }
+            }
+
+            function resetForm() {
+                // Reset form fields
+                $('#kategori_biaya_status').val('');
+                $('#jenis_biaya_id').val('');
+                $('#tahun').val('{{ $currentYear }}');
+                $('#tahun_ajar_id').val('');
+
+                // Reset visual states
+                $('.form-control').removeClass('is-valid is-invalid');
+            }
+
+            // Handle result modal close - redirect to index
+            $('#resultModal').on('hidden.bs.modal', function() {
+                // Force clean modal state
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
+                $('body').css('padding-right', '');
+
+                // Optional: Auto redirect to index after modal closes
+                // Uncomment line below if you want auto redirect
+                // window.location.href = '{{ route('tagihan_terjadwal.index') }}';
+            });
+
+            // Handle page unload/refresh warning during process
+            let isProcessing = false;
+
+            function startBulkGenerate() {
+                // Set processing flag
+                isProcessing = true;
+
+                // Disable form
+                $('#generateBtn').prop('disabled', true).html(
+                    '<i class="fas fa-spinner fa-spin"></i> Memproses...');
+
+                // Show progress modal
+                $('#progressModal').modal('show');
+
+                // Send request to start bulk generate
+                $.ajax({
+                    url: '{{ route('tagihan_terjadwal.generateBulkTerjadwal') }}',
+                    type: 'POST',
+                    data: $('#generateBulkForm').serialize(),
+                    dataType: 'json',
+                    success: function(response) {
+                        console.log('Generate response:', response);
+
+                        if (response.success) {
+                            // For quick response like yours, directly show result instead of monitoring
+                            if (response.processed !== undefined && response.failed !== undefined) {
+                                // Direct result available, show immediately
+                                setTimeout(function() {
+                                    showDirectResult(response);
+                                }, 1000); // Small delay to show progress started
+                            } else {
+                                // Start monitoring progress for longer operations
+                                startProgressMonitoring();
+                            }
+                        } else {
+                            isProcessing = false;
+                            showError(response.message || 'Terjadi kesalahan saat memulai proses.');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        isProcessing = false;
+                        console.error('AJAX Error:', {
+                            xhr,
+                            status,
+                            error
+                        });
+
+                        let errorMessage = 'Terjadi kesalahan saat memulai proses.';
+
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            errorMessage = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                        }
+
+                        showError(errorMessage);
+                    }
+                });
+            }
+
+            function showDirectResult(response) {
+                $('#progressModal').modal('hide');
+
+                // Force remove modal backdrop
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
+                $('body').css('padding-right', '');
+
+                const title = '<i class="fas fa-check-circle text-success"></i> Generate Berhasil';
+                const body = `
+                <div class="alert alert-success">
+                    <h6 class="alert-heading">Proses selesai!</h6>
+                    <p class="mb-2">
+                        <strong>${response.processed || 0}</strong> tagihan berhasil dibuat<br>
+                        <strong>${response.failed || 0}</strong> tagihan gagal dibuat
+                    </p>
+                    <p class="mb-0">
+                        <small><i class="fas fa-info-circle"></i> ${response.message}</small>
+                    </p>
                 </div>
-            </div>
-            <div class="col-sm">
-                <div class="form-group">
-                    <label for="facilities">Biaya Fasilitas</label>
-                    <h5>Rp. {{ number_format($cost->facilities, 2, ',', '.') }}</h5>
-                    <input type="text" hidden class="form-control" name="facilities" value="{{ $cost->facilities }}" readonly>
-                </div>
-            </div>
-            <div class="col-sm">
-                <div class="form-group">
-                    <label for="wardrobe">Biaya Alokasi Almari</label>
-                    <h5>Rp. {{ number_format($cost->wardrobe, 2, ',', '.') }}</h5>
-                    <input type="text" hidden class="form-control" name="wardrobe" value="{{ $cost->wardrobe }}" readonly>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-sm">
-                <div class="form-group">
-                    <button class="btn btn-primary">Bayar</button>
-                    <a href="{{ route('registration.index') }}" class="btn btn-secondary">Kembali</a>
-                </div>
-            </div>
-        </div>
-    </div> --}}
+            `;
+
+                $('#resultModalTitle').html(title);
+                $('#resultModalBody').html(body);
+                $('#resultModal').modal('show');
+
+                // Re-enable form and reset it
+                $('#generateBtn').prop('disabled', false).html(
+                    '<i class="fas fa-cogs"></i> Generate Tagihan Massal');
+                isProcessing = false;
+                resetForm();
+            }
+
+            function startProgressMonitoring() {
+                console.log('Starting progress monitoring...');
+
+                progressInterval = setInterval(function() {
+                    $.ajax({
+                        url: '{{ route('tagihan_terjadwal.getBulkProgress') }}',
+                        type: 'GET',
+                        dataType: 'json',
+                        success: function(progress) {
+                            console.log('Progress update:', progress);
+                            updateProgress(progress);
+
+                            if (progress.status === 'completed' || progress.status ===
+                                'failed') {
+                                isProcessing = false;
+                                clearInterval(progressInterval);
+
+                                // Small delay to show final progress
+                                setTimeout(function() {
+                                    showResult(progress);
+                                }, 500);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Progress monitoring error:', {
+                                xhr,
+                                status,
+                                error
+                            });
+                            // Continue monitoring even if one request fails, but log it
+                        }
+                    });
+                }, 1000); // Check every second
+            }
+
+            // Warn user if they try to leave during processing
+            window.addEventListener('beforeunload', function(e) {
+                if (isProcessing) {
+                    e.preventDefault();
+                    e.returnValue = 'Proses generate masih berjalan. Yakin ingin meninggalkan halaman?';
+                    return e.returnValue;
+                }
+            });
+        });
+    </script>
+@endsection
+
+@section('css_inline')
+    <style>
+        .required::after {
+            content: ' *';
+            color: red;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        .progress {
+            height: 1.5rem;
+        }
+
+        .alert-heading {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #dee2e6;
+        }
+
+        .progress-bar-animated {
+            animation: progress-bar-stripes 1s linear infinite;
+        }
+
+        @keyframes progress-bar-stripes {
+            0% {
+                background-position: 1rem 0;
+            }
+
+            100% {
+                background-position: 0 0;
+            }
+        }
+    </style>
+@endsection

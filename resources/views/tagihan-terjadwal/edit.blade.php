@@ -342,7 +342,7 @@
                             // Show error message
                             alert(
                                 'Terjadi kesalahan saat memuat data alokasi biaya. Silakan coba lagi.'
-                                );
+                            );
                         },
                         complete: function() {
                             $('#loadingModal').modal('hide');

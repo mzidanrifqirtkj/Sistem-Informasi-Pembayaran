@@ -2,289 +2,539 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\BiayaTerjadwal;
+use App\Models\BiayaSantri;
+use App\Models\DaftarBiaya;
 use App\Models\Santri;
 use App\Models\TagihanTerjadwal;
+use App\Models\TahunAjar;
+use App\Exports\TagihanTerjadwalExport;
 use Auth;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TagihanTerjadwalController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $user = Auth::user(); // Ambil user yang sedang login
-        $tagihanTerjadwals = collect(); // Inisialisasi koleksi kosong
+        $user = Auth::user();
+        $query = TagihanTerjadwal::query();
 
+        // Apply role-based filtering
         if ($user->hasRole('admin')) {
-            // Jika user adalah admin, ambil semua data tagihan terjadwal dengan pagination
-            $tagihanTerjadwals = TagihanTerjadwal::with(['santri', 'biayaTerjadwal'])->paginate(10);
+            // Admin dapat melihat semua tagihan
+            $query->with(['santri', 'daftarBiaya.kategoriBiaya', 'biayaSantri', 'tahunAjar']);
         } elseif ($user->hasRole('santri')) {
-            // Jika user adalah santri, ambil data tagihan terjadwal yang sesuai dengan user yang login
             $santri = $user->santri;
-            if ($santri) { // Pastikan relasi santri ada
-                $tagihanTerjadwals = TagihanTerjadwal::with(['santri', 'biayaTerjadwal'])
-                    ->where('santri_id', $santri->id_santri)
-                    ->paginate(10); // Gunakan paginate() untuk konsistensi
+            if ($santri) {
+                // Santri hanya melihat tagihannya sendiri
+                $query->where('santri_id', $santri->id_santri)
+                    ->with(['santri', 'daftarBiaya.kategoriBiaya', 'biayaSantri', 'tahunAjar']);
+            } else {
+                // Jika santri tidak ditemukan, return empty collection
+                $query->whereRaw('1 = 0');
             }
         }
 
-        return view('tagihan-terjadwal.index', compact('tagihanTerjadwals'));
+        // Apply filters
+        if ($request->filled('tahun')) {
+            $query->where('tahun', $request->tahun);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('jenis_biaya')) {
+            $query->whereHas('daftarBiaya.kategoriBiaya', function ($q) use ($request) {
+                $q->where('id_kategori_biaya', $request->jenis_biaya);
+            });
+        }
+
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->whereHas('santri', function ($q) use ($searchTerm) {
+                $q->where('nama_santri', 'like', "%{$searchTerm}%")
+                    ->orWhere('nis', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        $tagihanTerjadwals = $query->paginate(10);
+
+        // Get filter options
+        $tahunOptions = TagihanTerjadwal::select('tahun')->distinct()->orderBy('tahun', 'desc')->pluck('tahun');
+        $statusOptions = ['belum_lunas', 'dibayar_sebagian', 'lunas'];
+        $jenisBiayaOptions = DaftarBiaya::with('kategoriBiaya')
+            ->get()
+            ->groupBy('kategoriBiaya.id_kategori_biaya')
+            ->map(function ($items) {
+                return $items->first()->kategoriBiaya;
+            });
+
+        return view('tagihan-terjadwal.index', compact(
+            'tagihanTerjadwals',
+            'tahunOptions',
+            'statusOptions',
+            'jenisBiayaOptions'
+        ));
     }
-    // public function generateBulkTagihan()
-    // {
-    //     try {
-    //         DB::beginTransaction();
 
-    //         // Ambil semua santri
-    //         $santris = Santri::all();
+    public function create()
+    {
+        $santris = Santri::where('status', 'aktif')->get();
+        $tahunAjars = TahunAjar::all();
+        return view('tagihan-terjadwal.create', compact('santris', 'tahunAjars'));
+    }
 
-    //         // Ambil biaya terjadwal (asumsi ada data biaya yang ingin digunakan)
-    //         $biayaTerjadwal = BiayaTerjadwal::all();
+    public function getBiayaSantriBySantriId(Request $request)
+    {
+        try {
+            $santriId = $request->query('santri_id');
 
-    //         if ($biayaTerjadwal->isEmpty()) {
-    //             return redirect()->back()->with('error', 'Tidak ada data biaya terjadwal.');
-    //         }
+            if (!$santriId) {
+                return response()->json(['error' => 'Santri ID is required'], 400);
+            }
 
-    //         foreach ($santris as $santri) {
-    //             foreach ($biayaTerjadwal as $biaya) {
-    //                 // Cek apakah tagihan sudah ada untuk kombinasi santri dan biaya
-    //                 $existingTagihan = TagihanTerjadwal::where('santri_id', $santri->id_santri)
-    //                     ->where('biaya_terjadwal_id', $biaya->id_biaya_terjadwal)
-    //                     ->first();
+            // Filter BiayaSantri yang memiliki KategoriBiaya dengan status 'tahunan' atau 'insidental'
+            $biayaSantris = BiayaSantri::where('santri_id', $santriId)
+                ->with('daftarBiaya.kategoriBiaya')
+                ->whereHas('daftarBiaya.kategoriBiaya', function ($query) {
+                    $query->whereIn('status', ['tahunan', 'insidental']);
+                })
+                ->get()
+                ->map(function ($biayaSantri) {
+                    // Validasi relasi untuk menghindari error
+                    if (!$biayaSantri->daftarBiaya || !$biayaSantri->daftarBiaya->kategoriBiaya) {
+                        Log::warning("BiayaSantri ID {$biayaSantri->id_biaya_santri} has broken relations");
+                        return null;
+                    }
 
-    //                 if (!$existingTagihan) {
-    //                     // Buat tagihan baru
-    //                     TagihanTerjadwal::create([
-    //                         'santri_id' => $santri->id_santri,
-    //                         'biaya_terjadwal_id' => $biaya->id_biaya_terjadwal,
-    //                         'nominal' => $biaya->nominal, // Asumsi nominal ada di tabel biaya_terjadwal
-    //                         'status' => 'Belum Dibayar',
-    //                         'rincian' => [
-    //                             ['keterangan' => 'Tagihan otomatis', 'nominal' => $biaya->nominal],
-    //                         ],
-    //                     ]);
-    //                 }
-    //             }
-    //         }
+                    $nominalGabungan = $biayaSantri->daftarBiaya->nominal * $biayaSantri->jumlah;
+                    $statusKategori = $biayaSantri->daftarBiaya->kategoriBiaya->status;
 
-    //         DB::commit();
-    //         return redirect()->back()->with('success', 'Tagihan berhasil dibuat untuk semua santri.');
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-    //     }
-    // }
+                    return [
+                        'id' => $biayaSantri->id_biaya_santri,
+                        'nama_biaya_paket' => $biayaSantri->daftarBiaya->kategoriBiaya->nama_kategori .
+                            ' [' . ucfirst($statusKategori) . ']' .
+                            ' (Rp ' . number_format($nominalGabungan, 0, ',', '.') .
+                            ($biayaSantri->jumlah > 1 ? ' x ' . $biayaSantri->jumlah : '') . ')',
+                        'daftar_biaya_id' => $biayaSantri->daftarBiaya->id_daftar_biaya,
+                        'nominal_tagihan_default' => $nominalGabungan,
+                        'status_kategori' => $statusKategori,
+                    ];
+                })
+                ->filter(); // Remove null values
+
+            return response()->json($biayaSantris);
+        } catch (Exception $e) {
+            Log::error('Error in getBiayaSantriBySantriId: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan saat mengambil data biaya santri'], 500);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            $validatedData = $request->validate([
+                'santri_id' => 'required|exists:santris,id_santri',
+                'biaya_santri_id' => 'required|exists:biaya_santris,id_biaya_santri',
+                'daftar_biaya_id' => 'required|exists:daftar_biayas,id_daftar_biaya',
+                'tahun' => 'required|integer|min:2000|max:' . (now()->year + 2),
+                'tahun_ajar_id' => 'nullable|exists:tahun_ajars,id_tahun_ajar',
+                'nominal' => 'required|numeric|min:0',
+            ]);
+
+            // Pengecekan duplikasi berdasarkan biaya_santri_id + tahun + tahun_ajar_id
+            $existsQuery = TagihanTerjadwal::where('biaya_santri_id', $validatedData['biaya_santri_id'])
+                ->where('tahun', $validatedData['tahun']);
+
+            if ($validatedData['tahun_ajar_id']) {
+                $existsQuery->where('tahun_ajar_id', $validatedData['tahun_ajar_id']);
+            } else {
+                $existsQuery->whereNull('tahun_ajar_id');
+            }
+
+            if ($existsQuery->exists()) {
+                return back()->withInput()->withErrors([
+                    'biaya_santri_id' => 'Tagihan untuk alokasi biaya, tahun, dan tahun ajar yang dipilih sudah ada.'
+                ]);
+            }
+
+            $data = [
+                'santri_id' => $validatedData['santri_id'],
+                'daftar_biaya_id' => $validatedData['daftar_biaya_id'],
+                'biaya_santri_id' => $validatedData['biaya_santri_id'],
+                'nominal' => $validatedData['nominal'],
+                'status' => 'belum_lunas',
+                'tahun' => $validatedData['tahun'],
+                'tahun_ajar_id' => $validatedData['tahun_ajar_id'],
+                'rincian' => [
+                    ['keterangan' => 'Tagihan manual', 'nominal' => $validatedData['nominal']]
+                ],
+            ];
+
+            TagihanTerjadwal::create($data);
+
+            DB::commit();
+            return redirect()->route('tagihan_terjadwal.index')->with('success', 'Tagihan berhasil dibuat.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return back()->withInput()->withErrors($e->errors());
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Error creating tagihan: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Gagal membuat tagihan: ' . $e->getMessage());
+        }
+    }
+
     public function createBulkTagihanTerjadwal()
     {
-        $biayaTerjadwals = BiayaTerjadwal::all();
-        return view('tagihan-terjadwal.createBulk', compact('biayaTerjadwals'));
+        // Ambil status unik dari KategoriBiaya, namun hanya tampilkan 'tahunan' dan 'insidental'
+        $kategoriBiayaStatus = ['tahunan', 'insidental']; // Hardcode untuk membatasi pilihan
+
+        // Ambil jenis biaya berdasarkan status yang difilter
+        $jenisBiayaOptions = DaftarBiaya::with('kategoriBiaya')
+            ->whereHas('kategoriBiaya', function ($query) use ($kategoriBiayaStatus) {
+                $query->whereIn('status', $kategoriBiayaStatus);
+            })
+            ->get()
+            ->groupBy('kategoriBiaya.id_kategori_biaya')
+            ->map(function ($items) {
+                return $items->first()->kategoriBiaya;
+            })
+            ->sortBy('nama_kategori');
+
+        $tahunAjars = TahunAjar::all();
+        $currentYear = now()->year;
+
+        return view('tagihan-terjadwal.createBulk', compact('kategoriBiayaStatus', 'jenisBiayaOptions', 'tahunAjars', 'currentYear'));
     }
 
     public function generateBulkTagihanTerjadwal(Request $request)
     {
         try {
-            DB::beginTransaction();
             $request->validate([
-                'biaya_terjadwal_id' => 'required|exists:biaya_terjadwals,id_biaya_terjadwal',
+                'kategori_biaya_status' => 'nullable|string',
+                'jenis_biaya_id' => 'nullable|exists:kategori_biayas,id_kategori_biaya',
+                'tahun' => 'required|integer|min:2000|max:' . (now()->year + 2),
+                'tahun_ajar_id' => 'nullable|exists:tahun_ajars,id_tahun_ajar',
             ]);
 
-            // Ambil biaya terjadwal
-            $biayaTerjadwal = BiayaTerjadwal::where('id_biaya_terjadwal', $request->biaya_terjadwal_id)->first();
-
-            if (is_null($biayaTerjadwal)) {
-                return redirect()->back()->with('error', 'Tidak ada data biaya terjadwal.');
+            // Validasi: minimal salah satu filter harus dipilih
+            if (!$request->kategori_biaya_status && !$request->jenis_biaya_id) {
+                return back()->withInput()->with('error', 'Pilih minimal salah satu: Kategori Biaya atau Jenis Biaya tertentu.');
             }
 
-            // Proses semua santri dengan chunk
-            Santri::chunk(100, function ($santris) use ($biayaTerjadwal) {
-                foreach ($santris as $santri) {
-                    // Cek apakah tagihan sudah ada
-                    $existingTagihan = TagihanTerjadwal::where('santri_id', $santri->id_santri)
-                        ->where('biaya_terjadwal_id', $biayaTerjadwal->id_biaya_terjadwal)
-                        ->first();
+            $userId = Auth::id();
+            $cacheKey = "bulk_tagihan_{$userId}";
 
-                    if (!$existingTagihan) {
-                        $data = [
-                            'santri_id' => $santri->id_santri,
-                            'biaya_terjadwal_id' => $biayaTerjadwal->id_biaya_terjadwal,
-                            'nominal' => $biayaTerjadwal->nominal, // Ambil nominal dari biaya terjadwal
-                            'status' => 'belum_lunas',
-                            'rincian' => [
-                                ['keterangan' => 'Tagihan otomatis', 'nominal' => $biayaTerjadwal->nominal],
-                            ],
-                        ];
+            // Initialize progress tracking
+            Cache::put($cacheKey, [
+                'current' => 0,
+                'total' => 0,
+                'status' => 'initializing',
+                'errors' => []
+            ], 3600);
 
-                        if ($biayaTerjadwal->periode == "tahunan") {
-                            $data['tahun'] = now()->year;
-                        } else {
-                            $data['tahun'] = Carbon::parse($santri->tanggal_masuk)->year;
+            $selectedKategoriStatus = $request->kategori_biaya_status;
+            $selectedJenisBiayaId = $request->jenis_biaya_id;
+            $selectedTahun = $request->tahun;
+            $selectedTahunAjarId = $request->tahun_ajar_id;
+
+            // Build query untuk BiayaSantri
+            $biayaSantriQuery = BiayaSantri::with('daftarBiaya.kategoriBiaya');
+
+            if ($selectedKategoriStatus) {
+                // Filter berdasarkan status kategori
+                $biayaSantriQuery->whereHas('daftarBiaya.kategoriBiaya', function ($query) use ($selectedKategoriStatus) {
+                    $query->where('status', $selectedKategoriStatus);
+                });
+            }
+
+            if ($selectedJenisBiayaId) {
+                // Filter berdasarkan jenis biaya tertentu
+                $biayaSantriQuery->whereHas('daftarBiaya.kategoriBiaya', function ($query) use ($selectedJenisBiayaId) {
+                    $query->where('id_kategori_biaya', $selectedJenisBiayaId);
+                });
+            }
+
+            // Get total count for progress tracking
+            $totalBiayaSantris = $biayaSantriQuery->count();
+
+            if ($totalBiayaSantris === 0) {
+                return back()->withInput()->with('error', 'Tidak ada alokasi biaya santri dengan kategori tersebut untuk di-generate.');
+            }
+
+            // Update cache with total
+            Cache::put($cacheKey, [
+                'current' => 0,
+                'total' => $totalBiayaSantris,
+                'status' => 'processing',
+                'errors' => []
+            ], 3600);
+
+            DB::beginTransaction();
+
+            $processedCount = 0;
+            $errorCount = 0;
+            $errors = [];
+
+            // Process in chunks to avoid memory issues
+            $biayaSantriQuery->chunk(100, function ($biayaSantris) use ($selectedTahun, $selectedTahunAjarId, $cacheKey, &$processedCount, &$errorCount, &$errors) {
+                foreach ($biayaSantris as $biayaSantri) {
+                    try {
+                        // Validasi relasi
+                        if (!$biayaSantri->daftarBiaya || !$biayaSantri->daftarBiaya->kategoriBiaya) {
+                            throw new Exception("BiayaSantri ID {$biayaSantri->id_biaya_santri} has broken relations");
                         }
-                        // Buat tagihan baru
-                        TagihanTerjadwal::create($data);
+
+                        $nominalTagihan = $biayaSantri->daftarBiaya->nominal * $biayaSantri->jumlah;
+
+                        // Check for duplicates
+                        $existingTagihanQuery = TagihanTerjadwal::where('biaya_santri_id', $biayaSantri->id_biaya_santri)
+                            ->where('tahun', $selectedTahun);
+
+                        if ($selectedTahunAjarId) {
+                            $existingTagihanQuery->where('tahun_ajar_id', $selectedTahunAjarId);
+                        } else {
+                            $existingTagihanQuery->whereNull('tahun_ajar_id');
+                        }
+
+                        if (!$existingTagihanQuery->exists()) {
+                            TagihanTerjadwal::create([
+                                'santri_id' => $biayaSantri->santri_id,
+                                'daftar_biaya_id' => $biayaSantri->daftarBiaya->id_daftar_biaya,
+                                'biaya_santri_id' => $biayaSantri->id_biaya_santri,
+                                'nominal' => $nominalTagihan,
+                                'status' => 'belum_lunas',
+                                'tahun' => $selectedTahun,
+                                'tahun_ajar_id' => $selectedTahunAjarId,
+                                'rincian' => [
+                                        [
+                                            'keterangan' => 'Tagihan otomatis: ' . $biayaSantri->daftarBiaya->kategoriBiaya->nama_kategori,
+                                            'nominal' => $nominalTagihan
+                                        ],
+                                    ],
+                            ]);
+                        }
+
+                        $processedCount++;
+
+                    } catch (Exception $e) {
+                        $errorCount++;
+                        $errors[] = "Error processing BiayaSantri ID {$biayaSantri->id_biaya_santri}: " . $e->getMessage();
+                        Log::error("Bulk generate error: " . $e->getMessage());
+
+                        // If too many errors, stop and rollback
+                        if ($errorCount > 10) {
+                            throw new Exception("Too many errors encountered. Process stopped.");
+                        }
                     }
+
+                    // Update progress
+                    Cache::put($cacheKey, [
+                        'current' => $processedCount + $errorCount,
+                        'total' => Cache::get($cacheKey)['total'],
+                        'status' => 'processing',
+                        'errors' => $errors
+                    ], 3600);
                 }
             });
 
+            if ($errorCount > 10) {
+                DB::rollBack();
+                return back()->withInput()->with('error', 'Proses dihentikan karena terlalu banyak error.');
+            }
+
             DB::commit();
-            return redirect()->route('tagihan_terjadwal.index')->with('success', 'Tagihan berhasil dibuat untuk semua santri menggunakan chunk.');
-        } catch (\Exception $e) {
+
+            // Update final status
+            Cache::put($cacheKey, [
+                'current' => $processedCount + $errorCount,
+                'total' => Cache::get($cacheKey)['total'],
+                'status' => 'completed',
+                'errors' => $errors,
+                'processed' => $processedCount,
+                'failed' => $errorCount
+            ], 600); // Reduce cache time to 10 minutes after completion
+
+            return redirect()->route('tagihan_terjadwal.index')->with('success', "Tagihan massal berhasil dibuat. {$processedCount} berhasil, {$errorCount} gagal.");
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
+            return back()->withInput()->withErrors($e->errors());
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Bulk generate error: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    public function getBulkProgress()
+    {
+        $userId = Auth::id();
+        $cacheKey = "bulk_tagihan_{$userId}";
+        $progress = Cache::get($cacheKey, ['status' => 'not_found']);
+
+        return response()->json($progress);
+    }
+
+    public function edit($id_tagihan_terjadwal)
+    {
+        try {
+            $tagihanTerjadwal = TagihanTerjadwal::with(['santri', 'daftarBiaya.kategoriBiaya', 'biayaSantri', 'tahunAjar'])
+                ->findOrFail($id_tagihan_terjadwal);
+
+            $santris = Santri::where('status', 'aktif')->get();
+            $tahunAjars = TahunAjar::all();
+
+            // Get BiayaSantri untuk santri yang sedang ditagih dengan filter status 'tahunan' dan 'insidental'
+            $biayaSantrisUntukSantri = BiayaSantri::where('santri_id', $tagihanTerjadwal->santri_id)
+                ->with('daftarBiaya.kategoriBiaya')
+                ->whereHas('daftarBiaya.kategoriBiaya', function ($query) {
+                    $query->whereIn('status', ['tahunan', 'insidental']);
+                })
+                ->get()
+                ->map(function ($biayaSantri) {
+                    if (!$biayaSantri->daftarBiaya || !$biayaSantri->daftarBiaya->kategoriBiaya) {
+                        return null;
+                    }
+
+                    $nominalGabungan = $biayaSantri->daftarBiaya->nominal * $biayaSantri->jumlah;
+                    $statusKategori = $biayaSantri->daftarBiaya->kategoriBiaya->status;
+
+                    return [
+                        'id' => $biayaSantri->id_biaya_santri,
+                        'nama_biaya_paket' => $biayaSantri->daftarBiaya->kategoriBiaya->nama_kategori .
+                            ' [' . ucfirst($statusKategori) . ']' .
+                            ' (Rp ' . number_format($nominalGabungan, 0, ',', '.') .
+                            ($biayaSantri->jumlah > 1 ? ' x ' . $biayaSantri->jumlah : '') . ')',
+                        'daftar_biaya_id' => $biayaSantri->daftarBiaya->id_daftar_biaya,
+                        'nominal_tagihan_default' => $nominalGabungan,
+                        'status_kategori' => $statusKategori,
+                    ];
+                })
+                ->filter();
+
+            return view('tagihan-terjadwal.edit', compact('tagihanTerjadwal', 'santris', 'tahunAjars', 'biayaSantrisUntukSantri'));
+
+        } catch (ModelNotFoundException $e) {
+            return redirect()->back()->with('error', 'Tagihan tidak ditemukan.');
+        } catch (Exception $e) {
+            Log::error('Error in edit method: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
-    public function create()
+    public function update(Request $request, $id_tagihan_terjadwal)
     {
-        $santris = Santri::all();
-        $biayaTerjadwals = BiayaTerjadwal::all();
-        $now = (int) date('Y');
-        return view('tagihan-terjadwal.create', compact('santris', 'biayaTerjadwals', 'now'));
-    }
-    public function store(Request $request)
-    {
-        // Validasi Input
         try {
+            DB::beginTransaction();
+
+            $tagihanTerjadwal = TagihanTerjadwal::findOrFail($id_tagihan_terjadwal);
+
             $validatedData = $request->validate([
                 'santri_id' => 'required|exists:santris,id_santri',
-                'tahun' => 'nullable|integer|min:2000|max:' . (now()->year + 1),
-                'biaya_terjadwal_id' => 'required|exists:biaya_terjadwals,id_biaya_terjadwal',
+                'biaya_santri_id' => 'required|exists:biaya_santris,id_biaya_santri',
+                'daftar_biaya_id' => 'required|exists:daftar_biayas,id_daftar_biaya',
+                'nominal' => 'required|numeric|min:0',
+                'status' => ['required', Rule::in(['belum_lunas', 'dibayar_sebagian', 'lunas'])],
+                'tahun' => 'required|integer|min:2000|max:' . (now()->year + 2),
+                'tahun_ajar_id' => 'nullable|exists:tahun_ajars,id_tahun_ajar',
             ]);
 
-            $santriId = $validatedData['santri_id'];
-            $biayaId = $validatedData['biaya_terjadwal_id'];
+            // Check for duplicates (excluding current record)
+            $existsQuery = TagihanTerjadwal::where('biaya_santri_id', $validatedData['biaya_santri_id'])
+                ->where('tahun', $validatedData['tahun'])
+                ->where('id_tagihan_terjadwal', '!=', $id_tagihan_terjadwal);
 
-            // Ambil informasi santri dan biaya
-            $santri = Santri::findOrFail($santriId);
-            $tahunMasukSantri = Carbon::parse($santri->tanggal_masuk)->year;
-            $biaya = BiayaTerjadwal::findOrFail($biayaId);
-            $tipe = $biaya->periode; // 'tahunan', 'semesteran', 'sekali'
-
-            // Cek duplikasi berdasarkan tipe
-            $exists = false;
-
-            if ($tipe === 'tahunan') {
-                $tahun = $validatedData['tahun'] ?? now()->year;
-                // Hanya boleh ada satu tagihan per tahun
-                $exists = TagihanTerjadwal::where('santri_id', $santriId)
-                    ->where('biaya_terjadwal_id', $biayaId)
-                    ->where('tahun', $tahun)
-                    ->exists();
-            } elseif ($tipe === 'sekali') {
-                // Tidak boleh ada tagihan sebelumnya
-                $exists = TagihanTerjadwal::where('santri_id', $santriId)
-                    ->where('biaya_terjadwal_id', $biayaId)
-                    ->exists();
+            if ($validatedData['tahun_ajar_id']) {
+                $existsQuery->where('tahun_ajar_id', $validatedData['tahun_ajar_id']);
+            } else {
+                $existsQuery->whereNull('tahun_ajar_id');
             }
 
-            // Jika sudah ada, kirim error
-            if ($exists) {
-                return back()->withErrors(['biaya_terjadwal_id' => 'Tagihan untuk kombinasi ini sudah ada.']);
+            if ($existsQuery->exists()) {
+                return back()->withInput()->withErrors([
+                    'biaya_santri_id' => 'Tagihan untuk alokasi biaya, tahun, dan tahun ajar yang dipilih sudah ada.'
+                ]);
             }
-            $rincian = [
-                "keterangan" => "Dibuat dengan sistem",
+
+            $updateData = [
+                'santri_id' => $validatedData['santri_id'],
+                'daftar_biaya_id' => $validatedData['daftar_biaya_id'],
+                'biaya_santri_id' => $validatedData['biaya_santri_id'],
+                'nominal' => $validatedData['nominal'],
+                'status' => $validatedData['status'],
+                'tahun' => $validatedData['tahun'],
+                'tahun_ajar_id' => $validatedData['tahun_ajar_id'],
             ];
-            $data = [
-                'santri_id' => $santriId,
-                'biaya_terjadwal_id' => $biayaId,
-                'tahun' => $tahun,
-                'nominal' => $biaya->nominal,
-                'rincian' => $rincian,
-                'status' => 'belum_lunas', // Default status
-            ];
-            if ($tipe === 'sekali') {
-                $data['tahun'] = $tahunMasukSantri;
-            }
-            // Simpan tagihan baru
-            TagihanTerjadwal::create($data);
 
-            return redirect()->route('tagihan_terjadwal.index')->with('success', 'Tagihan berhasil dibuat.');
-        } catch (\Exception $e) {
-            return back()->withErrors(['biaya_terjadwal_id' => 'Gagal membuat tagihan ' . $e->getMessage()]);
-        }
-    }
+            $tagihanTerjadwal->update($updateData);
 
-    // public function store(Request $request)
-    // {
-    //     $request->validate([
-    //         'santri_id' => 'required|exists:santris,id_santri',
-    //         'biaya_terjadwal_id' => 'required|exists:biaya_terjadwals,id_biaya_terjadwal',
-    //     ]);
-
-    //     try {
-    //         $dataTagihan = $request->only([
-    //             'santri_id',
-    //             'biaya_terjadwal_id',
-    //         ]);
-    //         $santri = Santri::findOrFail($request->santri_id);
-    //         $biayaTerjadwal = BiayaTerjadwal::findOrFail($request->biaya_terjadwal_id);
-    //         $isExistTagihan = TagihanTerjadwal::where('santri_id', $request->santri_id)
-    //             ->where('tagihan_terjadwal_id', $request->biaya_terjadwal_id)
-    //             ->exists();
-    //         if ($isExistTagihan) {
-    //             return redirect()->back()
-    //                 ->with('error', 'Tagihan' . $biayaTerjadwal->nama_biaya . 'sudah dibuat');
-    //         }
-
-    //         $dataTagihan['nominal'] = $biayaTerjadwal->nominal;
-    //         $rincian = [
-    //             'biaya_terjadwal' => $biayaTerjadwal->nama_biaya,
-    //             'nominal' => $biayaTerjadwal->nominal,
-    //             // 'tabungan' => $santri->tabungan,
-    //             // 'total bayar' => $dataTagihan['nominal'],
-    //         ];
-
-    //         $dataTagihan['status'] = 'belum_lunas';
-    //         $dataTagihan['tahun'] = now()->year;
-    //         $dataTagihan['rincian'] = $rincian;
-    //         TagihanTerjadwal::create($dataTagihan);
-    //         return redirect()->route('tagihan_terjadwal.index')->with('success', 'Tagihan berhasil ditambahkan.');
-    //     } catch (ModelNotFoundException $e) {
-    //         throw new Exception('Data yang diminta tidak ditemukan. Harap periksa kembali.');
-    //     } catch (\Exception $e) {
-    //         return redirect()->back()->with('error', $e->getMessage());
-    //     }
-    // }
-
-    public function edit(Request $tagihanTerjadwal)
-    {
-        $biayaTerjadwals = BiayaTerjadwal::all()->with(['tagihanTerjadwal']);
-
-        try {
-            $tagihanTerjadwal = TagihanTerjadwal::findOrFail($tagihanTerjadwal);
-            return view('tagihan-terjadwal.edit', compact('tagihanTerjadwal', 'biayaTerjadwals'));
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Tagihan tidak ditemukan.');
-        }
-    }
-    public function update(Request $request, $tagihan)
-    {
-        $tagihanTerjadwal = TagihanTerjadwal::findOrFail($tagihan);
-        // Validasi input
-        $request->validate([
-            'santri_id' => 'required|exists:santris,id_santri',
-            'biaya_terjadwal_id' => 'required|exists:biaya_terjadwals,id_biaya_terjadwal',
-            'nominal' => 'required|numeric',
-        ]);
-
-        try {
-            // Update sesuai jenis tagihan
-            $updateData = $request->only([
-                'santri_id',
-                'biaya_terjadwal_id',
-                'nominal',
-            ]);
-
-            $tagihan->update($updateData);
-
+            DB::commit();
             return redirect()->route('tagihan_terjadwal.index')->with('success', 'Tagihan berhasil diperbarui.');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui tagihan.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return back()->withInput()->withErrors($e->errors());
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating tagihan: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui tagihan: ' . $e->getMessage());
+        }
+    }
+
+    public function destroy($id_tagihan_terjadwal)
+    {
+        try {
+            DB::beginTransaction();
+
+            $tagihanTerjadwal = TagihanTerjadwal::findOrFail($id_tagihan_terjadwal);
+            $tagihanTerjadwal->delete(); // Soft delete
+
+            DB::commit();
+            return redirect()->route('tagihan_terjadwal.index')->with('success', 'Tagihan berhasil dihapus.');
+
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Tagihan tidak ditemukan.');
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Error deleting tagihan: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus tagihan: ' . $e->getMessage());
+        }
+    }
+
+    public function export(Request $request)
+    {
+        try {
+            // Apply same filters as index
+            $filters = $request->only(['tahun', 'status', 'jenis_biaya', 'search']);
+
+            $filename = 'tagihan_terjadwal';
+            if ($request->filled('tahun')) {
+                $filename .= '_' . $request->tahun;
+            }
+            if ($request->filled('status')) {
+                $filename .= '_' . $request->status;
+            }
+            $filename .= '.xlsx';
+
+            return Excel::download(new TagihanTerjadwalExport($filters), $filename);
+
+        } catch (Exception $e) {
+            Log::error('Export error: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat export: ' . $e->getMessage());
         }
     }
 }

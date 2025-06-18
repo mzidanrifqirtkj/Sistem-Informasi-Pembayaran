@@ -5,39 +5,96 @@ namespace App\Observers;
 use App\Models\Pembayaran;
 use App\Models\TagihanTerjadwal;
 use App\Models\TagihanBulanan;
+use App\Models\AuditLog;
+use App\Services\PaymentAllocationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class PembayaranObserver
 {
+    protected $paymentAllocationService;
+
+    public function __construct(PaymentAllocationService $paymentAllocationService)
+    {
+        $this->paymentAllocationService = $paymentAllocationService;
+    }
+
+    /**
+     * Handle the Pembayaran "creating" event.
+     */
+    public function creating(Pembayaran $pembayaran): bool
+    {
+        // Check for duplicate payment
+        $recentPayment = Pembayaran::where(function ($query) use ($pembayaran) {
+            if ($pembayaran->tagihan_bulanan_id) {
+                $query->where('tagihan_bulanan_id', $pembayaran->tagihan_bulanan_id);
+            } else {
+                $query->where('tagihan_terjadwal_id', $pembayaran->tagihan_terjadwal_id);
+            }
+        })
+            ->where('nominal_pembayaran', $pembayaran->nominal_pembayaran)
+            ->where('created_at', '>', now()->subMinutes(config('tagihan.payment_duplicate_window', 5)))
+            ->first();
+
+        if ($recentPayment) {
+            Log::warning('Duplicate payment detected', [
+                'existing_id' => $recentPayment->id_pembayaran,
+                'nominal' => $pembayaran->nominal_pembayaran,
+                'user' => auth()->user()->name ?? 'System'
+            ]);
+
+            // In production, you might want to throw exception
+            // throw new \Exception('Pembayaran duplikat terdeteksi');
+        }
+
+        return true;
+    }
+
     /**
      * Handle the Pembayaran "created" event.
      */
     public function created(Pembayaran $pembayaran): void
     {
-        try {
-            // Update related TagihanTerjadwal status
-            if ($pembayaran->tagihan_terjadwal_id) {
-                $this->updateTagihanTerjadwalStatus($pembayaran->tagihan_terjadwal_id);
+        DB::transaction(function () use ($pembayaran) {
+            try {
+                // Log audit
+                AuditLog::logAction(
+                    'pembayarans',
+                    $pembayaran->id_pembayaran,
+                    'created',
+                    null,
+                    $pembayaran->toArray()
+                );
+
+                // Update status tagihan
+                if ($pembayaran->tagihan_terjadwal_id) {
+                    $this->updateTagihanTerjadwalStatus($pembayaran);
+                } elseif ($pembayaran->tagihan_bulanan_id) {
+                    // Check if needs allocation
+                    $this->paymentAllocationService->allocatePayment($pembayaran);
+                }
+
+                // Clear cache
+                $this->clearCache($pembayaran);
+
+                // Log success
+                Log::info('Pembayaran created successfully', [
+                    'id' => $pembayaran->id_pembayaran,
+                    'type' => $pembayaran->tagihan_bulanan_id ? 'bulanan' : 'terjadwal',
+                    'nominal' => $pembayaran->nominal_pembayaran,
+                    'created_by' => auth()->user()->name ?? 'System'
+                ]);
+
+            } catch (\Exception $e) {
+                Log::error('Error in PembayaranObserver created', [
+                    'pembayaran_id' => $pembayaran->id_pembayaran,
+                    'error' => $e->getMessage()
+                ]);
+
+                throw $e;
             }
-
-            // Update related TagihanBulanan status
-            if ($pembayaran->tagihan_bulanan_id) {
-                $this->updateTagihanBulananStatus($pembayaran->tagihan_bulanan_id);
-            }
-
-            Log::info("Pembayaran created and status updated", [
-                'pembayaran_id' => $pembayaran->id_pembayaran,
-                'tagihan_terjadwal_id' => $pembayaran->tagihan_terjadwal_id,
-                'tagihan_bulanan_id' => $pembayaran->tagihan_bulanan_id,
-                'nominal' => $pembayaran->nominal_pembayaran
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error("Error in Pembayaran created observer: " . $e->getMessage());
-            // Re-throw to trigger rollback
-            throw $e;
-        }
+        });
     }
 
     /**
@@ -45,52 +102,54 @@ class PembayaranObserver
      */
     public function updated(Pembayaran $pembayaran): void
     {
-        try {
-            // Check if nominal_pembayaran was changed
-            if ($pembayaran->wasChanged('nominal_pembayaran')) {
-                // Update related TagihanTerjadwal status
+        DB::transaction(function () use ($pembayaran) {
+            try {
+                // Log audit
+                AuditLog::logAction(
+                    'pembayarans',
+                    $pembayaran->id_pembayaran,
+                    'updated',
+                    $pembayaran->getOriginal(),
+                    $pembayaran->toArray()
+                );
+
+                // Recalculate tagihan status
                 if ($pembayaran->tagihan_terjadwal_id) {
-                    $this->updateTagihanTerjadwalStatus($pembayaran->tagihan_terjadwal_id);
+                    $this->updateTagihanTerjadwalStatus($pembayaran);
+                } elseif ($pembayaran->tagihan_bulanan_id) {
+                    // For allocated payments, need to recalculate all affected tagihan
+                    if ($pembayaran->is_allocated) {
+                        $santriId = $pembayaran->tagihanBulanan->santri_id;
+                        $this->paymentAllocationService->recalculateTagihanStatus($santriId);
+                    } else {
+                        $pembayaran->tagihanBulanan->updateStatus();
+                    }
                 }
 
-                // Update related TagihanBulanan status
-                if ($pembayaran->tagihan_bulanan_id) {
-                    $this->updateTagihanBulananStatus($pembayaran->tagihan_bulanan_id);
-                }
+                // Clear cache
+                $this->clearCache($pembayaran);
 
-                Log::info("Pembayaran updated and status recalculated", [
+            } catch (\Exception $e) {
+                Log::error('Error in PembayaranObserver updated', [
                     'pembayaran_id' => $pembayaran->id_pembayaran,
-                    'old_nominal' => $pembayaran->getOriginal('nominal_pembayaran'),
-                    'new_nominal' => $pembayaran->nominal_pembayaran
+                    'error' => $e->getMessage()
                 ]);
+
+                throw $e;
             }
+        });
+    }
 
-            // Check if tagihan relationship was changed
-            if ($pembayaran->wasChanged(['tagihan_terjadwal_id', 'tagihan_bulanan_id'])) {
-                // Update old tagihan status
-                $oldTerjadwalId = $pembayaran->getOriginal('tagihan_terjadwal_id');
-                $oldBulananId = $pembayaran->getOriginal('tagihan_bulanan_id');
+    /**
+     * Handle the Pembayaran "deleting" event.
+     */
+    public function deleting(Pembayaran $pembayaran): bool
+    {
+        // Store related IDs for status update after deletion
+        $pembayaran->relatedTagihanId = $pembayaran->tagihan_terjadwal_id ?? $pembayaran->tagihan_bulanan_id;
+        $pembayaran->relatedTagihanType = $pembayaran->tagihan_terjadwal_id ? 'terjadwal' : 'bulanan';
 
-                if ($oldTerjadwalId) {
-                    $this->updateTagihanTerjadwalStatus($oldTerjadwalId);
-                }
-                if ($oldBulananId) {
-                    $this->updateTagihanBulananStatus($oldBulananId);
-                }
-
-                // Update new tagihan status
-                if ($pembayaran->tagihan_terjadwal_id) {
-                    $this->updateTagihanTerjadwalStatus($pembayaran->tagihan_terjadwal_id);
-                }
-                if ($pembayaran->tagihan_bulanan_id) {
-                    $this->updateTagihanBulananStatus($pembayaran->tagihan_bulanan_id);
-                }
-            }
-
-        } catch (\Exception $e) {
-            Log::error("Error in Pembayaran updated observer: " . $e->getMessage());
-            throw $e;
-        }
+        return true;
     }
 
     /**
@@ -98,128 +157,81 @@ class PembayaranObserver
      */
     public function deleted(Pembayaran $pembayaran): void
     {
-        try {
-            // Update related TagihanTerjadwal status
-            if ($pembayaran->tagihan_terjadwal_id) {
-                $this->updateTagihanTerjadwalStatus($pembayaran->tagihan_terjadwal_id);
-            }
+        DB::transaction(function () use ($pembayaran) {
+            try {
+                // Log audit
+                AuditLog::logAction(
+                    'pembayarans',
+                    $pembayaran->id_pembayaran,
+                    'deleted',
+                    $pembayaran->toArray(),
+                    null
+                );
 
-            // Update related TagihanBulanan status
-            if ($pembayaran->tagihan_bulanan_id) {
-                $this->updateTagihanBulananStatus($pembayaran->tagihan_bulanan_id);
-            }
+                // Update tagihan status after payment deletion
+                if ($pembayaran->relatedTagihanType === 'terjadwal') {
+                    $tagihan = TagihanTerjadwal::find($pembayaran->relatedTagihanId);
+                    if ($tagihan) {
+                        $tagihan->updateStatus();
+                    }
+                } else {
+                    // For allocated payments, recalculate all
+                    if ($pembayaran->is_allocated) {
+                        $allocations = $pembayaran->paymentAllocations;
+                        foreach ($allocations as $allocation) {
+                            if ($allocation->tagihanBulanan) {
+                                $allocation->tagihanBulanan->updateStatus();
+                            }
+                        }
+                    } else {
+                        $tagihan = TagihanBulanan::find($pembayaran->relatedTagihanId);
+                        if ($tagihan) {
+                            $tagihan->updateStatus();
+                        }
+                    }
+                }
 
-            Log::info("Pembayaran deleted and status updated", [
-                'pembayaran_id' => $pembayaran->id_pembayaran,
-                'tagihan_terjadwal_id' => $pembayaran->tagihan_terjadwal_id,
-                'tagihan_bulanan_id' => $pembayaran->tagihan_bulanan_id,
-                'nominal' => $pembayaran->nominal_pembayaran
-            ]);
+                // Clear cache
+                $this->clearCache($pembayaran);
 
-        } catch (\Exception $e) {
-            Log::error("Error in Pembayaran deleted observer: " . $e->getMessage());
-            throw $e;
-        }
-    }
+                Log::info('Pembayaran deleted', [
+                    'id' => $pembayaran->id_pembayaran,
+                    'deleted_by' => auth()->user()->name ?? 'System'
+                ]);
 
-    /**
-     * Update TagihanTerjadwal status based on payments
-     */
-    private function updateTagihanTerjadwalStatus(int $tagihanTerjadwalId): void
-    {
-        try {
-            $tagihan = TagihanTerjadwal::find($tagihanTerjadwalId);
-            if (!$tagihan) {
-                Log::warning("TagihanTerjadwal not found for status update", ['id' => $tagihanTerjadwalId]);
-                return;
-            }
-
-            // Calculate total pembayaran
-            $totalPembayaran = Pembayaran::where('tagihan_terjadwal_id', $tagihanTerjadwalId)
-                ->sum('nominal_pembayaran');
-
-            $nominalTagihan = $tagihan->nominal;
-
-            // Calculate new status
-            $newStatus = $this->calculateStatus($totalPembayaran, $nominalTagihan);
-
-            // Update only if status changed
-            if ($tagihan->status !== $newStatus) {
-                $tagihan->update(['status' => $newStatus]);
-
-                Log::info("TagihanTerjadwal status auto-updated", [
-                    'id' => $tagihanTerjadwalId,
-                    'old_status' => $tagihan->getOriginal('status'),
-                    'new_status' => $newStatus,
-                    'total_pembayaran' => $totalPembayaran,
-                    'nominal_tagihan' => $nominalTagihan
+            } catch (\Exception $e) {
+                Log::error('Error in PembayaranObserver deleted', [
+                    'pembayaran_id' => $pembayaran->id_pembayaran,
+                    'error' => $e->getMessage()
                 ]);
             }
+        });
+    }
 
-        } catch (\Exception $e) {
-            Log::error("Error updating TagihanTerjadwal status in observer", [
-                'tagihan_id' => $tagihanTerjadwalId,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
+    /**
+     * Update TagihanTerjadwal status
+     */
+    protected function updateTagihanTerjadwalStatus(Pembayaran $pembayaran): void
+    {
+        $tagihan = $pembayaran->tagihanTerjadwal;
+        if ($tagihan) {
+            $tagihan->updateStatus();
         }
     }
 
     /**
-     * Update TagihanBulanan status based on payments
+     * Clear related caches
      */
-    private function updateTagihanBulananStatus(int $tagihanBulananId): void
+    protected function clearCache(Pembayaran $pembayaran): void
     {
-        try {
-            $tagihan = TagihanBulanan::find($tagihanBulananId);
-            if (!$tagihan) {
-                Log::warning("TagihanBulanan not found for status update", ['id' => $tagihanBulananId]);
-                return;
+        Cache::forget('dashboard_stats');
+
+        if ($pembayaran->tagihan_bulanan_id) {
+            $tagihan = $pembayaran->tagihanBulanan;
+            if ($tagihan) {
+                Cache::forget("santri_tagihan_{$tagihan->santri_id}");
+                Cache::forget("monthly_stats_{$tagihan->tahun}_{$tagihan->bulan}");
             }
-
-            // Calculate total pembayaran
-            $totalPembayaran = Pembayaran::where('tagihan_bulanan_id', $tagihanBulananId)
-                ->sum('nominal_pembayaran');
-
-            // Assuming TagihanBulanan has similar structure
-            $nominalTagihan = $tagihan->nominal ?? $tagihan->calculateNominal();
-
-            // Calculate new status
-            $newStatus = $this->calculateStatus($totalPembayaran, $nominalTagihan);
-
-            // Update only if status changed
-            if ($tagihan->status !== $newStatus) {
-                $tagihan->update(['status' => $newStatus]);
-
-                Log::info("TagihanBulanan status auto-updated", [
-                    'id' => $tagihanBulananId,
-                    'old_status' => $tagihan->getOriginal('status'),
-                    'new_status' => $newStatus,
-                    'total_pembayaran' => $totalPembayaran,
-                    'nominal_tagihan' => $nominalTagihan
-                ]);
-            }
-
-        } catch (\Exception $e) {
-            Log::error("Error updating TagihanBulanan status in observer", [
-                'tagihan_id' => $tagihanBulananId,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        }
-    }
-
-    /**
-     * Calculate status based on payment amount
-     */
-    private function calculateStatus(float $totalPembayaran, float $nominalTagihan): string
-    {
-        if ($totalPembayaran == 0) {
-            return 'belum_lunas';
-        } elseif ($totalPembayaran >= $nominalTagihan) {
-            return 'lunas';
-        } else {
-            return 'dibayar_sebagian';
         }
     }
 }
