@@ -234,12 +234,14 @@ class TagihanBulananController extends Controller
                 $rincian = $biayaSantris->map(function ($biayaSantri) {
                     return [
                         'biaya_santri_id' => $biayaSantri->id_biaya_santri,
-                        'nama' => $biayaSantri->daftarBiaya->nama_biaya,
-                        'nominal' => $biayaSantri->nominal_biaya_santri
+                        'nama' => $biayaSantri->daftarBiaya->kategoriBiaya->nama_kategori ?? null,
+                        'nominal' => $biayaSantri->daftarBiaya->nominal
                     ];
                 })->toArray();
 
-                $nominal = $biayaSantris->sum('nominal_biaya_santri');
+                $nominal = $biayaSantris->sum(function ($item) {
+                    return $item->daftarBiaya->nominal;
+                });
             }
 
             // Override nominal if provided
@@ -487,7 +489,7 @@ class TagihanBulananController extends Controller
             foreach ($santris as $santri) {
                 // Get BiayaSantri untuk santri ini
                 $biayaSantris = BiayaSantri::where('santri_id', $santri->id_santri)
-                    ->with('daftarBiaya.kategoriBiaya')
+                    ->with('daftarBiaya')
                     ->whereHas('daftarBiaya.kategoriBiaya', function ($q) {
                         $q->whereIn('status', ['tambahan', 'jalur']);
                     })
@@ -501,12 +503,14 @@ class TagihanBulananController extends Controller
                 $rincian = $biayaSantris->map(function ($biayaSantri) {
                     return [
                         'biaya_santri_id' => $biayaSantri->id_biaya_santri,
-                        'nama' => $biayaSantri->daftarBiaya->nama_biaya,
-                        'nominal' => $biayaSantri->nominal_biaya_santri
+                        'nama' => $biayaSantri->daftarBiaya->kategoriBiaya->nama_kategori ?? null,
+                        'nominal' => $biayaSantri->daftarBiaya->nominal // ambil dari daftarBiaya->nominal
                     ];
                 })->toArray();
 
-                $nominal = $biayaSantris->sum('nominal_biaya_santri');
+                $nominal = $biayaSantris->sum(function ($item) {
+                    return $item->daftarBiaya->nominal;
+                });
 
                 // Generate for each selected month
                 foreach ($request->bulan as $bulan) {
@@ -761,15 +765,12 @@ class TagihanBulananController extends Controller
      */
     public function getSantriBiayaInfo(Request $request)
     {
+
         $request->validate([
             'santri_id' => 'required|exists:santris,id_santri'
         ]);
 
-        $santri = Santri::with([
-            'biayaSantris.daftarBiaya.kategoriBiaya' => function ($q) {
-                $q->whereIn('status', ['tambahan', 'jalur']);
-            }
-        ])->findOrFail($request->santri_id);
+        $santri = Santri::with(['biayaSantris.daftarBiaya.kategoriBiaya'])->findOrFail($request->santri_id);
 
         $biayaSantris = $santri->biayaSantris->filter(function ($biayaSantri) {
             return $biayaSantri->daftarBiaya &&
@@ -779,12 +780,14 @@ class TagihanBulananController extends Controller
 
         $rincian = $biayaSantris->map(function ($biayaSantri) {
             return [
-                'nama' => $biayaSantri->daftarBiaya->nama_biaya,
-                'nominal' => $biayaSantri->nominal_biaya_santri
+                'nama' => $biayaSantri->daftarBiaya->kategoriBiaya->nama_kategori ?? null,
+                'nominal' => $biayaSantri->daftarBiaya->nominal // ambil dari daftarBiaya->nominal
             ];
         });
 
-        $total = $biayaSantris->sum('nominal_biaya_santri');
+        $total = $biayaSantris->sum(function ($item) {
+            return $item->daftarBiaya->nominal;
+        });
 
         return response()->json([
             'success' => true,

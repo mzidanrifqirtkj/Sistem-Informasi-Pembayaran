@@ -19,6 +19,6 @@ class KategoriBiaya extends Model
 
     public function daftarBiayas()
     {
-        return $this->hasMany(DaftarBiaya::class, 'kategori_biaya_id');
+        return $this->hasMany(DaftarBiaya::class, 'kategori_biaya_id', 'id_kategori_biaya');
     }
 }
