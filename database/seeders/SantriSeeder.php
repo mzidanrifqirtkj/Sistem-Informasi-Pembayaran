@@ -71,7 +71,7 @@ class SantriSeeder extends Seeder
                 'alamat_wali' => null,
                 'tempat_lahir_wali' => null,
                 'tanggal_lahir_wali' => null,
-                'status' => 'Aktif',
+                'status' => 'aktif',
                 'tabungan' => 0,
             ],
             [
@@ -105,7 +105,7 @@ class SantriSeeder extends Seeder
                 'alamat_ibu' => 'Jl. Cendana No. 7',
                 'tempat_lahir_ibu' => 'Bandung',
                 'tanggal_lahir_ibu' => '1986-09-21',
-                'status' => 'Aktif',
+                'status' => 'aktif',
                 'tabungan' => 50000,
             ],
         ];

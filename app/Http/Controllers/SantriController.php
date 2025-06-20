@@ -111,7 +111,7 @@ class SantriController extends Controller
                 // 'user_id' => 'required|exists:users,id_user|unique:santris',
                 //kategori_santri
                 'kategori_santri_id' => 'required|exists:kategori_santris,id_kategori_santri',
-                // 'status' => 'required|in:Aktif,Nonaktif',
+                // 'status' => 'required|in:aktif,non_aktif',
                 'nama_ayah' => 'required|string',
                 'no_hp_ayah' => 'required|string',
                 'pekerjaan_ayah' => 'required|string',
@@ -204,7 +204,7 @@ class SantriController extends Controller
                 'alamat_wali' => 'nullable|string',
                 'tempat_lahir_wali' => 'nullable|string',
                 'tanggal_lahir_wali' => 'nullable|date',
-                'status' => 'required|in:Aktif,Nonaktif',
+                'status' => 'required|in:aktif,non_aktif',
             ]);
 
             $validated['kategori_santri_id'] = $validated['kategori_santri_id'] ?? $santri->kategori_santri_id;

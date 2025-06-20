@@ -291,7 +291,7 @@
                                             <input class="form-check-input" type="radio" name="filter_type" id="filterAll"
                                                 value="all" checked>
                                             <label class="form-check-label" for="filterAll">
-                                                <strong>Semua Santri Aktif</strong>
+                                                <strong>Semua Santri aktif</strong>
                                                 <small class="text-muted d-block">Generate untuk semua santri yang memiliki
                                                     biaya tambahan/jalur</small>
                                             </label>

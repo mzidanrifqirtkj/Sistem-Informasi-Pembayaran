@@ -18,7 +18,7 @@
                             <tr>
                                 <th scope="col">#</th>
                                 <th scope="col">Nama Item</th>
-                                <th scope="col">Aktif</th>
+                                <th scope="col">aktif</th>
                                 <th scope="col">Jumlah (Nominal)</th>
                             </tr>
                         </thead>
@@ -82,7 +82,7 @@
                             <tr>
                                 <th scope="col">#</th>
                                 <th scope="col">Nama Item</th>
-                                <th scope="col">Aktif</th>
+                                <th scope="col">aktif</th>
                                 <th scope="col">Jumlah (Nominal)</th>
                             </tr>
                         </thead>

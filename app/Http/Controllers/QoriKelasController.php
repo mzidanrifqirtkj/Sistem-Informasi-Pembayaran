@@ -20,7 +20,7 @@ class QoriKelasController extends Controller
         $qori = QoriKelas::where('id_qori_kelas', $id)->firstOrFail();
 
         // Toggle status otomatis
-        $newStatus = $qori->status === 'Aktif' ? 'Tidak Aktif' : 'Aktif';
+        $newStatus = $qori->status === 'aktif' ? 'non_aktif' : 'aktif';
         $qori->update(['status' => $newStatus]);
 
         return redirect()->back()->with('success', 'Status berhasil diubah menjadi ' . ucfirst($newStatus));

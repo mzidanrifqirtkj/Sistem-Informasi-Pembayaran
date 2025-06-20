@@ -57,7 +57,7 @@ return new class extends Migration {
             $table->string('tempat_lahir_wali')->nullable();
             $table->date('tanggal_lahir_wali')->nullable();
             //status
-            $table->enum('status', ['Aktif', 'Nonaktif'])->default('Aktif');
+            $table->enum('status', ['aktif', 'non_aktif'])->default('aktif');
             $table->decimal('tabungan')->default(0);
             $table->timestamps();
         });

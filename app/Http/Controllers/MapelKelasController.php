@@ -30,7 +30,7 @@ class MapelKelasController extends Controller
         $kelas = Kelas::all();
         $mapel = MataPelajaran::all();
         $tahunAjar = TahunAjar::all();
-        $qoriKelas = QoriKelas::where('status', 'Aktif')->get();
+        $qoriKelas = QoriKelas::where('status', 'aktif')->get();
         return view('mapel-kelas.create', compact('kelas', 'mapel', 'tahunAjar', 'qoriKelas'));
     }
 
@@ -79,7 +79,7 @@ class MapelKelasController extends Controller
     public function edit(MapelKelas $mapelKelas)
     {
         $qoriKelas = QoriKelas::with('santri')
-            ->where('status', 'Aktif')
+            ->where('status', 'aktif')
             ->has('santri') // Hanya yang punya relasi santri
             ->get();
         $tahunAjar = TahunAjar::all();

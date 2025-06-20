@@ -274,10 +274,10 @@
                         <select class="form-control @error('status') is-invalid @enderror" name="status">
                             <option value="" disabled
                                 {{ old('status', $santri->status ?? '') == '' ? 'selected' : '' }}>Pilih Status</option>
-                            <option value="Aktif"
-                                {{ old('status', $santri->status ?? '') == 'Aktif' ? 'selected' : '' }}>Aktif</option>
-                            <option value="Nonaktif"
-                                {{ old('status', $santri->status ?? '') == 'Nonaktif' ? 'selected' : '' }}>Nonaktif
+                            <option value="aktif"
+                                {{ old('status', $santri->status ?? '') == 'aktif' ? 'selected' : '' }}>aktif</option>
+                            <option value="non_aktif"
+                                {{ old('status', $santri->status ?? '') == 'non_aktif' ? 'selected' : '' }}>non_aktif
                             </option>
                         </select>
                         @error('status')

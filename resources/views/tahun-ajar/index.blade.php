@@ -40,7 +40,7 @@
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $thn_ajar->tahun_ajar }}</td>
                         @if ($thn_ajar->status == 'aktif')
-                            <td><span class="badge badge-success">Aktif</span></td>
+                            <td><span class="badge badge-success">aktif</span></td>
                         @else
                             <td><span class="badge badge-danger">Tidak Aktif</span></td>
                         @endif

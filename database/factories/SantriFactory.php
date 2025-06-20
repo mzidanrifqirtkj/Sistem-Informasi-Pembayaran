@@ -63,7 +63,7 @@ class SantriFactory extends Factory
             'alamat_wali' => $this->faker->address,
             'tempat_lahir_wali' => $this->faker->city,
             'tanggal_lahir_wali' => $this->faker->date(),
-            'status' => $this->faker->randomElement(['Aktif', 'Nonaktif']),
+            'status' => $this->faker->randomElement(['aktif', 'non_aktif']),
         ];
     }
 }

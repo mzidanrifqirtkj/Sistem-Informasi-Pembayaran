@@ -44,7 +44,7 @@
                         <td>{{ $qori->nis }}</td>
                         <td>{{ $qori->santri->nama_santri ?? '-' }}</td>
                         <td>
-                            <span class="badge badge-{{ $qori->status == 'Aktif' ? 'success' : 'danger' }}">
+                            <span class="badge badge-{{ $qori->status == 'aktif' ? 'success' : 'danger' }}">
                                 {{ ucfirst($qori->status) }}
                             </span>
                         </td>
@@ -54,14 +54,13 @@
                             <form action="{{ route('qori_kelas.toggle-status', $qori->id_qori_kelas) }}" method="POST"
                                 class="d-inline">
                                 @csrf
-                                <input type="hidden" name="status"
-                                    value="{{ $qori->status === 'Aktif' ? 'Tidak Aktif' : 'Aktif' }}">
                                 <button type="submit"
-                                    class="btn btn-sm {{ $qori->status === 'Aktif' ? 'btn-outline-danger' : 'btn-outline-success' }}"
+                                    class="btn btn-sm {{ $qori->status === 'aktif' ? 'btn-outline-danger' : 'btn-outline-success' }}"
                                     onclick="return confirm('Apakah Anda yakin ingin mengubah status?')">
                                     Ubah Status
                                 </button>
                             </form>
+
 
                             <!-- Form hapus -->
 
