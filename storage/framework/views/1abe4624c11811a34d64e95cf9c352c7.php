@@ -1,6 +1,9 @@
 <?php $__env->startSection('title_page', 'Buat Tagihan Bulanan Individual'); ?>
 
 <?php $__env->startSection('content'); ?>
+    <!-- Add CSRF token meta tag -->
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
+
     <style>
         /* Enhanced form styling */
         .card {
@@ -139,6 +142,77 @@
             font-size: 1.25rem;
         }
 
+        /* Yearly Data Table Styling */
+        .yearly-data-section {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border: 1px solid #e9ecef;
+        }
+
+        .yearly-table {
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .yearly-table table {
+            margin-bottom: 0;
+        }
+
+        .yearly-table thead th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+            padding: 1rem;
+            white-space: nowrap;
+        }
+
+        .yearly-table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+        .yearly-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .yearly-table td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        /* Status styling */
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+
+        .status-lunas {
+            background-color: #d1edff;
+            color: #198754;
+        }
+
+        .status-dibayar-sebagian {
+            background-color: #fff3cd;
+            color: #fd7e14;
+        }
+
+        .status-belum-lunas {
+            background-color: #f8d7da;
+            color: #dc3545;
+        }
+
+        .status-belum-ada {
+            background-color: #e2e3e5;
+            color: #6c757d;
+        }
+
         /* Alert styling */
         .alert {
             border-radius: 10px;
@@ -153,6 +227,11 @@
         .alert-warning {
             background-color: #fff3cd;
             color: #856404;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
         }
 
         /* Loading animation */
@@ -176,6 +255,40 @@
             }
         }
 
+        /* Summary cards */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e9ecef;
+        }
+
+        .summary-card h6 {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-card .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-card .subtitle {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .card-body {
@@ -186,12 +299,20 @@
                 padding: 0.5rem 1rem;
                 font-size: 0.875rem;
             }
+
+            .yearly-table {
+                font-size: 0.875rem;
+            }
+
+            .summary-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
     </style>
 
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-md-8">
+            <div class="col-md-10">
                 <div class="card">
                     <div class="card-header">
                         <div class="d-flex align-items-center">
@@ -322,6 +443,32 @@
                                 </button>
                             </div>
                         </form>
+
+                        <!-- Yearly Data Section -->
+                        <div id="yearlyDataSection" class="yearly-data-section" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-calendar-alt me-2"></i>Data Tagihan Santri Tahun <span
+                                        id="selectedYear"></span>
+                                </h5>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="refreshYearlyData()">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </div>
+
+                            <!-- Summary Cards -->
+                            <div class="summary-cards" id="summaryCards">
+                                <!-- Summary cards will be populated by JavaScript -->
+                            </div>
+
+                            <!-- Data Table -->
+                            <div class="yearly-table" id="yearlyDataTable">
+                                <div class="text-center p-4">
+                                    <div class="loading-spinner"></div>
+                                    <p class="mb-0 mt-2 text-muted">Memuat data tagihan tahunan...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -361,6 +508,13 @@
                         $('#biayaInfo').hide();
                     }
                 }
+
+                // Load yearly data if santri and year are selected
+                if (santriId && tahun) {
+                    loadYearlyData(santriId, tahun);
+                } else {
+                    $('#yearlyDataSection').hide();
+                }
             }
 
             // Event listeners
@@ -395,7 +549,6 @@
                     santri_id: santriId
                 },
                 success: function(response) {
-                    // Debug: tampilkan response di console
                     console.log('AJAX response:', response);
                     if (response.success && response.rincian && Object.keys(response.rincian).length > 0) {
                         let html = `
@@ -408,7 +561,6 @@
                                 </thead>
                                 <tbody>
                         `;
-                        // Support response.rincian as array or object
                         Object.values(response.rincian).forEach(function(item) {
                             html += `
                                 <tr>
@@ -425,7 +577,6 @@
                         html += '</tbody></table>';
                         $('#rincianList').html(html);
                         $('#totalNominal').text(response.formatted_total);
-                        // Show success animation
                         $('#biayaInfo').css('background-color', '#f0f8ff');
                         setTimeout(() => {
                             $('#biayaInfo').css('background-color', '#f8f9fa');
@@ -453,6 +604,218 @@
                     $('#submitBtn').prop('disabled', true);
                 }
             });
+        }
+
+        function loadYearlyData(santriId, tahun) {
+            if (!santriId || !tahun) {
+                $('#yearlyDataSection').hide();
+                return;
+            }
+
+            $('#yearlyDataSection').show();
+            $('#selectedYear').text(tahun);
+            $('#yearlyDataTable').html(`
+                <div class="text-center p-4">
+                    <div class="loading-spinner"></div>
+                    <p class="mb-0 mt-2 text-muted">Memuat data tagihan tahunan...</p>
+                </div>
+            `);
+
+            // Debug: log URL being called
+            const url = "<?php echo e(route('tagihan_bulanan.getSantriYearlyData')); ?>";
+            console.log('Calling URL:', url);
+            console.log('Data being sent:', {
+                santri_id: santriId,
+                tahun: tahun
+            });
+
+            $.ajax({
+                url: url,
+                method: 'GET',
+                data: $.param({
+                    santri_id: santriId,
+                    tahun: tahun
+                }),
+                success: function(response) {
+                    console.log('Response received:', response);
+                    if (response.success) {
+                        displaySummaryCards(response.summary);
+                        displayYearlyTable(response.data);
+                    } else {
+                        $('#yearlyDataTable').html(`
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                ${response.message || 'Tidak ada data tagihan untuk tahun ini.'}
+                            </div>
+                        `);
+                        $('#summaryCards').html('');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error Details:');
+                    console.error('Status:', status);
+                    console.error('Error:', error);
+                    console.error('Response Text:', xhr.responseText);
+                    console.error('Status Code:', xhr.status);
+
+                    let errorMessage = 'Error loading yearly data. Silakan coba lagi.';
+
+                    if (xhr.status === 404) {
+                        errorMessage = 'Route tidak ditemukan. Pastikan route sudah didefinisikan.';
+                    } else if (xhr.status === 500) {
+                        errorMessage = 'Server error. Cek log server untuk detail.';
+                    } else if (xhr.responseText) {
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            errorMessage = response.message || errorMessage;
+                        } catch (e) {
+                            errorMessage = 'Response tidak valid dari server.';
+                        }
+                    }
+
+                    $('#yearlyDataTable').html(`
+                        <div class="alert alert-danger mb-0">
+                            <i class="fas fa-times-circle me-2"></i>
+                            ${errorMessage}
+                            <br><small class="text-muted">Status: ${xhr.status} - ${status}</small>
+                        </div>
+                    `);
+                    $('#summaryCards').html('');
+                }
+            });
+        }
+
+        function displaySummaryCards(summary) {
+            const cards = `
+                <div class="summary-card">
+                    <h6>Total Tagihan</h6>
+                    <div class="value text-primary">${summary.total_tagihan}</div>
+                    <div class="subtitle">Bulan</div>
+                </div>
+                <div class="summary-card">
+                    <h6>Lunas</h6>
+                    <div class="value text-success">${summary.total_lunas}</div>
+                    <div class="subtitle">${summary.lunas_percentage}%</div>
+                </div>
+                <div class="summary-card">
+                    <h6>Belum Lunas</h6>
+                    <div class="value text-danger">${summary.total_belum_lunas}</div>
+                    <div class="subtitle">${summary.belum_lunas_percentage}%</div>
+                </div>
+                <div class="summary-card">
+                    <h6>Total Nominal</h6>
+                    <div class="value text-info">Rp ${number_format(summary.total_nominal)}</div>
+                    <div class="subtitle">Tagihan</div>
+                </div>
+                <div class="summary-card">
+                    <h6>Total Dibayar</h6>
+                    <div class="value text-success">Rp ${number_format(summary.total_dibayar)}</div>
+                    <div class="subtitle">Pembayaran</div>
+                </div>
+                <div class="summary-card">
+                    <h6>Sisa Tagihan</h6>
+                    <div class="value text-warning">Rp ${number_format(summary.sisa_tagihan)}</div>
+                    <div class="subtitle">Tunggakan</div>
+                </div>
+            `;
+            $('#summaryCards').html(cards);
+        }
+
+        function displayYearlyTable(data) {
+            if (!data || data.length === 0) {
+                $('#yearlyDataTable').html(`
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Belum ada tagihan untuk tahun ini.
+                    </div>
+                `);
+                return;
+            }
+
+            let tableHtml = `
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Bulan</th>
+                            <th class="text-end">Nominal</th>
+                            <th class="text-end">Dibayar</th>
+                            <th class="text-end">Sisa</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Tanggal Dibuat</th>
+                            <th class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.forEach(function(item) {
+                const statusClass = getStatusClass(item.status);
+                const statusText = getStatusText(item.status);
+
+                tableHtml += `
+                    <tr>
+                        <td class="fw-semibold">${item.bulan_text}</td>
+                        <td class="text-end">Rp ${number_format(item.nominal)}</td>
+                        <td class="text-end text-success">Rp ${number_format(item.total_dibayar)}</td>
+                        <td class="text-end ${item.sisa > 0 ? 'text-danger' : 'text-success'}">
+                            Rp ${number_format(item.sisa)}
+                        </td>
+                        <td class="text-center">
+                            <span class="status-badge status-${item.status}">${statusText}</span>
+                        </td>
+                        <td class="text-center text-muted">
+                            <small>${item.created_at}</small>
+                        </td>
+                        <td class="text-center">
+                            <a href="${item.detail_url}" class="btn btn-sm btn-info text-white"
+                               data-bs-toggle="tooltip" title="Lihat Detail">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += '</tbody></table>';
+            $('#yearlyDataTable').html(tableHtml);
+
+            // Initialize tooltips
+            $('[data-bs-toggle="tooltip"]').tooltip();
+        }
+
+        function getStatusClass(status) {
+            switch (status) {
+                case 'lunas':
+                    return 'success';
+                case 'dibayar_sebagian':
+                    return 'warning';
+                case 'belum_lunas':
+                    return 'danger';
+                default:
+                    return 'secondary';
+            }
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'lunas':
+                    return 'Lunas';
+                case 'dibayar_sebagian':
+                    return 'Dibayar Sebagian';
+                case 'belum_lunas':
+                    return 'Belum Lunas';
+                default:
+                    return 'Tidak Diketahui';
+            }
+        }
+
+        function refreshYearlyData() {
+            const santriId = $('#santri_id').val();
+            const tahun = $('#tahun').val();
+
+            if (santriId && tahun) {
+                loadYearlyData(santriId, tahun);
+            }
         }
 
         function number_format(number) {

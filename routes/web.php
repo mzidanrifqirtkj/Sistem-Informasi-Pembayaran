@@ -111,41 +111,32 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::put('tambahan-bulanan/item-santri/{item}', [TambahanBulananController::class, 'updateItemSantri'])->name('tambahan_bulanan.item_santri.update')->middleware('permission:edit_item_santri');
 
     // Tagihan Bulanan
-    Route::get('tagihan-bulanan', [TagihanBulananController::class, 'index'])
-        ->name('tagihan_bulanan.index');
-    Route::get('tagihan-bulanan/create', [TagihanBulananController::class, 'create'])
-        ->name('tagihan_bulanan.create');
-    Route::post('tagihan-bulanan', [TagihanBulananController::class, 'store'])
-        ->name('tagihan_bulanan.store');
-    Route::get('tagihan-bulanan/{id}', [TagihanBulananController::class, 'show'])
-        ->name('tagihan_bulanan.show');
-    Route::get('tagihan-bulanan/{id}/edit', [TagihanBulananController::class, 'edit'])
-        ->name('tagihan_bulanan.edit');
-    Route::put('tagihan-bulanan/{id}', [TagihanBulananController::class, 'update'])
-        ->name('tagihan_bulanan.update');
-    Route::delete('tagihan-bulanan/{id}', [TagihanBulananController::class, 'destroy'])
-        ->name('tagihan_bulanan.destroy');
-    // Bulk Operations
-    Route::get('tagihan-bulanan/bulk/create', [TagihanBulananController::class, 'createBulkBulanan'])
-        ->name('tagihan_bulanan.createBulkBulanan');
-    Route::post('tagihan-bulanan/bulk/generate', [TagihanBulananController::class, 'generateBulkBulanan'])
-        ->name('tagihan_bulanan.bulkBulanan');
-    // AJAX Routes
-    Route::get('tagihan-bulanan/santri/biaya-info', [TagihanBulananController::class, 'getSantriBiayaInfo'])
-        ->name('tagihan_bulanan.getSantriBiayaInfo');
-    Route::get('tagihan-bulanan/available/months', [TagihanBulananController::class, 'getAvailableMonths'])
-        ->name('tagihan_bulanan.getAvailableMonths');
-    // Payment Routes
-    Route::post('tagihan-bulanan/{id}/payment', [TagihanBulananController::class, 'createPayment'])
-        ->name('tagihan_bulanan.createPayment');
-    Route::post('tagihan-bulanan/payment/overpayment', [TagihanBulananController::class, 'handleOverpayment'])
-        ->name('tagihan_bulanan.handleOverpayment');
-    // Export Route
-    Route::get('tagihan-bulanan/export/excel', [TagihanBulananController::class, 'export'])
-        ->name('tagihan_bulanan.export');
-    // Dashboard Route
-    Route::get('tagihan/dashboard', [TagihanBulananController::class, 'dashboard'])
-        ->name('tagihan.dashboard');
+    // Di dalam group route tagihan_bulanan
+    Route::prefix('tagihan-bulanan')->name('tagihan_bulanan.')->group(function () {
+        Route::get('/', [TagihanBulananController::class, 'index'])->name('index');
+        Route::get('/create', [TagihanBulananController::class, 'create'])->name('create');
+        Route::post('/', [TagihanBulananController::class, 'store'])->name('store');
+        Route::get('/{id}', [TagihanBulananController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [TagihanBulananController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [TagihanBulananController::class, 'update'])->name('update');
+        Route::delete('/{id}', [TagihanBulananController::class, 'destroy'])->name('destroy');
+
+        // Bulk operations
+        Route::get('/bulk/create', [TagihanBulananController::class, 'createBulkBulanan'])->name('createBulkBulanan');
+        Route::post('/bulk/generate', [TagihanBulananController::class, 'generateBulkBulanan'])->name('generateBulkBulanan');
+
+        // AJAX endpoints
+        Route::get('/ajax/santri-biaya-info', [TagihanBulananController::class, 'getSantriBiayaInfo'])->name('getSantriBiayaInfo');
+        Route::get('/ajax/santri-yearly-data', [TagihanBulananController::class, 'getSantriYearlyData'])->name('getSantriYearlyData');
+        Route::get('/ajax/available-months', [TagihanBulananController::class, 'getAvailableMonths'])->name('getAvailableMonths');
+
+        // Export
+        Route::get('/export', [TagihanBulananController::class, 'export'])->name('export');
+
+        // Payment
+        Route::post('/{id}/payment', [TagihanBulananController::class, 'createPayment'])->name('createPayment');
+        Route::post('/payment/handle-overpayment', [TagihanBulananController::class, 'handleOverpayment'])->name('handleOverpayment');
+    });
 
     // Pembayaran
     Route::get('pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index')->middleware('permission:view_pembayaran');

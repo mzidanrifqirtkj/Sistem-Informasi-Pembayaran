@@ -866,4 +866,157 @@ class TagihanBulananController extends Controller
 
         return view('tagihan_bulanan.dashboard', compact('stats', 'tahun'));
     }
+
+    /**
+     * Get santri yearly tagihan data for create form
+     */
+    /**
+     * Get santri yearly tagihan data for create form
+     */
+    public function getSantriYearlyData(Request $request)
+    {
+        // Debug log untuk melihat data yang diterima
+        Log::info('getSantriYearlyData called', [
+            'all_input' => $request->all(),
+            'santri_id' => $request->input('santri_id'),
+            'tahun' => $request->input('tahun'),
+            'query_params' => $request->query(),
+            'post_params' => $request->post()
+        ]);
+
+        $request->validate([
+            'santri_id' => 'required|exists:santris,id_santri',
+            'tahun' => 'required|integer'
+        ]);
+
+        try {
+            $santriId = $request->input('santri_id');
+            $tahun = $request->input('tahun');
+
+            $santri = Santri::findOrFail($santriId);
+
+            // Get all tagihan for the santri in the specified year
+            $tagihans = TagihanBulanan::where('santri_id', $santri->id_santri)
+                ->where('tahun', $tahun)
+                ->with(['pembayarans', 'paymentAllocations'])
+                ->get();
+
+            Log::info('Tagihan query result', [
+                'santri_id' => $santri->id_santri,
+                'tahun' => $tahun,
+                'tagihan_count' => $tagihans->count()
+            ]);
+
+            if ($tagihans->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Belum ada tagihan untuk santri ini di tahun ' . $tahun,
+                    'data' => [],
+                    'summary' => [
+                        'total_tagihan' => 0,
+                        'total_lunas' => 0,
+                        'total_dibayar_sebagian' => 0,
+                        'total_belum_lunas' => 0,
+                        'total_nominal' => 0,
+                        'total_dibayar' => 0,
+                        'sisa_tagihan' => 0,
+                        'lunas_percentage' => 0,
+                        'belum_lunas_percentage' => 0
+                    ]
+                ]);
+            }
+
+            // Calculate summary
+            $totalTagihan = $tagihans->count();
+            $totalLunas = $tagihans->where('status', 'lunas')->count();
+            $totalDibayarSebagian = $tagihans->where('status', 'dibayar_sebagian')->count();
+            $totalBelumLunas = $tagihans->where('status', 'belum_lunas')->count();
+            $totalNominal = $tagihans->sum('nominal');
+
+            // Calculate total dibayar
+            $totalDibayar = 0;
+            foreach ($tagihans as $tagihan) {
+                $pembayaranTotal = $tagihan->pembayarans ? $tagihan->pembayarans->sum('nominal_pembayaran') : 0;
+                $allocationTotal = $tagihan->paymentAllocations ? $tagihan->paymentAllocations->sum('allocated_amount') : 0;
+                $totalDibayar += ($pembayaranTotal + $allocationTotal);
+            }
+
+            $sisaTagihan = $totalNominal - $totalDibayar;
+
+            $lunasPercentage = $totalTagihan > 0 ? round(($totalLunas / $totalTagihan) * 100, 1) : 0;
+            $belumLunasPercentage = $totalTagihan > 0 ? round(($totalBelumLunas / $totalTagihan) * 100, 1) : 0;
+
+            // Define month names
+            $monthNames = [
+                'Jan' => 'Januari',
+                'Feb' => 'Februari',
+                'Mar' => 'Maret',
+                'Apr' => 'April',
+                'May' => 'Mei',
+                'Jun' => 'Juni',
+                'Jul' => 'Juli',
+                'Aug' => 'Agustus',
+                'Sep' => 'September',
+                'Oct' => 'Oktober',
+                'Nov' => 'November',
+                'Dec' => 'Desember'
+            ];
+
+            // Sort tagihan by month order
+            $monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            $tagihans = $tagihans->sortBy(function ($tagihan) use ($monthOrder) {
+                return array_search($tagihan->bulan, $monthOrder);
+            });
+
+            // Format data for table
+            $data = $tagihans->map(function ($tagihan) use ($monthNames, $tahun) {
+                $pembayaranTotal = $tagihan->pembayarans ? $tagihan->pembayarans->sum('nominal_pembayaran') : 0;
+                $allocationTotal = $tagihan->paymentAllocations ? $tagihan->paymentAllocations->sum('allocated_amount') : 0;
+                $totalDibayarTagihan = $pembayaranTotal + $allocationTotal;
+                $sisaTagihan = $tagihan->nominal - $totalDibayarTagihan;
+
+                return [
+                    'id' => $tagihan->id_tagihan_bulanan,
+                    'bulan' => $tagihan->bulan,
+                    'bulan_text' => $monthNames[$tagihan->bulan] ?? $tagihan->bulan,
+                    'tahun' => $tagihan->tahun,
+                    'nominal' => $tagihan->nominal,
+                    'total_dibayar' => $totalDibayarTagihan,
+                    'sisa' => $sisaTagihan,
+                    'status' => $tagihan->status,
+                    'created_at' => $tagihan->created_at->format('d M Y'),
+                    'detail_url' => route('tagihan_bulanan.show', ['id' => $tagihan->santri_id, 'tahun' => $tahun])
+                ];
+            })->values(); // Reset array keys
+
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'summary' => [
+                    'total_tagihan' => $totalTagihan,
+                    'total_lunas' => $totalLunas,
+                    'total_dibayar_sebagian' => $totalDibayarSebagian,
+                    'total_belum_lunas' => $totalBelumLunas,
+                    'total_nominal' => $totalNominal,
+                    'total_dibayar' => $totalDibayar,
+                    'sisa_tagihan' => $sisaTagihan,
+                    'lunas_percentage' => $lunasPercentage,
+                    'belum_lunas_percentage' => $belumLunasPercentage
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error getting santri yearly data', [
+                'santri_id' => $request->input('santri_id'),
+                'tahun' => $request->input('tahun'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memuat data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
