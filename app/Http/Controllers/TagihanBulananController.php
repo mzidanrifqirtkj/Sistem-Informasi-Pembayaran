@@ -279,17 +279,88 @@ class TagihanBulananController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($id)
+    /**
+     * Display the specified resource.
+     */
+    public function show($id, $tahun = null)
     {
-        $tagihan = TagihanBulanan::with([
-            'santri',
-            'pembayarans',
-            'paymentAllocations.pembayaran'
+        // $id adalah santri_id, bukan tagihan_id
+        $santri = Santri::with([
+            'riwayatKelas.mapelKelas.kelas',
+            'biayaSantris.daftarBiaya.kategoriBiaya'
         ])->findOrFail($id);
 
-        $tagihan->load(['santri.riwayatKelas.mapelKelas.kelas']);
+        // Get tahun from parameter or current year
+        $tahun = $tahun ?? request('tahun') ?? Carbon::now()->year;
 
-        return view('tagihan_bulanan.show', compact('tagihan'));
+        // Get all tagihan for this santri in the specified year
+        $tagihanBulanan = TagihanBulanan::where('santri_id', $santri->id_santri)
+            ->where('tahun', $tahun)
+            ->with(['pembayarans', 'paymentAllocations.pembayaran'])
+            ->get();
+
+        // Get available years for this santri
+        $availableYears = TagihanBulanan::where('santri_id', $santri->id_santri)
+            ->select('tahun')
+            ->distinct()
+            ->orderBy('tahun', 'desc')
+            ->pluck('tahun');
+
+        if ($availableYears->isEmpty()) {
+            $availableYears = collect([Carbon::now()->year]);
+        }
+
+        // Create monthly structure
+        $allMonths = [
+            'Jan' => 'Januari',
+            'Feb' => 'Februari',
+            'Mar' => 'Maret',
+            'Apr' => 'April',
+            'May' => 'Mei',
+            'Jun' => 'Juni',
+            'Jul' => 'Juli',
+            'Aug' => 'Agustus',
+            'Sep' => 'September',
+            'Oct' => 'Oktober',
+            'Nov' => 'November',
+            'Dec' => 'Desember'
+        ];
+
+        // Group tagihan by month
+        $tagihansByMonth = $tagihanBulanan->keyBy('bulan');
+
+        // Process each tagihan to add calculated fields
+        $tagihansByMonth->each(function ($tagihan) {
+            if ($tagihan) {
+                // Calculate total pembayaran
+                $totalPembayaran = $tagihan->pembayarans->sum('nominal_pembayaran');
+                $totalAllocation = $tagihan->paymentAllocations->sum('allocated_amount');
+                $tagihan->total_pembayaran = $totalPembayaran + $totalAllocation;
+                $tagihan->sisa_tagihan = $tagihan->nominal - $tagihan->total_pembayaran;
+
+                // Add status color
+                $tagihan->status_color = match ($tagihan->status) {
+                    'lunas' => 'success',
+                    'dibayar_sebagian' => 'warning',
+                    'belum_lunas' => 'danger',
+                    default => 'secondary'
+                };
+            }
+        });
+
+        // Add tagihan collection to santri for summary calculations
+        $santri->tagihanBulanan = $tagihanBulanan;
+
+        // Get santri's current class name
+        $santri->nama_kelas_aktif = $santri->kelasAktif->nama_kelas ?? 'Tanpa Kelas';
+
+        return view('tagihan_bulanan.show', compact(
+            'santri',
+            'tahun',
+            'allMonths',
+            'tagihansByMonth',
+            'availableYears'
+        ));
     }
 
     /**
