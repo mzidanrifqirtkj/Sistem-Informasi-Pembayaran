@@ -131,7 +131,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/ajax/available-months', [TagihanBulananController::class, 'getAvailableMonths'])->name('getAvailableMonths');
 
         // Export
-        Route::get('/export', [TagihanBulananController::class, 'export'])->name('export');
+        Route::get('/export/excel', [TagihanBulananController::class, 'export'])->name('export');
+
 
         // Payment
         Route::post('/{id}/payment', [TagihanBulananController::class, 'createPayment'])->name('createPayment');

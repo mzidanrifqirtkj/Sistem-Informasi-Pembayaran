@@ -1090,6 +1090,4 @@ class TagihanBulananController extends Controller
             ], 500);
         }
     }
-
-
 }
