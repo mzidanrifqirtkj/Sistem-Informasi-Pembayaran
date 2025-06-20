@@ -778,6 +778,15 @@ class TagihanBulananController extends Controller
                 in_array($biayaSantri->daftarBiaya->kategoriBiaya->status, ['tambahan', 'jalur']);
         });
 
+        if ($biayaSantris->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'rincian' => [],
+                'total' => 0,
+                'formatted_total' => 'Rp 0'
+            ]);
+        }
+
         $rincian = $biayaSantris->map(function ($biayaSantri) {
             return [
                 'nama' => $biayaSantri->daftarBiaya->kategoriBiaya->nama_kategori ?? null,
