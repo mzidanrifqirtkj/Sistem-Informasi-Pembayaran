@@ -51,11 +51,15 @@ class Santri extends Model
         'tempat_lahir_wali',
         'tanggal_lahir_wali',
         'status',
-        'tabungan'
+        'tabungan',
+        'status_reason',
+        'status_changed_at',
+        'status_notes'
     ];
 
     protected $casts = [
         'monthly_status' => 'array',
+        'status_changed_at' => 'date'
     ];
 
     // Verifikasi password untuk Santri berdasarkan user
@@ -160,6 +164,51 @@ class Santri extends Model
     public function riwayatKelas()
     {
         return $this->hasMany(RiwayatKelas::class, 'santri_id', 'id_santri');
+    }
+
+    // Tambahkan Scopes
+    public function scopeAktif($query)
+    {
+        return $query->where('status', 'aktif');
+    }
+
+    public function scopeNonAktif($query)
+    {
+        return $query->where('status', 'non_aktif');
+    }
+
+    // Tambahkan Accessors
+    public function getIsAktifAttribute()
+    {
+        return $this->status === 'aktif';
+    }
+
+    public function getStatusBadgeAttribute()
+    {
+        return $this->status === 'aktif'
+            ? '<span class="badge badge-success">Aktif</span>'
+            : '<span class="badge badge-danger">Non Aktif</span>';
+    }
+
+    // Tambahkan Methods
+    public function deactivate($reason = null, $notes = null)
+    {
+        $this->update([
+            'status' => 'non_aktif',
+            'status_reason' => $reason,
+            'status_changed_at' => now(),
+            'status_notes' => $notes
+        ]);
+    }
+
+    public function activate()
+    {
+        $this->update([
+            'status' => 'aktif',
+            'status_reason' => null,
+            'status_changed_at' => now(),
+            'status_notes' => null
+        ]);
     }
 
     // public function absensiMataPelajaran()
