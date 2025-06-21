@@ -2,205 +2,230 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pembayaran;
 use App\Http\Controllers\Controller;
 use App\Models\Santri;
-use App\Models\TagihanBulanan;
-use App\Models\TagihanTerjadwal;
-use Auth;
-use Barryvdh\Debugbar\Facades\Debugbar;
-use Exception;
+use App\Models\Pembayaran;
+use App\Services\PaymentService;
+use App\Services\PaymentValidationService;
+use App\Http\Requests\StorePaymentRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PembayaranController extends Controller
 {
-    // public function index()
-    // {
-    //     $dataPembayarans = Pembayaran::with([
-    //         'tagihanTerjadwal',
-    //         'santriTagihanTerjadwal',
-    //         'santriTagihanBulanan',
-    //         'tagihanBulanan'
-    //     ])->get();
-    //     return view('pembayaran.index', compact('dataPembayarans'));
-    // }
+    protected $paymentService;
+    protected $validationService;
 
-    public function index()
+    public function __construct(
+        PaymentService $paymentService,
+        PaymentValidationService $validationService
+    ) {
+        $this->paymentService = $paymentService;
+        $this->validationService = $validationService;
+    }
+
+    /**
+     * Display listing of santri untuk pembayaran
+     */
+    public function index(Request $request)
     {
-        $user = Auth::user(); // Ambil user yang sedang login
+        $query = Santri::with('kategoriSantri')
+            ->where('status', 'aktif');
 
-        if ($user->hasRole('admin')) {
-            // Jika user adalah admin, ambil semua data santri
-            $santris = Santri::with('kategoriSantri')->paginate(10);
-        } elseif ($user->hasRole('santri')) {
-            // Jika user adalah santri, ambil data santri yang sesuai dengan user yang login
-            $santri = $user->santri; // Ambil data santri dari user yang login
-
-            if ($santri) {
-                // Ambil data santri yang login
-                $santris = Santri::with('kategoriSantri')
-                    ->where('id_santri', $santri->id_santri) // Filter berdasarkan id_santri
-                    ->paginate(10);
-            } else {
-                // Jika relasi santri tidak ditemukan, kembalikan koleksi kosong
-                $santris = collect();
-            }
-        } else {
-            // Jika role tidak dikenali, kembalikan koleksi kosong
-            $santris = collect();
+        // Search functionality
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nis', 'like', "%{$search}%")
+                    ->orWhere('nama_santri', 'like', "%{$search}%");
+            });
         }
+
+        // Filter by kategori
+        if ($request->has('kategori') && $request->kategori != '') {
+            $query->where('kategori_santri_id', $request->kategori);
+        }
+
+        $santris = $query->orderBy('nama_santri')->paginate(20);
 
         return view('pembayaran.index', compact('santris'));
     }
-    public function riwayat()
-    {
-        $user = Auth::user(); // Ambil user yang sedang login
-        $now = now()->year; // Ambil tahun saat ini
 
-        if ($user->hasRole('admin')) {
-            // Jika user adalah admin, ambil semua data santri beserta tagihan bulanan untuk tahun ini
-            $santris = Santri::with([
-                'tagihanBulanan' => function ($query) use ($now) {
-                    $query->where('tahun', $now); // Filter tagihan berdasarkan tahun
-                }
-            ])->paginate(10); // Paginasi data santri
-
-            $dataPembayarans = Pembayaran::with(['tagihanBulanan.santri', 'tagihanTerjadwal.santri'])->get();
-        } elseif ($user->hasRole('santri')) {
-            // Jika user adalah santri, ambil data tagihan bulanan yang terkait dengan santri tersebut
-            $santri = $user->santri; // Ambil data santri dari user yang login
-
-            if ($santri) {
-                // Ambil data tagihan bulanan untuk santri tersebut pada tahun ini
-                $santris = Santri::with([
-                    'tagihanBulanan' => function ($query) use ($now) {
-                        $query->where('tahun', $now); // Filter tagihan berdasarkan tahun
-                    }
-                ])->where('id_santri', $santri->id_santri) // Filter santri berdasarkan id
-                    ->paginate(10);
-
-                // Ambil data pembayaran untuk santri tersebut
-                $dataPembayarans = Pembayaran::with(['tagihanBulanan.santri', 'tagihanTerjadwal.santri'])
-                    ->whereHas('tagihanBulanan', function ($query) use ($santri) {
-                        $query->where('santri_id', $santri->id_santri);
-                    })
-                    ->orWhereHas('tagihanTerjadwal', function ($query) use ($santri) {
-                        $query->where('santri_id', $santri->id_santri);
-                    })
-                    ->get();
-            } else {
-                // Jika relasi santri tidak ditemukan, kembalikan koleksi kosong
-                $santris = collect();
-                $dataPembayarans = collect();
-            }
-        } else {
-            // Jika role tidak dikenali, kembalikan koleksi kosong
-            $santris = collect();
-            $dataPembayarans = collect();
-        }
-
-        return view('pembayaran.riwayat', compact('santris', 'now', 'dataPembayarans'));
-    }
-
-    // Menampilkan tagihan berdasarkan santri yang dipilih
+    /**
+     * Show payment form untuk santri
+     */
     public function show($santriId)
     {
+        try {
+            $santri = Santri::findOrFail($santriId);
 
-        $santri = Santri::with('kategoriSantri', 'tagihanBulanan', 'tagihanTerjadwal.biayaTerjadwal')->findOrFail($santriId);
-        return view('pembayaran.show', compact('santri'));
+            // Validate santri aktif
+            $this->validationService->validateSantriActive($santri);
+
+            // Get tagihan data
+            $data = $this->paymentService->getTagihanSantri($santri);
+
+            return view('pembayaran.create', $data);
+
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('pembayaran.index')
+                ->with('error', $e->getMessage());
+        }
     }
 
-    //create pembayaran
-    // public function create()
-    // {
-    //     try {
-    //         $santri = Santri::all();
-    //         $tagihanBulanan = TagihanBulanan::where('status', 'belum_lunas')->get();
-    //         $tagihanTerjadwal = TagihanTerjadwal::where('status', 'belum_lunas')->get();
-
-    //         return view('pembayaran.create', compact('santri', 'tagihanBulanan', 'tagihanTerjadwal'));
-    //     } catch (\Exception $e) {
-    //         return redirect()->back()->with('error', $e->getMessage());
-    //     }
-    // }
-
-    public function store(Request $request)
+    /**
+     * Preview payment allocation
+     */
+    public function preview(Request $request)
     {
-        $request->validate([
-            'santri_id' => 'required|exists:santris,id_santri',
-            'jenis_tagihan' => 'required|in:bulanan,terjadwal',
-            'tagihan_id' => 'required|numeric',
-            // 'nominal' => 'required|numeric|min:1',
-        ]);
-
         try {
-            $santri = Santri::findOrFail($request->santri_id);
+            $request->validate([
+                'santri_id' => 'required|exists:santris,id_santri',
+                'nominal_pembayaran' => 'required|numeric|min:1',
+                'selected_tagihan' => 'array'
+            ]);
 
-            if ($request->jenis_tagihan === 'bulanan') {
-                $tagihan = TagihanBulanan::findOrFail($request->tagihan_id);
-                // dd($tagihan->id_tagihan_bulanan);
+            $previewData = $this->paymentService->previewPaymentAllocation(
+                $request->santri_id,
+                $request->nominal_pembayaran,
+                $request->selected_tagihan ?? []
+            );
 
-                if ($tagihan->status === 'lunas') {
-                    return back()->withErrors(['message' => 'Tagihan ini sudah lunas.']);
-                }
+            return response()->json([
+                'success' => true,
+                'data' => $previewData,
+                'html' => view('pembayaran.preview-modal', $previewData)->render()
+            ]);
 
-                // Update tagihan bulanan
-                // $tagihan->nominal = $request->nominal;
-                // if ($tagihan->nominal >= $tagihan->nominal) {
-                // }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
 
-                $data = [
-                    // 'santri_id' => $santri->id_santri,
-                    // 'jenis_tagihan' => $request->jenis_tagihan,
-                    'tagihan_bulanan_id' => $tagihan->id_tagihan_bulanan,
-                    'created_by_id' => $santri->user_id,
-                    'nominal_pembayaran' => $tagihan->nominal,
-                    'tanggal_pembayaran' => now(),
-                ];
-                // dd($data);
-                $tagihan->status = 'lunas';
-                $tagihan->save();
-            } else {
+    /**
+     * Store pembayaran
+     */
+    public function store(StorePaymentRequest $request)
+    {
+        try {
+            DB::beginTransaction();
 
-                $tagihan = TagihanTerjadwal::findOrFail($request->tagihan_id);
-                // dd($tagihan->id_tagihan_terjadwal);
-                if ($tagihan->status === 'lunas') {
-                    return back()->withErrors(['message' => 'Tagihan ini sudah lunas.']);
-                }
+            // Process payment
+            $pembayaran = $this->paymentService->processPayment($request->validated());
 
-                // Update tagihan terjadwal
-                // $tagihan->nominal_terbayar += $request->nominal;
-                // if ($tagihan->nominal_terbayar >= $tagihan->nominal) {
-                // }
-                // Pembayaran::create($tagihan);
-                $data = [
-                    'tagihan_terjadwal_id' => $tagihan->id_tagihan_terjadwal,
-                    'created_by_id' => $santri->user_id,
-                    'nominal_pembayaran' => $tagihan->nominal,
-                    'tanggal_pembayaran' => now(),
-                ];
-                // dd($data);
+            DB::commit();
 
-                $tagihan->status = 'lunas';
-                $tagihan->save();
+            return redirect()
+                ->route('pembayaran.receipt', $pembayaran->id_pembayaran)
+                ->with('success', 'Pembayaran berhasil diproses');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Payment store error: ' . $e->getMessage());
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Show receipt/kwitansi
+     */
+    public function receipt($id)
+    {
+        $pembayaran = Pembayaran::with([
+            'tagihanBulanan.santri',
+            'tagihanTerjadwal.santri',
+            'paymentAllocations.tagihanBulanan',
+            'paymentAllocations.tagihanTerjadwal',
+            'createdBy'
+        ])->findOrFail($id);
+
+        $isReprint = request()->has('reprint');
+
+        // Log reprint if needed
+        if ($isReprint) {
+            Log::info('Kwitansi reprint', [
+                'pembayaran_id' => $id,
+                'printed_by' => auth()->user()->name
+            ]);
+        }
+
+        return view('pembayaran.receipt', compact('pembayaran', 'isReprint'));
+    }
+
+    /**
+     * Print receipt
+     */
+    public function printReceipt($id)
+    {
+        $pembayaran = Pembayaran::with([
+            'tagihanBulanan.santri',
+            'tagihanTerjadwal.santri',
+            'paymentAllocations.tagihanBulanan',
+            'paymentAllocations.tagihanTerjadwal'
+        ])->findOrFail($id);
+
+        $isReprint = request()->has('reprint');
+
+        return view('pembayaran.print-receipt', compact('pembayaran', 'isReprint'));
+    }
+
+    /**
+     * History pembayaran
+     */
+    public function history(Request $request)
+    {
+        $query = Pembayaran::with([
+            'tagihanBulanan.santri',
+            'tagihanTerjadwal.santri',
+            'createdBy',
+            'voidedBy'
+        ])->orderBy('created_at', 'desc');
+
+        // Filter by date range
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('tanggal_pembayaran', [
+                $request->start_date,
+                $request->end_date
+            ]);
+        }
+
+        // Filter by status
+        if ($request->has('status')) {
+            if ($request->status == 'void') {
+                $query->where('is_void', true);
+            } elseif ($request->status == 'active') {
+                $query->where('is_void', false);
             }
-
-            Pembayaran::create($data);
-            return redirect()->back()->with('alert', 'Pembayaran berhasil.');
-        } catch (\Exception $e) {
-            return back()->withErrors(['message' => $e->getMessage()]);
         }
-    }
 
-    public function destroy($id)
-    {
-        try {
-            $pembayaran = Pembayaran::findOrFail($id);
-            $pembayaran->delete();
-            return redirect()->route('pembayaran.index')->with('alert', 'Pembayaran berhasil dihapus.');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+        // Search
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('receipt_number', 'like', "%{$search}%")
+                    ->orWhereHas('tagihanBulanan.santri', function($q2) use ($search) {
+                        $q2->where('nama_santri', 'like', "%{$search}%")
+                            ->orWhere('nis', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('tagihanTerjadwal.santri', function($q2) use ($search) {
+                        $q2->where('nama_santri', 'like', "%{$search}%")
+                            ->orWhere('nis', 'like', "%{$search}%");
+                    });
+            });
         }
+
+        $pembayarans = $query->paginate(20);
+
+        return view('pembayaran.history', compact('pembayarans'));
     }
 }

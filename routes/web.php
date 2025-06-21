@@ -142,14 +142,60 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     });
 
     // Pembayaran
-    Route::get('pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index')->middleware('permission:view_pembayaran');
-    Route::get('pembayaran/riwayat', [PembayaranController::class, 'riwayat'])->name('pembayaran.riwayat')->middleware('permission:view_riwayat_pembayaran');
-    Route::get('pembayaran/create', [PembayaranController::class, 'create'])->name('pembayaran.create')->middleware('permission:create_pembayaran');
-    Route::get('pembayaran/{id}', [PembayaranController::class, 'show'])->name('pembayaran.show')->middleware('permission:view_pembayaran');
-    Route::get('pembayaran/{id}/edit', [PembayaranController::class, 'edit'])->name('pembayaran.edit')->middleware('permission:edit_pembayaran');
-    Route::post('pembayaran', [PembayaranController::class, 'store'])->name('pembayaran.store')->middleware('permission:create_pembayaran');
-    Route::put('pembayaran/{id}', [PembayaranController::class, 'update'])->name('pembayaran.update')->middleware('permission:edit_pembayaran');
-    Route::delete('pembayaran/{id}', [PembayaranController::class, 'destroy'])->name('pembayaran.destroy')->middleware('permission:delete_pembayaran');
+    // Route::post('/pembayaran/{id}/void', [PembayaranController::class, 'void'])->name('pembayaran.void');
+    // Route::get('pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index')->middleware('permission:view_pembayaran');
+    // Route::get('pembayaran/riwayat', [PembayaranController::class, 'riwayat'])->name('pembayaran.riwayat')->middleware('permission:view_riwayat_pembayaran');
+    // Route::get('pembayaran/create', [PembayaranController::class, 'create'])->name('pembayaran.create')->middleware('permission:create_pembayaran');
+    // Route::get('pembayaran/{id}', [PembayaranController::class, 'show'])->name('pembayaran.show')->middleware('permission:view_pembayaran');
+    // Route::get('pembayaran/{id}/edit', [PembayaranController::class, 'edit'])->name('pembayaran.edit')->middleware('permission:edit_pembayaran');
+    // Route::post('pembayaran', [PembayaranController::class, 'store'])->name('pembayaran.store')->middleware('permission:create_pembayaran');
+    // Route::put('pembayaran/{id}', [PembayaranController::class, 'update'])->name('pembayaran.update')->middleware('permission:edit_pembayaran');
+    // Route::delete('pembayaran/{id}', [PembayaranController::class, 'destroy'])->name('pembayaran.destroy')->middleware('permission:delete_pembayaran');
+
+    //Pembayaran
+    // Main pembayaran routes
+    Route::prefix('pembayaran')->name('pembayaran.')->group(function () {
+        // List santri
+        Route::get('/', [PembayaranController::class, 'index'])->name('index');
+        // Show payment form for specific santri
+        Route::get('/santri/{santri}', [PembayaranController::class, 'show'])->name('show');
+        // Preview payment allocation
+        Route::post('/preview', [PembayaranController::class, 'preview'])->name('preview');
+        // Process payment
+        Route::post('/store', [PembayaranController::class, 'store'])->name('store');
+        // Show receipt
+        Route::get('/receipt/{id}', [PembayaranController::class, 'receipt'])->name('receipt');
+        // Print receipt
+        Route::get('/receipt/{id}/print', [PembayaranController::class, 'printReceipt'])->name('print-receipt');
+        // Payment history
+        Route::get('/history', [PembayaranController::class, 'history'])->name('history');
+    });
+
+    // Void routes
+    Route::prefix('pembayaran/void')->name('pembayaran.void.')->group(function () {
+        // Show void confirmation
+        Route::get('/{id}', [PembayaranVoidController::class, 'show'])->name('show');
+        // Get void modal
+        Route::get('/{id}/modal', [PembayaranVoidController::class, 'voidModal'])->name('modal');
+        // Process void
+        Route::post('/{id}', [PembayaranVoidController::class, 'void'])->name('process');
+    });
+
+    // Bulk payment routes
+    Route::prefix('pembayaran/bulk')->name('pembayaran.bulk.')->group(function () {
+        // Bulk payment form
+        Route::get('/', [PembayaranBulkController::class, 'index'])->name('index');
+        // Process bulk payment
+        Route::post('/process', [PembayaranBulkController::class, 'process'])->name('process');
+        // Import form
+        Route::get('/import', [PembayaranBulkController::class, 'importForm'])->name('import');
+        // Download template
+        Route::get('/template', [PembayaranBulkController::class, 'downloadTemplate'])->name('template');
+        // Process import
+        Route::post('/import', [PembayaranBulkController::class, 'import'])->name('import.process');
+        // Preview import
+        Route::post('/import/preview', [PembayaranBulkController::class, 'previewImport'])->name('import.preview');
+    });
 
     // Biaya Terjadwal
     Route::get('biaya-terjadwal', [BiayaTerjadwalController::class, 'index'])->name('biaya_terjadwal.index')->middleware('permission:view_biaya_terjadwal');
