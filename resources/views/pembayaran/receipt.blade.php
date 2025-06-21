@@ -105,7 +105,7 @@
                                                         Syahriah {{ $allocation->tagihanBulanan->bulan }}
                                                         {{ $allocation->tagihanBulanan->tahun }}
                                                     @else
-                                                        {{ $allocation->tagihanTerjadwal->daftarBiaya->nama_biaya ?? 'Tagihan Terjadwal' }}
+                                                        {{ $allocation->tagihanTerjadwal->daftarBiaya->kategoriBiaya->nama_kategori ?? 'Tagihan Terjadwal' }}
                                                     @endif
                                                 </td>
                                                 <td class="text-right">Rp
@@ -120,7 +120,7 @@
                                                     Syahriah {{ $pembayaran->tagihanBulanan->bulan }}
                                                     {{ $pembayaran->tagihanBulanan->tahun }}
                                                 @else
-                                                    {{ $pembayaran->tagihanTerjadwal->daftarBiaya->nama_biaya ?? 'Tagihan Terjadwal' }}
+                                                    {{ $pembayaran->tagihanTerjadwal->daftarBiaya->kategoriBiaya->nama_kategori ?? 'Tagihan Terjadwal' }}
                                                 @endif
                                             </td>
                                             <td class="text-right">Rp

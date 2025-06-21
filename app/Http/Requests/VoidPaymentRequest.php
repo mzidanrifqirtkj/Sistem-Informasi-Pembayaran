@@ -11,7 +11,8 @@ class VoidPaymentRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->user()->hasRole('admin');
+        // return auth()->user()->hasRole('admin');
+        return auth()->user()->can('pembayaran-void');
     }
 
     /**

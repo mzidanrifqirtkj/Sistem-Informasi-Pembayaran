@@ -145,11 +145,14 @@
                         <i class="fas fa-file-invoice"></i> <span>Pembayaran</span>
                     </a>
                     <ul class="dropdown-menu">
-                        @can('view_pembayaran')
-                            <li class="{{ request()->routeIs('pembayaran.index') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('pembayaran.index') }}">Pembayaran Tagihan</a>
+                        @canany(['pembayaran-list', 'pembayaran-create'])
+                            <li class="nav-item">
+                                <a href="{{ route('pembayaran.index') }}" class="nav-link">
+                                    <i class="nav-icon fas fa-money-bill-wave"></i>
+                                    <p>Pembayaran</p>
+                                </a>
                             </li>
-                        @endcan
+                        @endcanany
                         @can('view_riwayat_pembayaran')
                             <li class="{{ request()->routeIs('pembayaran.riwayat') ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('pembayaran.riwayat') }}">Riwayat Pembayaran</a>

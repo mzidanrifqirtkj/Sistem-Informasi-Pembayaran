@@ -148,7 +148,8 @@
                                                             value="{{ $tagihan->id_tagihan_terjadwal }}"
                                                             data-nominal="{{ $tagihan->sisa_tagihan }}">
                                                     </td>
-                                                    <td>{{ $tagihan->daftarBiaya->nama_biaya ?? 'Tagihan Terjadwal' }}</td>
+                                                    <td>{{ $tagihan->daftarBiaya->kategoriBiaya->nama_kategori ?? 'Tagihan Terjadwal' }}
+                                                    </td>
                                                     <td>{{ $tagihan->tahun }}</td>
                                                     <td>Rp {{ number_format($tagihan->nominal, 0, ',', '.') }}</td>
                                                     <td>Rp {{ number_format($tagihan->total_pembayaran, 0, ',', '.') }}

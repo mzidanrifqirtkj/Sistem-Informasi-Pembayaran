@@ -172,7 +172,8 @@ class PaymentValidationService
         }
 
         // Check user permission
-        if (!auth()->user()->hasRole('admin')) {
+        // if (!auth()->user()->hasRole('admin')) {
+        if (!auth()->user()->can('pembayaran-void')) {
             throw new \Exception('Anda tidak memiliki izin untuk void pembayaran');
         }
 

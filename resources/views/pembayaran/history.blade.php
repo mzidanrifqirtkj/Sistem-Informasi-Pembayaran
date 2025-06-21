@@ -1,0 +1,274 @@
+@extends('layouts.home')
+@section('title_page', 'Riwayat Pembayaran')
+
+@section('content')
+    <div class="container">
+        <div class="row mb-3">
+            <div class="col-md-8">
+                <h1>Riwayat Pembayaran</h1>
+            </div>
+            <div class="col-md-4 text-right">
+                <a href="{{ route('pembayaran.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Kembali
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <form action="{{ route('pembayaran.history') }}" method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <label>Tanggal Mulai</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ request('start_date') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Tanggal Akhir</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ request('end_date') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label>Status</label>
+                        <select name="status" class="form-control">
+                            <option value="">Semua</option>
+                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Aktif</option>
+                            <option value="void" {{ request('status') == 'void' ? 'selected' : '' }}>Void</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Cari</label>
+                        <input type="text" name="search" class="form-control" placeholder="No/Nama/NIS"
+                            value="{{ request('search') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label>&nbsp;</label>
+                        <div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Filter
+                            </button>
+                            <a href="{{ route('pembayaran.history') }}" class="btn btn-secondary">
+                                <i class="fas fa-sync"></i>
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h6>Total Hari Ini</h6>
+                        <h4>Rp {{ number_format(\App\Models\Pembayaran::getTodayTotal(), 0, ',', '.') }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6>Total Bulan Ini</h6>
+                        <h4>Rp {{ number_format(\App\Models\Pembayaran::getMonthTotal(), 0, ',', '.') }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h6>Total Tahun Ini</h6>
+                        <h4>Rp {{ number_format(\App\Models\Pembayaran::getYearTotal(), 0, ',', '.') }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h6>Transaksi Hari Ini</h6>
+                        <h4>{{ \App\Models\Pembayaran::whereDate('tanggal_pembayaran', today())->count() }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th width="5%">No</th>
+                                <th width="15%">No. Kwitansi</th>
+                                <th width="10%">Tanggal</th>
+                                <th width="10%">NIS</th>
+                                <th>Nama Santri</th>
+                                <th>Deskripsi</th>
+                                <th width="15%">Nominal</th>
+                                <th width="8%">Status</th>
+                                <th width="15%">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($pembayarans as $index => $pembayaran)
+                                <tr class="{{ $pembayaran->is_void ? 'table-danger' : '' }}">
+                                    <td>{{ $pembayarans->firstItem() + $index }}</td>
+                                    <td>
+                                        <strong>{{ $pembayaran->receipt_number }}</strong>
+                                    </td>
+                                    <td>{{ $pembayaran->tanggal_pembayaran->format('d/m/Y') }}</td>
+                                    <td>{{ $pembayaran->santri_nis }}</td>
+                                    <td>{{ $pembayaran->santri_name }}</td>
+                                    <td>
+                                        {{ $pembayaran->payment_description }}
+                                        @if ($pembayaran->payment_note)
+                                            <br><small class="text-muted">{{ $pembayaran->payment_note }}</small>
+                                        @endif
+                                    </td>
+                                    <td class="text-right">
+                                        <strong>{{ $pembayaran->formatted_nominal }}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        {!! $pembayaran->status_badge !!}
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{{ route('pembayaran.receipt', $pembayaran->id_pembayaran) }}"
+                                            class="btn btn-sm btn-info" target="_blank" title="Lihat Kwitansi">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+
+                                        @can('pembayaran-void')
+                                            @if ($pembayaran->can_void)
+                                                <button onclick="showVoidModal({{ $pembayaran->id_pembayaran }})"
+                                                    class="btn btn-sm btn-danger" title="Void Pembayaran">
+                                                    <i class="fas fa-ban"></i> Void
+                                                </button>
+                                            @endif
+                                        @endcan
+
+                                        @if ($pembayaran->is_void)
+                                            <button class="btn btn-sm btn-secondary"
+                                                onclick="showVoidInfo({{ $pembayaran->id_pembayaran }})" title="Info Void">
+                                                <i class="fas fa-info-circle"></i>
+                                            </button>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="9" class="text-center">Tidak ada data pembayaran</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        Menampilkan {{ $pembayarans->firstItem() ?? 0 }} - {{ $pembayarans->lastItem() ?? 0 }}
+                        dari {{ $pembayarans->total() }} pembayaran
+                    </div>
+                    <div>
+                        {{ $pembayarans->links('pagination::bootstrap-5') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Void Modal -->
+    <div class="modal fade" id="voidModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="voidForm" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title">Void Pembayaran</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Apakah Anda yakin ingin void pembayaran ini?</p>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Pembayaran yang di-void tidak dapat dikembalikan.
+                        </div>
+                        <div class="form-group">
+                            <label>Alasan Void <span class="text-danger">*</span></label>
+                            <textarea name="void_reason" class="form-control" rows="3" placeholder="Masukkan alasan void..." required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-ban"></i> Void Pembayaran
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Void Info Modal -->
+    <div class="modal fade" id="voidInfoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Informasi Void</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="voidInfoContent">
+                    <!-- Content will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('script')
+    <script>
+        function showVoidModal(id) {
+            const form = document.getElementById('voidForm');
+            form.action = `{{ url('pembayaran/void') }}/${id}`;
+            form.querySelector('textarea[name="void_reason"]').value = '';
+            $('#voidModal').modal('show');
+        }
+
+        function showVoidInfo(id) {
+            // Get void info via AJAX
+            $.get(`{{ url('pembayaran/void') }}/${id}/info`, function(data) {
+                let content = `
+            <table class="table table-sm">
+                <tr>
+                    <td width="40%">Di-void oleh</td>
+                    <td>: ${data.voided_by_name}</td>
+                </tr>
+                <tr>
+                    <td>Tanggal Void</td>
+                    <td>: ${data.voided_at}</td>
+                </tr>
+                <tr>
+                    <td>Alasan</td>
+                    <td>: ${data.void_reason}</td>
+                </tr>
+            </table>
+        `;
+                $('#voidInfoContent').html(content);
+                $('#voidInfoModal').modal('show');
+            });
+        }
+
+        // Auto submit filter on date change
+        $('input[type="date"]').on('change', function() {
+            if ($('input[name="start_date"]').val() && $('input[name="end_date"]').val()) {
+                $(this).closest('form').submit();
+            }
+        });
+    </script>
+@endsection

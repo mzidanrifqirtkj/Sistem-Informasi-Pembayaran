@@ -36,7 +36,7 @@ class PembayaranController extends Controller
         // Search functionality
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nis', 'like', "%{$search}%")
                     ->orWhere('nama_santri', 'like', "%{$search}%");
             });
@@ -115,8 +115,13 @@ class PembayaranController extends Controller
         try {
             DB::beginTransaction();
 
+            // Parse payment data from JSON if exists
+            $data = $request->has('payment_data')
+                ? json_decode($request->payment_data, true)
+                : $request->validated();
+
             // Process payment
-            $pembayaran = $this->paymentService->processPayment($request->validated());
+            $pembayaran = $this->paymentService->processPayment($data);
 
             DB::commit();
 
@@ -211,13 +216,13 @@ class PembayaranController extends Controller
         // Search
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('receipt_number', 'like', "%{$search}%")
-                    ->orWhereHas('tagihanBulanan.santri', function($q2) use ($search) {
+                    ->orWhereHas('tagihanBulanan.santri', function ($q2) use ($search) {
                         $q2->where('nama_santri', 'like', "%{$search}%")
                             ->orWhere('nis', 'like', "%{$search}%");
                     })
-                    ->orWhereHas('tagihanTerjadwal.santri', function($q2) use ($search) {
+                    ->orWhereHas('tagihanTerjadwal.santri', function ($q2) use ($search) {
                         $q2->where('nama_santri', 'like', "%{$search}%")
                             ->orWhere('nis', 'like', "%{$search}%");
                     });

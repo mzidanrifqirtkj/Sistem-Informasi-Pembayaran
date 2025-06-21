@@ -4,6 +4,8 @@ use App\Http\Controllers\AbsensiController;
 use App\Http\Controllers\BiayaSantriController;
 use App\Http\Controllers\DaftarBiayaController;
 use App\Http\Controllers\KategoriBiayaController;
+use App\Http\Controllers\PembayaranBulkController;
+use App\Http\Controllers\PembayaranVoidController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\QoriKelasController;
 use App\Http\Controllers\RiwayatKelasController;
@@ -153,49 +155,76 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     // Route::delete('pembayaran/{id}', [PembayaranController::class, 'destroy'])->name('pembayaran.destroy')->middleware('permission:delete_pembayaran');
 
     //Pembayaran
-    // Main pembayaran routes
+    // Main pembayaran routes - accessible by multiple roles
     Route::prefix('pembayaran')->name('pembayaran.')->group(function () {
-        // List santri
-        Route::get('/', [PembayaranController::class, 'index'])->name('index');
+        // List santri - kasir & admin can access
+        Route::get('/', [PembayaranController::class, 'index'])
+            ->name('index')
+            ->middleware('permission:pembayaran-list');
         // Show payment form for specific santri
-        Route::get('/santri/{santri}', [PembayaranController::class, 'show'])->name('show');
+        Route::get('/santri/{santri}', [PembayaranController::class, 'show'])
+            ->name('show')
+            ->middleware('permission:pembayaran-create');
         // Preview payment allocation
-        Route::post('/preview', [PembayaranController::class, 'preview'])->name('preview');
+        Route::post('/preview', [PembayaranController::class, 'preview'])
+            ->name('preview')
+            ->middleware('permission:pembayaran-create');
         // Process payment
-        Route::post('/store', [PembayaranController::class, 'store'])->name('store');
-        // Show receipt
-        Route::get('/receipt/{id}', [PembayaranController::class, 'receipt'])->name('receipt');
+        Route::post('/store', [PembayaranController::class, 'store'])
+            ->name('store')
+            ->middleware('permission:pembayaran-create');
+        // Show receipt - multiple roles can view
+        Route::get('/receipt/{id}', [PembayaranController::class, 'receipt'])
+            ->name('receipt')
+            ->middleware('permission:pembayaran-view');
         // Print receipt
-        Route::get('/receipt/{id}/print', [PembayaranController::class, 'printReceipt'])->name('print-receipt');
+        Route::get('/receipt/{id}/print', [PembayaranController::class, 'printReceipt'])
+            ->name('print-receipt')
+            ->middleware('permission:pembayaran-view');
         // Payment history
-        Route::get('/history', [PembayaranController::class, 'history'])->name('history');
+        Route::get('/history', [PembayaranController::class, 'history'])
+            ->name('history')
+            ->middleware('permission:pembayaran-list');
     });
 
-    // Void routes
-    Route::prefix('pembayaran/void')->name('pembayaran.void.')->group(function () {
-        // Show void confirmation
-        Route::get('/{id}', [PembayaranVoidController::class, 'show'])->name('show');
-        // Get void modal
-        Route::get('/{id}/modal', [PembayaranVoidController::class, 'voidModal'])->name('modal');
-        // Process void
-        Route::post('/{id}', [PembayaranVoidController::class, 'void'])->name('process');
-    });
+    // Void routes - admin only
+    Route::prefix('pembayaran/void')->name('pembayaran.void.')
+        ->middleware('permission:pembayaran-void')
+        ->group(function () {
+            // Show void confirmation
+            Route::get('/{id}', [PembayaranVoidController::class, 'show'])->name('show');
+            // Get void modal
+            Route::get('/{id}/modal', [PembayaranVoidController::class, 'voidModal'])->name('modal');
+            // Process void
+            Route::post('/{id}', [PembayaranVoidController::class, 'void'])->name('process');
+            Route::get('/{id}/info', function ($id) {
+                $pembayaran = \App\Models\Pembayaran::with('voidedBy')->findOrFail($id);
 
-    // Bulk payment routes
-    Route::prefix('pembayaran/bulk')->name('pembayaran.bulk.')->group(function () {
-        // Bulk payment form
-        Route::get('/', [PembayaranBulkController::class, 'index'])->name('index');
-        // Process bulk payment
-        Route::post('/process', [PembayaranBulkController::class, 'process'])->name('process');
-        // Import form
-        Route::get('/import', [PembayaranBulkController::class, 'importForm'])->name('import');
-        // Download template
-        Route::get('/template', [PembayaranBulkController::class, 'downloadTemplate'])->name('template');
-        // Process import
-        Route::post('/import', [PembayaranBulkController::class, 'import'])->name('import.process');
-        // Preview import
-        Route::post('/import/preview', [PembayaranBulkController::class, 'previewImport'])->name('import.preview');
-    });
+                return response()->json([
+                    'voided_by_name' => $pembayaran->voidedBy->name ?? 'Unknown',
+                    'voided_at' => $pembayaran->voided_at->format('d/m/Y H:i:s'),
+                    'void_reason' => $pembayaran->void_reason
+                ]);
+            })->name('pembayaran.void.info')->middleware('permission:pembayaran-list');
+        });
+
+    // Bulk payment routes - admin only
+    Route::prefix('pembayaran/bulk')->name('pembayaran.bulk.')
+        ->middleware('permission:pembayaran-bulk')
+        ->group(function () {
+            // Bulk payment form
+            Route::get('/', [PembayaranBulkController::class, 'index'])->name('index');
+            // Process bulk payment
+            Route::post('/process', [PembayaranBulkController::class, 'process'])->name('process');
+            // Import form
+            Route::get('/import', [PembayaranBulkController::class, 'importForm'])->name('import');
+            // Download template
+            Route::get('/template', [PembayaranBulkController::class, 'downloadTemplate'])->name('template');
+            // Process import
+            Route::post('/import', [PembayaranBulkController::class, 'import'])->name('import.process');
+            // Preview import
+            Route::post('/import/preview', [PembayaranBulkController::class, 'previewImport'])->name('import.preview');
+        });
 
     // Biaya Terjadwal
     Route::get('biaya-terjadwal', [BiayaTerjadwalController::class, 'index'])->name('biaya_terjadwal.index')->middleware('permission:view_biaya_terjadwal');

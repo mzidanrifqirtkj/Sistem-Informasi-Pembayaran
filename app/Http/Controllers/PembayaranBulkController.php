@@ -32,7 +32,7 @@ class PembayaranBulkController extends Controller
         $this->validationService = $validationService;
         $this->importService = $importService;
 
-        $this->middleware('role:administrator');
+        // $this->middleware('role:administrator');
     }
 
     /**

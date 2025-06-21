@@ -58,7 +58,7 @@
                             @if ($allocation['type'] == 'bulanan')
                                 {{ $allocation['tagihan']->bulan }} {{ $allocation['tagihan']->tahun }}
                             @else
-                                {{ $allocation['tagihan']->daftarBiaya->nama_biaya ?? 'Tagihan Terjadwal' }}
+                                {{ $allocation['tagihan']->daftarBiaya->kategoriBiaya->nama_kategori ?? 'Tagihan Terjadwal' }}
                             @endif
                         </td>
                         <td class="text-right">

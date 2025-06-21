@@ -9,9 +9,11 @@
             </div>
             <div class="col-md-4">
                 <div class="d-flex gap-2 justify-content-end">
-                    <a href="{{ route('pembayaran.bulk') }}" class="btn btn-success">
-                        <i class="fas fa-users"></i> Pembayaran Massal
-                    </a>
+                    @can('pembayaran-bulk')
+                        <a href="{{ route('pembayaran.bulk.index') }}" class="btn btn-success">
+                            <i class="fas fa-users"></i> Pembayaran Massal
+                        </a>
+                    @endcan
                     <a href="{{ route('pembayaran.history') }}" class="btn btn-info">
                         <i class="fas fa-history"></i> Riwayat
                     </a>

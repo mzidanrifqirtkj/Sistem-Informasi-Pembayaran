@@ -132,4 +132,51 @@ class Pembayaran extends Model
     {
         return $this->belongsTo(User::class, 'created_by_id', 'id_user');
     }
+
+    public function getPaymentDescriptionAttribute()
+    {
+        if ($this->payment_type === 'allocated') {
+            $count = $this->paymentAllocations->count();
+            return "Pembayaran untuk {$count} tagihan";
+        }
+
+        if ($this->tagihan_bulanan_id) {
+            $tagihan = $this->tagihanBulanan;
+            return "Syahriah {$tagihan->bulan} {$tagihan->tahun}";
+        }
+
+        if ($this->tagihan_terjadwal_id) {
+            $tagihan = $this->tagihanTerjadwal;
+            // Update bagian ini sesuai struktur yang benar
+            if ($tagihan && $tagihan->biayaSantri && $tagihan->biayaSantri->daftarBiaya && $tagihan->biayaSantri->daftarBiaya->kategoriBiaya) {
+                return $tagihan->biayaSantri->daftarBiaya->kategoriBiaya->nama_kategori;
+            }
+            return 'Tagihan Terjadwal';
+        }
+
+        return 'Pembayaran';
+    }
+
+    public static function getTodayTotal()
+    {
+        return self::whereDate('tanggal_pembayaran', now()->toDateString())
+            ->where('is_void', false)
+            ->sum('nominal_pembayaran'); // pastikan nama kolom ini sesuai
+    }
+
+    public static function getMonthTotal()
+    {
+        return self::whereMonth('tanggal_pembayaran', now()->month)
+            ->whereYear('tanggal_pembayaran', now()->year)
+            ->where('is_void', false)
+            ->sum('nominal_pembayaran'); // ganti jika nama kolom berbeda
+    }
+
+    public static function getYearTotal()
+    {
+        return self::whereYear('tanggal_pembayaran', now()->year)
+            ->where('is_void', false)
+            ->sum('nominal_pembayaran'); // sesuaikan jika field berbeda
+    }
+
 }
