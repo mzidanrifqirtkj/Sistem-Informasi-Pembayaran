@@ -61,12 +61,126 @@ class PaymentForm {
         // Confirm payment button
         this.elements.confirmButton.on("click", () => this.confirmPayment());
 
-        // Prevent form submission without preview
+        // FIX: Handle form submission - langsung bayar tanpa preview
         this.elements.paymentForm.on("submit", (e) => {
-            if (!this.previewData) {
-                e.preventDefault();
-                this.showPreview();
+            e.preventDefault(); // Always prevent default form submission
+
+            // Validasi input
+            if (
+                this.nominalPembayaran <= 0 ||
+                this.selectedTagihan.length === 0
+            ) {
+                Swal.fire({
+                    title: "Peringatan",
+                    text: "Pilih tagihan dan masukkan nominal pembayaran",
+                    icon: "warning",
+                    backdrop: false,
+                });
+                return;
             }
+
+            // Langsung proses pembayaran tanpa preview
+            this.processDirectPayment();
+        });
+    }
+
+    // TAMBAH method baru: processDirectPayment()
+    processDirectPayment() {
+        // Show loading
+        Swal.fire({
+            title: "Processing...",
+            text: "Sedang memproses pembayaran...",
+            allowOutsideClick: false,
+            backdrop: false,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+        });
+
+        // Get current CSRF token
+        const currentToken =
+            $('meta[name="csrf-token"]').attr("content") ||
+            this.config.csrfToken;
+
+        // Prepare allocations langsung dari selectedTagihan
+        const allocations = this.selectedTagihan.map((tagihan) => ({
+            type: tagihan.type,
+            tagihan_id: tagihan.id,
+            allocated_amount: Math.min(this.nominalPembayaran, tagihan.sisa), // Hitung di sini
+        }));
+
+        // Prepare form data
+        const formData = {
+            santri_id: this.config.santriId,
+            nominal_pembayaran: this.nominalPembayaran,
+            tanggal_pembayaran: $('[name="tanggal_pembayaran"]').val(),
+            payment_note: $('[name="payment_note"]').val(),
+            allocations: allocations,
+            sisa_pembayaran: 0, // For now, assume no overpayment
+            _token: currentToken,
+        };
+
+        console.log("Direct payment data:", formData);
+
+        // Submit dengan AJAX
+        $.ajax({
+            url: this.config.storeUrl,
+            type: "POST",
+            data: formData,
+            dataType: "json",
+            success: (response) => {
+                console.log("Direct payment success:", response);
+                Swal.close();
+
+                if (response.success || response.redirect_url) {
+                    const redirectUrl =
+                        response.redirect_url || response.redirect;
+                    if (redirectUrl) {
+                        window.location.href = redirectUrl;
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    Swal.fire({
+                        title: "Error",
+                        text:
+                            response.message ||
+                            "Terjadi kesalahan saat memproses pembayaran",
+                        icon: "error",
+                        backdrop: false,
+                    });
+                }
+            },
+            error: (xhr) => {
+                Swal.close();
+                console.error("Direct payment error:", xhr);
+
+                let errorMessage =
+                    "Terjadi kesalahan saat memproses pembayaran";
+
+                if (xhr.status === 302) {
+                    const redirectLocation = xhr.getResponseHeader("Location");
+                    if (redirectLocation) {
+                        window.location.href = redirectLocation;
+                        return;
+                    }
+                } else if (xhr.status === 422) {
+                    const errors = xhr.responseJSON?.errors;
+                    if (errors) {
+                        errorMessage = Object.values(errors).flat().join("\n");
+                    } else {
+                        errorMessage =
+                            xhr.responseJSON?.message || "Data tidak valid";
+                    }
+                }
+
+                Swal.fire({
+                    title: "Error",
+                    text: errorMessage,
+                    icon: "error",
+                    backdrop: false,
+                });
+            },
         });
     }
 
@@ -258,6 +372,7 @@ class PaymentForm {
         });
     }
 
+    // FIX confirmPayment() di payment.js
     confirmPayment() {
         if (!this.previewData) {
             console.error("No preview data available");
@@ -283,22 +398,15 @@ class PaymentForm {
             $('meta[name="csrf-token"]').attr("content") ||
             this.config.csrfToken;
 
-        // Simplify allocations data - hanya ambil yang diperlukan
+        // FIX: Sesuaikan struktur allocations dengan StorePaymentRequest
         const simplifiedAllocations = this.previewData.allocations.map(
             (allocation) => ({
                 type: allocation.type,
-                tagihan: {
-                    // Kirim hanya ID yang diperlukan
-                    ...(allocation.type === "bulanan"
-                        ? {
-                              id_tagihan_bulanan:
-                                  allocation.tagihan.id_tagihan_bulanan,
-                          }
-                        : {
-                              id_tagihan_terjadwal:
-                                  allocation.tagihan.id_tagihan_terjadwal,
-                          }),
-                },
+                // FIX: Kirim tagihan_id langsung (bukan nested object)
+                tagihan_id:
+                    allocation.type === "bulanan"
+                        ? allocation.tagihan.id_tagihan_bulanan
+                        : allocation.tagihan.id_tagihan_terjadwal,
                 allocated_amount: allocation.allocated_amount,
             })
         );
@@ -309,14 +417,14 @@ class PaymentForm {
             nominal_pembayaran: this.nominalPembayaran,
             tanggal_pembayaran: $('[name="tanggal_pembayaran"]').val(),
             payment_note: $('[name="payment_note"]').val(),
-            // Kirim allocations yang sudah disederhanakan
+            // Kirim allocations dengan struktur yang benar
             allocations: simplifiedAllocations,
             sisa_pembayaran: this.previewData.sisa_pembayaran,
             _token: currentToken,
         };
 
         console.log("Sending payment data:", formData); // Debug log
-        console.log("Preview data:", this.previewData); // Debug preview data
+        console.log("Simplified allocations:", simplifiedAllocations); // Debug allocations
 
         // Submit menggunakan AJAX dengan error handling yang lebih baik
         $.ajax({
@@ -328,10 +436,10 @@ class PaymentForm {
                 console.log("Payment success:", response);
                 Swal.close();
 
-                if (response.success || response.redirect) {
+                if (response.success || response.redirect_url) {
                     // Redirect to receipt page
                     const redirectUrl =
-                        response.redirect || response.receipt_url;
+                        response.redirect_url || response.redirect;
                     if (redirectUrl) {
                         window.location.href = redirectUrl;
                     } else {
@@ -359,7 +467,6 @@ class PaymentForm {
                 if (xhr.status === 302) {
                     // Handle redirect case - might be successful but Laravel is redirecting
                     console.log("Received 302 redirect, following...");
-                    // Check if there's a location header
                     const redirectLocation = xhr.getResponseHeader("Location");
                     if (redirectLocation) {
                         window.location.href = redirectLocation;

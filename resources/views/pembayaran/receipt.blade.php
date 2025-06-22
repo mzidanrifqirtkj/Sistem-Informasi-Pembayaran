@@ -198,7 +198,7 @@
     </style>
 @endsection
 
-@php
+{{-- @php
     function terbilang($angka)
     {
         $angka = abs($angka);
@@ -239,4 +239,4 @@
             return terbilang($angka / 1000000000000) . ' trilyun ' . terbilang($angka % 1000000000000);
         }
     }
-@endphp
+@endphp --}}

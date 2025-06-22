@@ -107,3 +107,37 @@
     "sisa_pembayaran": "0",
     "_token": "3EEDiDYb7wV1M0ttzKchFYbNLi504R5XbgNbBBuU"
 }
+{
+    "santri_id": "234",
+    "nominal_pembayaran": "200000",
+    "tanggal_pembayaran": "2025-06-22",
+    "payment_note": null,
+    "allocations": [
+        {
+            "type": "bulanan",
+            "tagihan": {
+                "id_tagihan_bulanan": "85"
+            },
+            "allocated_amount": "200000"
+        }
+    ],
+    "sisa_pembayaran": "0",
+    "_token": "3EEDiDYb7wV1M0ttzKchFYbNLi504R5XbgNbBBuU"
+}
+{
+    "santri_id": "239",
+    "nominal_pembayaran": "450000",
+    "tanggal_pembayaran": "2025-06-22",
+    "payment_note": null,
+    "allocations": [
+        {
+            "type": "bulanan",
+            "tagihan": {
+                "id_tagihan_bulanan": "65"
+            },
+            "allocated_amount": "450000"
+        }
+    ],
+    "sisa_pembayaran": "0",
+    "_token": "3EEDiDYb7wV1M0ttzKchFYbNLi504R5XbgNbBBuU"
+}

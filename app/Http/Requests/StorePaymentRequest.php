@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -15,49 +14,32 @@ class StorePaymentRequest extends FormRequest
         $this->validationService = app(PaymentValidationService::class);
     }
 
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        // return auth()->user()->hasRole('admin');
-        return auth()->check(); // Atau sesuai permission
+        return auth()->check();
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         return [
             'santri_id' => 'required|exists:santris,id_santri',
             'nominal_pembayaran' => 'required|numeric|min:1',
-            'tanggal_pembayaran' => 'nullable|date|before_or_equal:today|after:' . now()->subDays(30)->format('Y-m-d'),
+            'tanggal_pembayaran' => 'nullable|date|before_or_equal:today',
             'payment_note' => 'nullable|string|max:255',
             'allocations' => 'required|array|min:1',
             'allocations.*.type' => 'required|in:bulanan,terjadwal',
-            // Conditional validation untuk tagihan IDs
-            'allocations.*.tagihan.id_tagihan_bulanan' => 'required_if:allocations.*.type,bulanan|exists:tagihan_bulanans,id_tagihan_bulanan',
-            'allocations.*.tagihan.id_tagihan_terjadwal' => 'required_if:allocations.*.type,terjadwal|exists:tagihan_terjadwals,id_tagihan_terjadwal',
+            // FIX: Sesuaikan dengan format yang dikirim frontend
+            'allocations.*.tagihan_id' => 'required|integer',
             'allocations.*.allocated_amount' => 'required|numeric|min:1',
             'sisa_pembayaran' => 'nullable|numeric|min:0'
         ];
     }
 
-    /**
-     * Configure the validator instance.
-     */
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
             if (!$validator->errors()->any()) {
                 try {
-                    // // Validate duplicate payment
-                    // $this->validationService->validateDuplicatePayment(
-                    //     $this->santri_id,
-                    //     $this->nominal_pembayaran
-                    // );
-
                     // Validate total allocation equals payment amount
                     $totalAllocated = collect($this->allocations)->sum('allocated_amount');
                     $sisaPembayaran = $this->sisa_pembayaran ?? 0;
@@ -76,9 +58,6 @@ class StorePaymentRequest extends FormRequest
         });
     }
 
-    /**
-     * Get custom error messages
-     */
     public function messages(): array
     {
         return [
@@ -87,8 +66,6 @@ class StorePaymentRequest extends FormRequest
             'nominal_pembayaran.required' => 'Nominal pembayaran harus diisi',
             'nominal_pembayaran.numeric' => 'Nominal pembayaran harus berupa angka',
             'nominal_pembayaran.min' => 'Nominal pembayaran minimal Rp 1',
-            'tanggal_pembayaran.before_or_equal' => 'Tanggal pembayaran tidak boleh melebihi hari ini',
-            'tanggal_pembayaran.after' => 'Tanggal pembayaran tidak boleh lebih dari 30 hari yang lalu',
             'allocations.required' => 'Alokasi pembayaran harus ada',
             'allocations.array' => 'Format alokasi pembayaran tidak valid',
             'allocations.min' => 'Minimal harus ada 1 alokasi pembayaran'

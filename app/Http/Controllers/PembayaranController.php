@@ -133,34 +133,35 @@ class PembayaranController extends Controller
      */
     public function store(StorePaymentRequest $request)
     {
-        \Log::info('=== PAYMENT STORE DEBUG ===', [
-            'raw_request' => $request->all(),
-            'validation_passed' => true, // Jika sampai sini berarti validation OK
-            'user' => auth()->user()->name ?? 'Guest'
-        ]);
-
-        file_put_contents(
-            storage_path('logs/debug_payment.log'),
-            json_encode($request->all(), JSON_PRETTY_PRINT) . "\n",
-            FILE_APPEND
-        );
         try {
             DB::beginTransaction();
 
-            $data = $request->has('payment_data')
-                ? json_decode($request->payment_data, true)
-                : $request->validated();
+            \Log::info('Payment store request:', $request->all());
 
-            $pembayaran = $this->paymentService->processPayment($data);
+            // Process payment menggunakan service
+            $pembayaran = $this->paymentService->processPayment($request->validated());
 
             DB::commit();
 
-            // Tambahkan log redirect
-            \Log::info('Redirecting to receipt page', [
-                'redirect_url' => route('pembayaran.receipt', $pembayaran->id_pembayaran),
+            \Log::info('Payment processed successfully:', [
                 'pembayaran_id' => $pembayaran->id_pembayaran,
+                'receipt_number' => $pembayaran->receipt_number
             ]);
 
+            // Check if request is AJAX
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Pembayaran berhasil diproses',
+                    'pembayaran_id' => $pembayaran->id_pembayaran,
+                    'redirect_url' => route('pembayaran.receipt', $pembayaran->id_pembayaran),
+                    // TAMBAH: Status refresh data
+                    'should_refresh' => true,
+                    'refresh_url' => route('pembayaran.show', $request->santri_id)
+                ]);
+            }
+
+            // Regular form submission
             return redirect()
                 ->route('pembayaran.receipt', $pembayaran->id_pembayaran)
                 ->with('success', 'Pembayaran berhasil diproses');
@@ -168,7 +169,17 @@ class PembayaranController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            \Log::error('Payment store error: ' . $e->getMessage());
+            \Log::error('Payment store error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ], 500);
+            }
 
             return redirect()
                 ->back()
