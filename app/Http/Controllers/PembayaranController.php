@@ -81,10 +81,15 @@ class PembayaranController extends Controller
     public function preview(Request $request)
     {
         try {
+            \Log::info('Preview request received', $request->all());
+
             $request->validate([
                 'santri_id' => 'required|exists:santris,id_santri',
                 'nominal_pembayaran' => 'required|numeric|min:1',
-                'selected_tagihan' => 'array'
+                'selected_tagihan' => 'nullable|array',
+                'selected_tagihan.*.type' => 'required_with:selected_tagihan|in:bulanan,terjadwal',
+                'selected_tagihan.*.id' => 'required_with:selected_tagihan|integer',
+                'selected_tagihan.*.sisa' => 'required_with:selected_tagihan|numeric'
             ]);
 
             $previewData = $this->paymentService->previewPaymentAllocation(
@@ -99,7 +104,23 @@ class PembayaranController extends Controller
                 'html' => view('pembayaran.preview-modal', $previewData)->render()
             ]);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error in preview', [
+                'errors' => $e->errors(),
+                'request' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak valid: ' . collect($e->errors())->flatten()->first()
+            ], 422);
+
         } catch (\Exception $e) {
+            \Log::error('Preview error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()

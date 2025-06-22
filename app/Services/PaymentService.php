@@ -101,15 +101,35 @@ class PaymentService
         $allocations = [];
         $sisaPembayaran = $nominalPembayaran;
 
+        // Debug log
+        \Log::info('Preview Payment Allocation', [
+            'santri_id' => $santriId,
+            'nominal' => $nominalPembayaran,
+            'selected_tagihan' => $selectedTagihan
+        ]);
+
         // Jika ada tagihan yang dipilih
         if (!empty($selectedTagihan)) {
             foreach ($selectedTagihan as $item) {
                 if ($sisaPembayaran <= 0)
                     break;
 
-                $tagihan = $this->getTagihanById($item['type'], $item['id']);
-                if (!$tagihan)
+                // Pastikan struktur data benar
+                if (!isset($item['type']) || !isset($item['id'])) {
+                    \Log::warning('Invalid tagihan item structure', ['item' => $item]);
                     continue;
+                }
+
+                $tagihan = $this->getTagihanById($item['type'], $item['id']);
+                if (!$tagihan) {
+                    \Log::warning('Tagihan not found', ['type' => $item['type'], 'id' => $item['id']]);
+                    continue;
+                }
+
+                // Load relationships untuk tagihan terjadwal
+                if ($item['type'] === 'terjadwal') {
+                    $tagihan->load('biayaSantri.daftarBiaya.kategoriBiaya');
+                }
 
                 $sisaTagihan = $tagihan->sisa_tagihan;
                 $allocationAmount = min($sisaPembayaran, $sisaTagihan);
@@ -352,10 +372,19 @@ class PaymentService
      */
     protected function getTagihanById($type, $id)
     {
-        if ($type === 'bulanan') {
-            return TagihanBulanan::find($id);
-        } else {
-            return TagihanTerjadwal::find($id);
+        try {
+            if ($type === 'bulanan') {
+                return TagihanBulanan::with('santri')->findOrFail($id);
+            } else {
+                return TagihanTerjadwal::with(['santri', 'biayaSantri.daftarBiaya.kategoriBiaya'])->findOrFail($id);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error getting tagihan', [
+                'type' => $type,
+                'id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            return null;
         }
     }
 
@@ -382,3 +411,5 @@ class PaymentService
         // Future: implement credit/refund system
     }
 }
+
+

@@ -9,7 +9,6 @@ class PaymentForm {
     }
 
     init() {
-        // Cache DOM elements
         this.elements = {
             nominalInput: $("#nominalPembayaran"),
             previewButton: $("#previewButton"),
@@ -19,15 +18,15 @@ class PaymentForm {
             allocationPreview: $("#allocationPreview"),
             allocationList: $("#allocationList"),
             sisaPembayaran: $("#sisaPembayaran"),
-            previewModal: $("#previewModal"),
+            previewModalElement: document.getElementById("previewModal"),
             previewModalBody: $("#previewModalBody"),
             paymentForm: $("#paymentForm"),
         };
 
-        // Bind events
-        this.bindEvents();
+        // Bootstrap 4: gunakan jQuery untuk kontrol modal
+        this.previewModal = $(this.elements.previewModalElement);
 
-        // Calculate initial selection
+        this.bindEvents();
         this.calculateSelectedTagihan();
     }
 
@@ -182,59 +181,78 @@ class PaymentForm {
 
     showPreview() {
         if (this.nominalPembayaran <= 0 || this.selectedTagihan.length === 0) {
-            Swal.fire(
-                "Peringatan",
-                "Pilih tagihan dan masukkan nominal pembayaran",
-                "warning"
-            );
+            Swal.fire({
+                title: "Peringatan",
+                text: "Pilih tagihan dan masukkan nominal pembayaran",
+                icon: "warning",
+                backdrop: false,
+                customClass: {
+                    container: "high-z-index-swal",
+                },
+            });
             return;
         }
 
-        // Show loading
         Swal.fire({
             title: "Loading...",
             allowOutsideClick: false,
+            backdrop: false,
             didOpen: () => {
                 Swal.showLoading();
             },
         });
 
-        // Prepare data
         const data = {
             santri_id: this.config.santriId,
             nominal_pembayaran: this.nominalPembayaran,
             selected_tagihan: this.selectedTagihan,
+            _token: this.config.csrfToken,
         };
 
-        // Send request
         $.ajax({
             url: this.config.previewUrl,
             type: "POST",
             data: data,
-            headers: {
-                "X-CSRF-TOKEN": this.config.csrfToken,
-            },
+            dataType: "json",
             success: (response) => {
                 Swal.close();
 
-                if (response.success) {
-                    this.previewData = response.data;
-                    this.elements.previewModalBody.html(response.html);
-                    this.elements.previewModal.modal("show");
-                } else {
-                    Swal.fire(
-                        "Error",
-                        response.message || "Terjadi kesalahan",
-                        "error"
-                    );
-                }
+                setTimeout(() => {
+                    if (response.success) {
+                        this.previewData = response.data;
+                        this.elements.previewModalBody.html(response.html);
+
+                        $(".swal2-container").remove();
+                        $(".modal-backdrop").remove();
+                        $("body").removeClass("modal-open swal2-shown");
+
+                        // Bootstrap 4: tampilkan dengan jQuery
+                        this.previewModal.modal("show");
+                    } else {
+                        setTimeout(() => {
+                            Swal.fire({
+                                title: "Error",
+                                text: response.message || "Terjadi kesalahan",
+                                icon: "error",
+                                backdrop: false,
+                            });
+                        }, 100);
+                    }
+                }, 300);
             },
             error: (xhr) => {
                 Swal.close();
 
-                const message =
-                    xhr.responseJSON?.message || "Terjadi kesalahan server";
-                Swal.fire("Error", message, "error");
+                setTimeout(() => {
+                    const message =
+                        xhr.responseJSON?.message || "Terjadi kesalahan server";
+                    Swal.fire({
+                        title: "Error",
+                        text: message,
+                        icon: "error",
+                        backdrop: false,
+                    });
+                }, 300);
             },
         });
     }
@@ -326,3 +344,11 @@ function checkDuplicatePayment(santriId, nominal, callback) {
 
     callback(true);
 }
+
+const style = document.createElement("css_inline");
+style.textContent = `
+    .high-z-index-swal {
+        z-index: 10000 !important;
+    }
+`;
+document.head.appendChild(style);

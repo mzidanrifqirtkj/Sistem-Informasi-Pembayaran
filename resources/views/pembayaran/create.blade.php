@@ -1,6 +1,37 @@
 @extends('layouts.home')
 @section('title_page', 'Form Pembayaran')
 
+@section('css_inline')
+    <style>
+        /* Fix z-index conflict between SweetAlert2 and Bootstrap Modal */
+        .swal2-container {
+            z-index: 10000 !important;
+            /* Higher than Bootstrap modal (1050) */
+        }
+
+        /* Ensure modal backdrop doesn't interfere */
+        .modal-backdrop {
+            z-index: 1040 !important;
+        }
+
+        .modal {
+            z-index: 1050 !important;
+        }
+
+        /* Fix untuk multiple backdrop */
+        .modal-backdrop+.modal-backdrop {
+            opacity: 0;
+            display: none;
+        }
+
+        .modal-backdrop.show {
+            opacity: 0 !important;
+            /* Transparan sepenuhnya */
+            pointer-events: none !important;
+            background-color: transparent !important;
+        }
+    </style>
+@endsection
 @section('content')
     <div class="container">
         <div class="row">
@@ -262,8 +293,21 @@
 @section('script')
     <script src="{{ asset('js/payment.js') }}"></script>
     <script>
-        // Initialize payment form
         $(document).ready(function() {
+            // Fix SweetAlert2 backdrop issue dengan Bootstrap Modal
+            // Remove any SweetAlert backdrop when modal opens
+            $('#previewModal').on('show.bs.modal', function() {
+                $('.swal2-container').removeClass('swal2-backdrop-show');
+                $('.swal2-backdrop').remove();
+            });
+
+            // Clean up when modal closes
+            $('#previewModal').on('hidden.bs.modal', function() {
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open').css('padding-right', '');
+            });
+
+            // Initialize payment form
             const paymentForm = new PaymentForm({
                 santriId: {{ $santri->id_santri }},
                 csrfToken: '{{ csrf_token() }}',

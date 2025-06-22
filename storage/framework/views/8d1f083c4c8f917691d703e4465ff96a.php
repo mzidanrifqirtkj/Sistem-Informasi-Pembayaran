@@ -12,7 +12,9 @@
     <link rel="icon" href="<?php echo e(asset('assets/img/logo.ico')); ?>" type="image/x-icon">
 
     <!-- General CSS Files -->
-    <link rel="stylesheet" href="<?php echo e(asset('assets/modules/bootstrap/css/bootstrap.min.css')); ?>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
     <link rel="stylesheet" href="<?php echo e(asset('assets/modules/fontawesome/css/all.min.css')); ?>">
 
     <!-- CSS Libraries -->
@@ -55,8 +57,11 @@
             <nav class="navbar navbar-expand-lg main-navbar">
                 <form class="form-inline mr-auto">
                     <ul class="navbar-nav mr-3">
-                        <li><a href="#" data-toggle="sidebar" class="nav-link nav-link-lg"><i
-                                    class="fas fa-bars"></i></a></li>
+                        <li>
+                            <a href="#" data-bs-toggle="offcanvas" class="nav-link nav-link-lg">
+                                <i class="fas fa-bars"></i>
+                            </a>
+                        </li>
                     </ul>
                 </form>
                 <?php echo $__env->make('layouts.header', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
@@ -70,29 +75,27 @@
                     <div class="section-header">
                         <h1><?php echo $__env->yieldContent('title_page'); ?></h1>
                     </div>
+                    <!-- ALERT -->
                     <?php if(Session::has('alert')): ?>
                         <div class="alert alert-warning alert-dismissible fade show" role="alert">
                             <?php echo e(Session::get('alert')); ?>
 
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
                         </div>
                     <?php elseif(Session::has('error')): ?>
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             <?php echo e(Session::get('error')); ?>
 
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
                         </div>
                     <?php elseif(Session::has('success')): ?>
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                             <?php echo e(Session::get('success')); ?>
 
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
                         </div>
                     <?php endif; ?>
 
@@ -115,7 +118,8 @@
 
     <!-- General JS Scripts -->
     <script src="<?php echo e(asset('assets/modules/jquery.min.js')); ?>"></script>
-    <script src="<?php echo e(asset('assets/modules/bootstrap/js/bootstrap.min.js')); ?>"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo e(asset('assets/modules/nicescroll/jquery.nicescroll.min.js')); ?>"></script>
     <script src="<?php echo e(asset('assets/modules/moment.min.js')); ?>"></script>
     <script src="<?php echo e(asset('assets/js/stisla.js')); ?>"></script>
@@ -137,7 +141,11 @@
     <script src="<?php echo e(asset('assets/js/custom.js')); ?>"></script>
 
     <script>
-        $('.alert').alert();
+        document.querySelectorAll('.alert .btn-close').forEach(button => {
+            button.addEventListener('click', function() {
+                this.closest('.alert').remove();
+            });
+        });
     </script>
     
     
