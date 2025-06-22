@@ -300,6 +300,21 @@
             </div>
         </div>
     </div>
+
+    <form id="finalPaymentForm" action="<?php echo e(route('pembayaran.store')); ?>" method="POST">
+        <?php echo csrf_field(); ?>
+
+        <input type="hidden" name="santri_id">
+        <input type="hidden" name="nominal_pembayaran">
+        <input type="hidden" name="tanggal_pembayaran">
+        <input type="hidden" name="payment_note">
+
+        <!-- Alokasi pembayaran -->
+        <div id="allocationsContainer"></div>
+
+        <input type="hidden" name="sisa_pembayaran">
+    </form>
+
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startSection('script'); ?>
@@ -326,6 +341,9 @@
                 previewUrl: '<?php echo e(route('pembayaran.preview')); ?>',
                 storeUrl: '<?php echo e(route('pembayaran.store')); ?>'
             });
+
+            // Set global variable untuk debugging
+            window.paymentFormInstance = paymentForm;
         });
     </script>
 <?php $__env->stopSection(); ?>

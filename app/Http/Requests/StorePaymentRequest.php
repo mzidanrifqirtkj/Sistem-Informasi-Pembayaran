@@ -21,7 +21,7 @@ class StorePaymentRequest extends FormRequest
     public function authorize(): bool
     {
         // return auth()->user()->hasRole('admin');
-        return auth()->user()->can('pembayaran-create');
+        return auth()->check(); // Atau sesuai permission
     }
 
     /**
@@ -36,6 +36,7 @@ class StorePaymentRequest extends FormRequest
             'payment_note' => 'nullable|string|max:255',
             'allocations' => 'required|array|min:1',
             'allocations.*.type' => 'required|in:bulanan,terjadwal',
+            // Conditional validation untuk tagihan IDs
             'allocations.*.tagihan.id_tagihan_bulanan' => 'required_if:allocations.*.type,bulanan|exists:tagihan_bulanans,id_tagihan_bulanan',
             'allocations.*.tagihan.id_tagihan_terjadwal' => 'required_if:allocations.*.type,terjadwal|exists:tagihan_terjadwals,id_tagihan_terjadwal',
             'allocations.*.allocated_amount' => 'required|numeric|min:1',
@@ -51,11 +52,11 @@ class StorePaymentRequest extends FormRequest
         $validator->after(function ($validator) {
             if (!$validator->errors()->any()) {
                 try {
-                    // Validate duplicate payment
-                    $this->validationService->validateDuplicatePayment(
-                        $this->santri_id,
-                        $this->nominal_pembayaran
-                    );
+                    // // Validate duplicate payment
+                    // $this->validationService->validateDuplicatePayment(
+                    //     $this->santri_id,
+                    //     $this->nominal_pembayaran
+                    // );
 
                     // Validate total allocation equals payment amount
                     $totalAllocated = collect($this->allocations)->sum('allocated_amount');

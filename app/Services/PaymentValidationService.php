@@ -24,29 +24,25 @@ class PaymentValidationService
     /**
      * Check duplicate payment dalam window tertentu
      */
-    public function validateDuplicatePayment($santriId, $nominal): bool
+    public function validateDuplicatePayment($santriId, $nominalPembayaran, $timeThreshold = 5): void
     {
-        $duplicateWindow = config('tagihan.payment_duplicate_window', 5);
+        $cutoffTime = now()->subMinutes($timeThreshold);
 
-        $recentPayment = Pembayaran::whereHas('tagihanBulanan', function ($q) use ($santriId) {
-            $q->where('santri_id', $santriId);
-        })
-            ->orWhereHas('tagihanTerjadwal', function ($q) use ($santriId) {
+        $recentPayment = Pembayaran::where(function ($query) use ($santriId) {
+            $query->whereHas('tagihanBulanan', function ($q) use ($santriId) {
                 $q->where('santri_id', $santriId);
-            })
-            ->where('nominal_pembayaran', $nominal)
+            })->orWhereHas('tagihanTerjadwal', function ($q) use ($santriId) {
+                $q->where('santri_id', $santriId);
+            });
+        })
+            ->where('nominal_pembayaran', $nominalPembayaran)
+            ->where('created_at', '>=', $cutoffTime)
             ->where('is_void', false)
-            ->where('created_at', '>', now()->subMinutes($duplicateWindow))
-            ->first();
+            ->exists();
 
         if ($recentPayment) {
-            throw new \Exception(
-                "Pembayaran dengan nominal yang sama terdeteksi dalam {$duplicateWindow} menit terakhir. " .
-                "Silakan periksa kembali atau tunggu beberapa saat."
-            );
+            throw new \Exception('Pembayaran dengan nominal yang sama terdeteksi dalam 5 menit terakhir. Silakan periksa kembali atau tunggu beberapa saat.');
         }
-
-        return true;
     }
 
     /**

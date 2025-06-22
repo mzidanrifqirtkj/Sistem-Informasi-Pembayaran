@@ -244,6 +244,7 @@ class PaymentForm {
                 Swal.close();
 
                 setTimeout(() => {
+                    console.log("Ajax Error:", xhr); // Debug log
                     const message =
                         xhr.responseJSON?.message || "Terjadi kesalahan server";
                     Swal.fire({
@@ -258,45 +259,143 @@ class PaymentForm {
     }
 
     confirmPayment() {
-        if (!this.previewData) return;
+        if (!this.previewData) {
+            console.error("No preview data available");
+            return;
+        }
 
-        // Prepare form data
+        // Close modal first
+        this.previewModal.modal("hide");
+
+        // Show loading
+        Swal.fire({
+            title: "Processing...",
+            text: "Sedang memproses pembayaran...",
+            allowOutsideClick: false,
+            backdrop: false,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+        });
+
+        // Get current CSRF token (fresh token)
+        const currentToken =
+            $('meta[name="csrf-token"]').attr("content") ||
+            this.config.csrfToken;
+
+        // Simplify allocations data - hanya ambil yang diperlukan
+        const simplifiedAllocations = this.previewData.allocations.map(
+            (allocation) => ({
+                type: allocation.type,
+                tagihan: {
+                    // Kirim hanya ID yang diperlukan
+                    ...(allocation.type === "bulanan"
+                        ? {
+                              id_tagihan_bulanan:
+                                  allocation.tagihan.id_tagihan_bulanan,
+                          }
+                        : {
+                              id_tagihan_terjadwal:
+                                  allocation.tagihan.id_tagihan_terjadwal,
+                          }),
+                },
+                allocated_amount: allocation.allocated_amount,
+            })
+        );
+
+        // Prepare form data sesuai dengan StorePaymentRequest
         const formData = {
             santri_id: this.config.santriId,
             nominal_pembayaran: this.nominalPembayaran,
             tanggal_pembayaran: $('[name="tanggal_pembayaran"]').val(),
             payment_note: $('[name="payment_note"]').val(),
-            allocations: this.previewData.allocations,
+            // Kirim allocations yang sudah disederhanakan
+            allocations: simplifiedAllocations,
             sisa_pembayaran: this.previewData.sisa_pembayaran,
+            _token: currentToken,
         };
 
-        // Add CSRF token
-        const form = $("<form>", {
-            action: this.config.storeUrl,
-            method: "POST",
+        console.log("Sending payment data:", formData); // Debug log
+        console.log("Preview data:", this.previewData); // Debug preview data
+
+        // Submit menggunakan AJAX dengan error handling yang lebih baik
+        $.ajax({
+            url: this.config.storeUrl,
+            type: "POST",
+            data: formData,
+            dataType: "json",
+            success: (response) => {
+                console.log("Payment success:", response);
+                Swal.close();
+
+                if (response.success || response.redirect) {
+                    // Redirect to receipt page
+                    const redirectUrl =
+                        response.redirect || response.receipt_url;
+                    if (redirectUrl) {
+                        window.location.href = redirectUrl;
+                    } else {
+                        // Fallback: reload page with success message
+                        window.location.reload();
+                    }
+                } else {
+                    Swal.fire({
+                        title: "Error",
+                        text:
+                            response.message ||
+                            "Terjadi kesalahan saat memproses pembayaran",
+                        icon: "error",
+                        backdrop: false,
+                    });
+                }
+            },
+            error: (xhr) => {
+                Swal.close();
+                console.error("Payment error:", xhr);
+
+                let errorMessage =
+                    "Terjadi kesalahan saat memproses pembayaran";
+
+                if (xhr.status === 302) {
+                    // Handle redirect case - might be successful but Laravel is redirecting
+                    console.log("Received 302 redirect, following...");
+                    // Check if there's a location header
+                    const redirectLocation = xhr.getResponseHeader("Location");
+                    if (redirectLocation) {
+                        window.location.href = redirectLocation;
+                        return;
+                    }
+                } else if (xhr.status === 422) {
+                    // Validation error
+                    const errors = xhr.responseJSON?.errors;
+                    if (errors) {
+                        errorMessage = Object.values(errors).flat().join("\n");
+                        console.log("Validation errors:", errors);
+                    } else {
+                        errorMessage =
+                            xhr.responseJSON?.message || "Data tidak valid";
+                    }
+                } else if (xhr.status === 419) {
+                    // CSRF token mismatch
+                    errorMessage =
+                        "Sesi telah berakhir. Silakan refresh halaman.";
+                } else if (xhr.responseJSON?.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+
+                Swal.fire({
+                    title: "Error",
+                    text: errorMessage,
+                    icon: "error",
+                    backdrop: false,
+                }).then(() => {
+                    if (xhr.status === 419) {
+                        // Refresh page on CSRF error
+                        window.location.reload();
+                    }
+                });
+            },
         });
-
-        // Add hidden inputs
-        form.append(
-            $("<input>", {
-                type: "hidden",
-                name: "_token",
-                value: this.config.csrfToken,
-            })
-        );
-
-        // Add form data as JSON
-        form.append(
-            $("<input>", {
-                type: "hidden",
-                name: "payment_data",
-                value: JSON.stringify(formData),
-            })
-        );
-
-        // Submit form
-        $("body").append(form);
-        form.submit();
     }
 
     formatRupiah(number) {
@@ -345,7 +444,7 @@ function checkDuplicatePayment(santriId, nominal, callback) {
     callback(true);
 }
 
-const style = document.createElement("css_inline");
+const style = document.createElement("style");
 style.textContent = `
     .high-z-index-swal {
         z-index: 10000 !important;

@@ -288,6 +288,21 @@
             </div>
         </div>
     </div>
+
+    <form id="finalPaymentForm" action="{{ route('pembayaran.store') }}" method="POST">
+        @csrf
+
+        <input type="hidden" name="santri_id">
+        <input type="hidden" name="nominal_pembayaran">
+        <input type="hidden" name="tanggal_pembayaran">
+        <input type="hidden" name="payment_note">
+
+        <!-- Alokasi pembayaran -->
+        <div id="allocationsContainer"></div>
+
+        <input type="hidden" name="sisa_pembayaran">
+    </form>
+
 @endsection
 
 @section('script')
@@ -314,6 +329,9 @@
                 previewUrl: '{{ route('pembayaran.preview') }}',
                 storeUrl: '{{ route('pembayaran.store') }}'
             });
+
+            // Set global variable untuk debugging
+            window.paymentFormInstance = paymentForm;
         });
     </script>
 @endsection

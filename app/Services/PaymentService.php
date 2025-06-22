@@ -276,18 +276,32 @@ class PaymentService
     }
 
     /**
-     * Process payment allocations
+     * Process payment allocations - Using existing model methods
      */
     protected function processAllocations(Pembayaran $pembayaran, array $allocations): void
     {
         $order = 1;
 
         foreach ($allocations as $allocation) {
+            // Handle both object dan array format untuk tagihan
+            $tagihan = $allocation['tagihan'];
+
             // Set pembayaran ID berdasarkan type
             if ($allocation['type'] === 'bulanan') {
-                $pembayaran->tagihan_bulanan_id = $allocation['tagihan']->id_tagihan_bulanan;
+                // Extract ID dari tagihan (bisa object atau array)
+                $tagihanId = is_array($tagihan) ?
+                    $tagihan['id_tagihan_bulanan'] :
+                    $tagihan->id_tagihan_bulanan;
+
+                $pembayaran->tagihan_bulanan_id = $tagihanId;
+
             } else {
-                $pembayaran->tagihan_terjadwal_id = $allocation['tagihan']->id_tagihan_terjadwal;
+                // Extract ID dari tagihan terjadwal
+                $tagihanId = is_array($tagihan) ?
+                    $tagihan['id_tagihan_terjadwal'] :
+                    $tagihan->id_tagihan_terjadwal;
+
+                $pembayaran->tagihan_terjadwal_id = $tagihanId;
             }
 
             // Jika ini pembayaran pertama, update pembayaran record
@@ -299,12 +313,33 @@ class PaymentService
             if (count($allocations) > 1) {
                 \App\Models\PaymentAllocation::create([
                     'pembayaran_id' => $pembayaran->id_pembayaran,
-                    'tagihan_bulanan_id' => $allocation['type'] === 'bulanan' ?
-                        $allocation['tagihan']->id_tagihan_bulanan : null,
-                    'tagihan_terjadwal_id' => $allocation['type'] === 'terjadwal' ?
-                        $allocation['tagihan']->id_tagihan_terjadwal : null,
+                    'tagihan_bulanan_id' => $allocation['type'] === 'bulanan' ? $tagihanId : null,
+                    'tagihan_terjadwal_id' => $allocation['type'] === 'terjadwal' ? $tagihanId : null,
                     'allocated_amount' => $allocation['allocated_amount'],
                     'allocation_order' => $order++
+                ]);
+            }
+
+            // Update status menggunakan method yang sudah ada di model
+            try {
+                if ($allocation['type'] === 'bulanan') {
+                    $tagihanModel = TagihanBulanan::find($tagihanId);
+                    if ($tagihanModel) {
+                        $tagihanModel->updateStatus(); // Gunakan method yang sudah ada
+                    }
+                } else {
+                    $tagihanModel = TagihanTerjadwal::find($tagihanId);
+                    if ($tagihanModel) {
+                        // Update status manual untuk tagihan terjadwal
+                        $newStatus = $tagihanModel->calculateStatus();
+                        $tagihanModel->update(['status' => $newStatus]);
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Failed to update tagihan status', [
+                    'type' => $allocation['type'],
+                    'id' => $tagihanId,
+                    'error' => $e->getMessage()
                 ]);
             }
         }
@@ -315,7 +350,14 @@ class PaymentService
             $pembayaran->total_allocations = count($allocations);
             $pembayaran->save();
         }
+
+        // Log success untuk debug
+        \Log::info('Allocations processed successfully', [
+            'pembayaran_id' => $pembayaran->id_pembayaran,
+            'allocations_count' => count($allocations)
+        ]);
     }
+
 
     /**
      * Void pembayaran

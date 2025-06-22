@@ -133,18 +133,33 @@ class PembayaranController extends Controller
      */
     public function store(StorePaymentRequest $request)
     {
+        \Log::info('=== PAYMENT STORE DEBUG ===', [
+            'raw_request' => $request->all(),
+            'validation_passed' => true, // Jika sampai sini berarti validation OK
+            'user' => auth()->user()->name ?? 'Guest'
+        ]);
+
+        file_put_contents(
+            storage_path('logs/debug_payment.log'),
+            json_encode($request->all(), JSON_PRETTY_PRINT) . "\n",
+            FILE_APPEND
+        );
         try {
             DB::beginTransaction();
 
-            // Parse payment data from JSON if exists
             $data = $request->has('payment_data')
                 ? json_decode($request->payment_data, true)
                 : $request->validated();
 
-            // Process payment
             $pembayaran = $this->paymentService->processPayment($data);
 
             DB::commit();
+
+            // Tambahkan log redirect
+            \Log::info('Redirecting to receipt page', [
+                'redirect_url' => route('pembayaran.receipt', $pembayaran->id_pembayaran),
+                'pembayaran_id' => $pembayaran->id_pembayaran,
+            ]);
 
             return redirect()
                 ->route('pembayaran.receipt', $pembayaran->id_pembayaran)
@@ -153,7 +168,7 @@ class PembayaranController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            Log::error('Payment store error: ' . $e->getMessage());
+            \Log::error('Payment store error: ' . $e->getMessage());
 
             return redirect()
                 ->back()
