@@ -55,6 +55,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('santri', [SantriController::class, 'store'])->name('santri.store')->middleware('permission:create_santri');
     Route::get('santri/import', [SantriController::class, 'importForm'])->name('santri.importForm')->middleware('permission:import_santri');
     Route::post('santri/import', [SantriController::class, 'import'])->name('santri.import')->middleware('permission:import_santri');
+    Route::get('/template-download/santri', [SantriController::class, 'downloadTemplate'])->name('download.template');
     Route::get('santri/{santri}/edit', [SantriController::class, 'edit'])->name('santri.edit')->middleware('permission:edit_santri');
     Route::put('santri/{santri}', [SantriController::class, 'update'])->name('santri.update')->middleware('permission:edit_santri');
     Route::delete('santri/{santri}', [SantriController::class, 'destroy'])->name('santri.destroy')->middleware('permission:delete_santri');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\SantriImportTemplateExport;
 use App\Http\Controllers\Controller;
 use App\Imports\SantriImport;
 use App\Models\KategoriSantri;
@@ -11,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Yajra\DataTables\Facades\DataTables;
 
 class SantriController extends Controller
@@ -74,6 +76,11 @@ class SantriController extends Controller
         }
     }
 
+    public function downloadTemplate(): BinaryFileResponse
+    {
+        $filePath = storage_path('app/public/template_santri.xlsx');
+        return response()->download($filePath, 'template_import_santri.xlsx');
+    }
     /**
      * Show the form for creating a new resource.
      */
