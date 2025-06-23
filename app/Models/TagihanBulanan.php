@@ -140,7 +140,7 @@ class TagihanBulanan extends Model
 
     public function getSisaTagihanAttribute()
     {
-        return $this->nominal - $this->total_pembayaran;
+        return max(0, $this->nominal - $this->total_pembayaran);
     }
 
     public function getIsLunasAttribute()
@@ -216,7 +216,6 @@ class TagihanBulanan extends Model
         }
 
         $this->save();
-
         return $this->status;
     }
 

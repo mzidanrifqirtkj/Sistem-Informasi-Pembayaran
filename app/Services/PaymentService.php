@@ -235,6 +235,18 @@ class PaymentService
         try {
             DB::beginTransaction();
 
+            // Validate total allocation
+            if (!empty($data['allocations'])) {
+                $totalAllocated = collect($data['allocations'])->sum('allocated_amount');
+                $sisaPembayaran = $data['sisa_pembayaran'] ?? 0;
+
+                if (($totalAllocated + $sisaPembayaran) != $data['nominal_pembayaran']) {
+                    throw new \Exception(
+                        "Total alokasi ({$totalAllocated}) + sisa ({$sisaPembayaran}) tidak sama dengan nominal pembayaran ({$data['nominal_pembayaran']})"
+                    );
+                }
+            }
+
             // Generate receipt number
             $data['receipt_number'] = $this->generateReceiptNumber();
             $data['created_by_id'] = auth()->id();
@@ -248,21 +260,18 @@ class PaymentService
                 'created_by_id' => $data['created_by_id']
             ]);
 
-            // Process allocations
+            // Process allocations (pure allocation system)
             if (!empty($data['allocations'])) {
                 $this->processAllocations($pembayaran, $data['allocations']);
             }
 
-            // Handle overpayment
-            if (isset($data['sisa_pembayaran']) && $data['sisa_pembayaran'] > 0) {
-                $this->handleOverpayment($pembayaran, $data['sisa_pembayaran']);
-            }
-
             DB::commit();
 
-            Log::info('Pembayaran berhasil diproses', [
+            Log::info('Payment processed successfully with pure allocation', [
                 'pembayaran_id' => $pembayaran->id_pembayaran,
                 'nominal' => $pembayaran->nominal_pembayaran,
+                'allocations_count' => count($data['allocations'] ?? []),
+                'sisa_pembayaran' => $data['sisa_pembayaran'] ?? 0,
                 'receipt' => $pembayaran->receipt_number
             ]);
 
@@ -270,7 +279,10 @@ class PaymentService
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error processing payment: ' . $e->getMessage());
+            Log::error('Error processing payment: ' . $e->getMessage(), [
+                'data' => $data,
+                'trace' => $e->getTraceAsString()
+            ]);
             throw $e;
         }
     }
@@ -280,91 +292,66 @@ class PaymentService
      */
     protected function processAllocations(Pembayaran $pembayaran, array $allocations): void
     {
-        $order = 1;
+        try {
+            // PURE ALLOCATION SYSTEM: Always use allocations, never direct links
+            $pembayaran->update([
+                'tagihan_bulanan_id' => null,
+                'tagihan_terjadwal_id' => null,
+                'payment_type' => 'allocated',
+                'total_allocations' => count($allocations)
+            ]);
 
-        foreach ($allocations as $allocation) {
-            $tagihanId = $allocation['tagihan_id'];
-            $type = $allocation['type'];
+            // Create allocation records for ALL tagihan
+            foreach ($allocations as $order => $allocation) {
+                $tagihanId = $allocation['tagihan_id'];
+                $type = $allocation['type'];
+                $amount = $allocation['allocated_amount'];
 
-            // Set pembayaran ID berdasarkan type
-            if ($type === 'bulanan') {
-                $pembayaran->tagihan_bulanan_id = $tagihanId;
-            } else {
-                $pembayaran->tagihan_terjadwal_id = $tagihanId;
-            }
+                // CRITICAL: Skip if amount <= 0
+                if ($amount <= 0) {
+                    \Log::warning('Skipping zero allocation', [
+                        'type' => $type,
+                        'tagihan_id' => $tagihanId,
+                        'amount' => $amount
+                    ]);
+                    continue;
+                }
 
-            // Jika ini pembayaran pertama, update pembayaran record
-            if ($order === 1) {
-                $pembayaran->save();
-            }
-
-            // Create allocation record jika multiple tagihan
-            if (count($allocations) > 1) {
+                // Create PaymentAllocation record
                 \App\Models\PaymentAllocation::create([
                     'pembayaran_id' => $pembayaran->id_pembayaran,
                     'tagihan_bulanan_id' => $type === 'bulanan' ? $tagihanId : null,
                     'tagihan_terjadwal_id' => $type === 'terjadwal' ? $tagihanId : null,
-                    'allocated_amount' => $allocation['allocated_amount'],
-                    'allocation_order' => $order++
+                    'allocated_amount' => $amount,
+                    'allocation_order' => $order + 1
                 ]);
-            }
 
-            // FIX: Update status dengan refresh data
-            try {
-                if ($type === 'bulanan') {
-                    $tagihanModel = TagihanBulanan::find($tagihanId);
-                    if ($tagihanModel) {
-                        // UPDATE: Refresh data dulu sebelum update status
-                        $tagihanModel->refresh();
-                        $tagihanModel->updateStatus();
-
-                        // FORCE refresh lagi setelah update
-                        $tagihanModel->refresh();
-
-                        \Log::info('Tagihan bulanan status updated', [
-                            'id' => $tagihanId,
-                            'new_status' => $tagihanModel->status,
-                            'sisa_tagihan' => $tagihanModel->sisa_tagihan
-                        ]);
-                    }
-                } else {
-                    $tagihanModel = TagihanTerjadwal::find($tagihanId);
-                    if ($tagihanModel) {
-                        // UPDATE: Refresh data dulu
-                        $tagihanModel->refresh();
-                        $newStatus = $tagihanModel->calculateStatus();
-                        $tagihanModel->update(['status' => $newStatus]);
-
-                        // FORCE refresh lagi
-                        $tagihanModel->refresh();
-
-                        \Log::info('Tagihan terjadwal status updated', [
-                            'id' => $tagihanId,
-                            'new_status' => $newStatus,
-                            'sisa_tagihan' => $tagihanModel->sisa_tagihan
-                        ]);
-                    }
-                }
-            } catch (\Exception $e) {
-                \Log::warning('Failed to update tagihan status', [
+                \Log::info('Allocation created', [
+                    'pembayaran_id' => $pembayaran->id_pembayaran,
                     'type' => $type,
-                    'id' => $tagihanId,
-                    'error' => $e->getMessage()
+                    'tagihan_id' => $tagihanId,
+                    'amount' => $amount,
+                    'order' => $order + 1
                 ]);
             }
-        }
 
-        // Set payment type
-        if (count($allocations) > 1) {
-            $pembayaran->payment_type = 'allocated';
-            $pembayaran->total_allocations = count($allocations);
-            $pembayaran->save();
-        }
+            // Update status untuk semua tagihan yang terdampak
+            $this->updateAllTagihanStatus($allocations);
 
-        \Log::info('Allocations processed successfully', [
-            'pembayaran_id' => $pembayaran->id_pembayaran,
-            'allocations_count' => count($allocations)
-        ]);
+            \Log::info('Pure allocation processed successfully', [
+                'pembayaran_id' => $pembayaran->id_pembayaran,
+                'allocations_count' => count($allocations),
+                'total_amount' => collect($allocations)->sum('allocated_amount')
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to process allocations', [
+                'pembayaran_id' => $pembayaran->id_pembayaran,
+                'error' => $e->getMessage(),
+                'allocations' => $allocations
+            ]);
+            throw $e;
+        }
     }
 
     /**
@@ -507,6 +494,67 @@ class PaymentService
         ]);
 
         // Future: implement credit/refund system
+    }
+
+    protected function updateAllTagihanStatus(array $allocations): void
+    {
+        foreach ($allocations as $allocation) {
+            try {
+                $this->updateSingleTagihanStatus($allocation['type'], $allocation['tagihan_id']);
+            } catch (\Exception $e) {
+                \Log::warning('Failed to update tagihan status', [
+                    'type' => $allocation['type'],
+                    'tagihan_id' => $allocation['tagihan_id'],
+                    'error' => $e->getMessage()
+                ]);
+                // Don't throw - continue with other tagihan
+            }
+        }
+    }
+
+    protected function updateSingleTagihanStatus(string $type, int $tagihanId): void
+    {
+        if ($type === 'bulanan') {
+            $tagihanModel = \App\Models\TagihanBulanan::find($tagihanId);
+            if ($tagihanModel) {
+                // Clear cache untuk fresh calculation
+                $tagihanModel->unsetRelation('pembayarans');
+                $tagihanModel->unsetRelation('paymentAllocations');
+                $tagihanModel->refresh();
+
+                $oldStatus = $tagihanModel->status;
+                $tagihanModel->updateStatus();
+                $tagihanModel->refresh();
+
+                \Log::info('Tagihan bulanan status updated', [
+                    'id' => $tagihanId,
+                    'old_status' => $oldStatus,
+                    'new_status' => $tagihanModel->status,
+                    'total_pembayaran' => $tagihanModel->total_pembayaran,
+                    'sisa_tagihan' => $tagihanModel->sisa_tagihan
+                ]);
+            }
+        } else {
+            $tagihanModel = \App\Models\TagihanTerjadwal::find($tagihanId);
+            if ($tagihanModel) {
+                // Clear cache untuk fresh calculation
+                $tagihanModel->unsetRelation('pembayarans');
+                $tagihanModel->refresh();
+
+                $oldStatus = $tagihanModel->status;
+                $newStatus = $tagihanModel->calculateStatus();
+                $tagihanModel->update(['status' => $newStatus]);
+                $tagihanModel->refresh();
+
+                \Log::info('Tagihan terjadwal status updated', [
+                    'id' => $tagihanId,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                    'total_pembayaran' => $tagihanModel->total_pembayaran,
+                    'sisa_tagihan' => $tagihanModel->sisa_tagihan
+                ]);
+            }
+        }
     }
 }
 

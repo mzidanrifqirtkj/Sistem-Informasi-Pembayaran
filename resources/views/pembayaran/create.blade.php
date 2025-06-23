@@ -128,7 +128,17 @@
                                                         Rp {{ number_format($tagihan->sisa_tagihan, 0, ',', '.') }}
                                                     </td>
                                                     <td>
-                                                        <span class="badge badge-{{ $tagihan->status_color }}">
+                                                        <span
+                                                            class="badge
+        @if ($tagihan->status == 'lunas') badge-success @endif
+        @if ($tagihan->status == 'dibayar_sebagian') badge-warning @endif
+        @if (in_array($tagihan->status, ['belum_lunas', 'belum_bayar'])) badge-danger @endif
+    "
+                                                            style="
+        @if ($tagihan->status == 'lunas') color: white !important; @endif
+        @if ($tagihan->status == 'dibayar_sebagian') color: #212529 !important; background-color: #ffc107 !important; @endif
+        @if (in_array($tagihan->status, ['belum_lunas', 'belum_bayar'])) color: white !important; @endif
+    ">
                                                             {{ ucfirst(str_replace('_', ' ', $tagihan->status)) }}
                                                         </span>
                                                     </td>
@@ -190,7 +200,16 @@
                                                     </td>
                                                     <td>
                                                         <span
-                                                            class="badge badge-{{ $tagihan->status == 'lunas' ? 'success' : ($tagihan->status == 'dibayar_sebagian' ? 'warning' : 'danger') }}">
+                                                            class="badge
+        @if ($tagihan->status == 'lunas') badge-success @endif
+        @if ($tagihan->status == 'dibayar_sebagian') badge-warning @endif
+        @if (in_array($tagihan->status, ['belum_lunas', 'belum_bayar'])) badge-danger @endif
+    "
+                                                            style="
+        @if ($tagihan->status == 'lunas') color: white !important; @endif
+        @if ($tagihan->status == 'dibayar_sebagian') color: #212529 !important; background-color: #ffc107 !important; @endif
+        @if (in_array($tagihan->status, ['belum_lunas', 'belum_bayar'])) color: white !important; @endif
+    ">
                                                             {{ ucfirst(str_replace('_', ' ', $tagihan->status)) }}
                                                         </span>
                                                     </td>

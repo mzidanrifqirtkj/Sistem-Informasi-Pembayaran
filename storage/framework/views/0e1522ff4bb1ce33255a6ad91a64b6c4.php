@@ -32,30 +32,34 @@
                             <p class="mb-0">No: <strong><?php echo e($pembayaran->receipt_number); ?></strong></p>
                         </div>
 
+                        <?php
+                            // SAFE: Gunakan accessor yang sudah dibuat di model
+                            $santri = $pembayaran->santri; // This uses the getSantriAttribute() accessor
+                            $santriNis = $pembayaran->santri_nis; // This uses getSantriNisAttribute() accessor
+                            $santriName = $pembayaran->santri_name; // This uses getSantriNameAttribute() accessor
+
+                            // Safe category access
+                            $kategoriName = 'Tidak Ada Data';
+                            if ($santri && $santri->kategoriSantri) {
+                                $kategoriName = $santri->kategoriSantri->nama_kategori;
+                            }
+                        ?>
+
                         <!-- Info Pembayaran -->
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <table class="table table-sm table-borderless">
                                     <tr>
                                         <td width="40%">Telah Terima Dari</td>
-                                        <td>:
-                                            <?php echo e($pembayaran->tagihanBulanan->santri->nama_santri ?? $pembayaran->tagihanTerjadwal->santri->nama_santri); ?>
-
-                                        </td>
+                                        <td>: <?php echo e($santriName ?: 'Data Santri Tidak Ditemukan'); ?></td>
                                     </tr>
                                     <tr>
                                         <td>NIS</td>
-                                        <td>:
-                                            <?php echo e($pembayaran->tagihanBulanan->santri->nis ?? $pembayaran->tagihanTerjadwal->santri->nis); ?>
-
-                                        </td>
+                                        <td>: <?php echo e($santriNis ?: '-'); ?></td>
                                     </tr>
                                     <tr>
                                         <td>Kategori</td>
-                                        <td>:
-                                            <?php echo e($pembayaran->tagihanBulanan->santri->kategoriSantri->nama_kategori ?? $pembayaran->tagihanTerjadwal->santri->kategoriSantri->nama_kategori); ?>
-
-                                        </td>
+                                        <td>: <?php echo e($kategoriName); ?></td>
                                     </tr>
                                 </table>
                             </div>
@@ -100,36 +104,53 @@
                                 </thead>
                                 <tbody>
                                     <?php if($pembayaran->payment_type == 'allocated' && $pembayaran->paymentAllocations->count() > 0): ?>
+                                        
                                         <?php $__currentLoopData = $pembayaran->paymentAllocations; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $allocation): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                             <tr>
                                                 <td><?php echo e($index + 1); ?></td>
                                                 <td>
-                                                    <?php if($allocation->tagihan_bulanan_id): ?>
+                                                    <?php if($allocation->tagihan_bulanan_id && $allocation->tagihanBulanan): ?>
                                                         Syahriah <?php echo e($allocation->tagihanBulanan->bulan); ?>
 
                                                         <?php echo e($allocation->tagihanBulanan->tahun); ?>
 
-                                                    <?php else: ?>
+                                                    <?php elseif($allocation->tagihan_terjadwal_id && $allocation->tagihanTerjadwal): ?>
                                                         <?php echo e($allocation->tagihanTerjadwal->daftarBiaya->kategoriBiaya->nama_kategori ?? 'Tagihan Terjadwal'); ?>
 
+                                                    <?php else: ?>
+                                                        Pembayaran
                                                     <?php endif; ?>
                                                 </td>
                                                 <td class="text-right">Rp
                                                     <?php echo e(number_format($allocation->allocated_amount, 0, ',', '.')); ?></td>
                                             </tr>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+
+                                        
+                                        <?php if($pembayaran->sisa_pembayaran > 0): ?>
+                                            <tr class="table-warning">
+                                                <td><?php echo e($pembayaran->paymentAllocations->count() + 1); ?></td>
+                                                <td><em>Kelebihan Pembayaran (Dikembalikan)</em></td>
+                                                <td class="text-right"><em>Rp
+                                                        <?php echo e(number_format($pembayaran->sisa_pembayaran, 0, ',', '.')); ?></em>
+                                                </td>
+                                            </tr>
+                                        <?php endif; ?>
                                     <?php else: ?>
+                                        
                                         <tr>
                                             <td>1</td>
                                             <td>
-                                                <?php if($pembayaran->tagihan_bulanan_id): ?>
+                                                <?php if($pembayaran->tagihan_bulanan_id && $pembayaran->tagihanBulanan): ?>
                                                     Syahriah <?php echo e($pembayaran->tagihanBulanan->bulan); ?>
 
                                                     <?php echo e($pembayaran->tagihanBulanan->tahun); ?>
 
-                                                <?php else: ?>
+                                                <?php elseif($pembayaran->tagihan_terjadwal_id && $pembayaran->tagihanTerjadwal): ?>
                                                     <?php echo e($pembayaran->tagihanTerjadwal->daftarBiaya->kategoriBiaya->nama_kategori ?? 'Tagihan Terjadwal'); ?>
 
+                                                <?php else: ?>
+                                                    Pembayaran
                                                 <?php endif; ?>
                                             </td>
                                             <td class="text-right">Rp
@@ -137,11 +158,38 @@
                                         </tr>
                                     <?php endif; ?>
                                 </tbody>
+                                <tfoot>
+                                    <tr class="table-active">
+                                        <th colspan="2" class="text-right">Total Diterima:</th>
+                                        <th class="text-right">Rp
+                                            <?php echo e(number_format($pembayaran->nominal_pembayaran, 0, ',', '.')); ?></th>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
 
                         <?php if($pembayaran->payment_note): ?>
                             <p><strong>Catatan:</strong> <?php echo e($pembayaran->payment_note); ?></p>
+                        <?php endif; ?>
+
+                        
+                        <?php if($pembayaran->payment_type == 'allocated'): ?>
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <div class="alert alert-info">
+                                        <strong>Ringkasan Pembayaran:</strong><br>
+                                        Total Diterima: Rp
+                                        <?php echo e(number_format($pembayaran->nominal_pembayaran, 0, ',', '.')); ?><br>
+                                        Total Dialokasikan: Rp
+                                        <?php echo e(number_format($pembayaran->paymentAllocations->sum('allocated_amount'), 0, ',', '.')); ?><br>
+                                        <?php if($pembayaran->sisa_pembayaran > 0): ?>
+                                            Sisa/Kelebihan: Rp
+                                            <?php echo e(number_format($pembayaran->sisa_pembayaran, 0, ',', '.')); ?>
+
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
                         <?php endif; ?>
 
                         <!-- Footer -->

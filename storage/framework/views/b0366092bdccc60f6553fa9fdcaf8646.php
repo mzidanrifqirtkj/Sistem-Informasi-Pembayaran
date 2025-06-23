@@ -134,7 +134,17 @@
 
                                                     </td>
                                                     <td>
-                                                        <span class="badge badge-<?php echo e($tagihan->status_color); ?>">
+                                                        <span
+                                                            class="badge
+        <?php if($tagihan->status == 'lunas'): ?> badge-success <?php endif; ?>
+        <?php if($tagihan->status == 'dibayar_sebagian'): ?> badge-warning <?php endif; ?>
+        <?php if(in_array($tagihan->status, ['belum_lunas', 'belum_bayar'])): ?> badge-danger <?php endif; ?>
+    "
+                                                            style="
+        <?php if($tagihan->status == 'lunas'): ?> color: white !important; <?php endif; ?>
+        <?php if($tagihan->status == 'dibayar_sebagian'): ?> color: #212529 !important; background-color: #ffc107 !important; <?php endif; ?>
+        <?php if(in_array($tagihan->status, ['belum_lunas', 'belum_bayar'])): ?> color: white !important; <?php endif; ?>
+    ">
                                                             <?php echo e(ucfirst(str_replace('_', ' ', $tagihan->status))); ?>
 
                                                         </span>
@@ -201,7 +211,16 @@
                                                     </td>
                                                     <td>
                                                         <span
-                                                            class="badge badge-<?php echo e($tagihan->status == 'lunas' ? 'success' : ($tagihan->status == 'dibayar_sebagian' ? 'warning' : 'danger')); ?>">
+                                                            class="badge
+        <?php if($tagihan->status == 'lunas'): ?> badge-success <?php endif; ?>
+        <?php if($tagihan->status == 'dibayar_sebagian'): ?> badge-warning <?php endif; ?>
+        <?php if(in_array($tagihan->status, ['belum_lunas', 'belum_bayar'])): ?> badge-danger <?php endif; ?>
+    "
+                                                            style="
+        <?php if($tagihan->status == 'lunas'): ?> color: white !important; <?php endif; ?>
+        <?php if($tagihan->status == 'dibayar_sebagian'): ?> color: #212529 !important; background-color: #ffc107 !important; <?php endif; ?>
+        <?php if(in_array($tagihan->status, ['belum_lunas', 'belum_bayar'])): ?> color: white !important; <?php endif; ?>
+    ">
                                                             <?php echo e(ucfirst(str_replace('_', ' ', $tagihan->status))); ?>
 
                                                         </span>
