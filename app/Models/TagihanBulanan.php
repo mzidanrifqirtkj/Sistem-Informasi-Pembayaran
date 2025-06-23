@@ -125,8 +125,17 @@ class TagihanBulanan extends Model
     // Accessors & Mutators
     public function getTotalPembayaranAttribute()
     {
-        return $this->pembayarans->sum('nominal_pembayaran') +
-            $this->paymentAllocations->sum('allocated_amount');
+        $totalLangsung = $this->pembayarans()
+            ->where('is_void', false)
+            ->sum('nominal_pembayaran');
+
+        $totalAlokasi = $this->paymentAllocations()
+            ->whereHas('pembayaran', function ($q) {
+                $q->where('is_void', false);
+            })
+            ->sum('allocated_amount');
+
+        return $totalLangsung + $totalAlokasi;
     }
 
     public function getSisaTagihanAttribute()
@@ -177,7 +186,26 @@ class TagihanBulanan extends Model
 
     public function updateStatus()
     {
-        $totalPembayaran = $this->total_pembayaran;
+        // CLEAR cache relationships dulu
+        $this->unsetRelation('pembayarans');
+        $this->unsetRelation('paymentAllocations');
+
+        // Refresh model untuk data terbaru
+        $this->refresh();
+
+        // Hitung total pembayaran yang tidak void dengan query fresh
+        $totalPembayaranLangsung = $this->pembayarans()
+            ->where('is_void', false)
+            ->sum('nominal_pembayaran');
+
+        // Hitung total dari payment allocations yang tidak void
+        $totalPembayaranAlokasi = $this->paymentAllocations()
+            ->whereHas('pembayaran', function ($q) {
+                $q->where('is_void', false);
+            })
+            ->sum('allocated_amount');
+
+        $totalPembayaran = $totalPembayaranLangsung + $totalPembayaranAlokasi;
 
         if ($totalPembayaran >= $this->nominal) {
             $this->status = 'lunas';

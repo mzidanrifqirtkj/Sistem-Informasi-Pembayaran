@@ -77,7 +77,16 @@ class TagihanTerjadwal extends Model
 
     public function getTotalPembayaranAttribute(): float
     {
-        return $this->pembayarans->sum('nominal_pembayaran');
+        $totalLangsung = $this->pembayarans()
+            ->where('is_void', false)
+            ->sum('nominal_pembayaran');
+
+        $totalAlokasi = \App\Models\PaymentAllocation::whereHas('pembayaran', function ($q) {
+            $q->where('is_void', false);
+        })->where('tagihan_terjadwal_id', $this->id_tagihan_terjadwal)
+            ->sum('allocated_amount');
+
+        return $totalLangsung + $totalAlokasi;
     }
 
     // Accessor untuk sisa tagihan
@@ -148,5 +157,22 @@ class TagihanTerjadwal extends Model
             $q->where('nama_santri', 'like', "%{$searchTerm}%")
                 ->orWhere('nis', 'like', "%{$searchTerm}%");
         });
+    }
+
+    public function updateStatus()
+    {
+        $totalPembayaran = $this->total_pembayaran;
+
+        if ($totalPembayaran >= $this->nominal) {
+            $this->status = 'lunas';
+        } elseif ($totalPembayaran > 0) {
+            $this->status = 'dibayar_sebagian';
+        } else {
+            $this->status = 'belum_lunas';
+        }
+
+        $this->save();
+
+        return $this->status;
     }
 }

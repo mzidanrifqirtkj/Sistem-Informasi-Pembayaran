@@ -23,12 +23,51 @@
         </div>
     </div>
 
+    <!-- FIX: Tambah konfirmasi sisa dengan opsi -->
     <?php if($sisa_pembayaran > 0): ?>
         <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Terdapat kelebihan pembayaran sebesar Rp <?php echo e(number_format($sisa_pembayaran, 0, ',', '.')); ?></strong>
+
+            <div class="mt-3">
+                <p class="mb-2"><strong>Pilih tindakan untuk kelebihan:</strong></p>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="overpayment_action" id="action_allocate"
+                        value="allocate" checked>
+                    <label class="form-check-label" for="action_allocate">
+                        <strong>Alokasikan ke tagihan bulan berikutnya</strong>
+                        <br><small class="text-muted">Kelebihan akan dialokasikan ke tagihan bulan depan secara
+                            otomatis</small>
+                    </label>
+                </div>
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="radio" name="overpayment_action" id="action_return"
+                        value="return">
+                    <label class="form-check-label" for="action_return">
+                        <strong>Kembalikan kelebihan</strong>
+                        <br><small class="text-muted">Kelebihan akan dicatat dan dapat dikembalikan kepada
+                            santri</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <!-- FIX: Tambah warning jika nominal kurang -->
+    <?php
+        $totalTagihanTerpilih = collect($allocations)->sum(function ($allocation) {
+            return $allocation['tagihan']->sisa_tagihan;
+        });
+    ?>
+
+    <?php if($nominal_pembayaran < $totalTagihanTerpilih): ?>
+        <div class="alert alert-info">
             <i class="fas fa-info-circle"></i>
-            Terdapat kelebihan pembayaran sebesar <strong>Rp <?php echo e(number_format($sisa_pembayaran, 0, ',', '.')); ?></strong>
-            <br>
-            <small>Kelebihan pembayaran akan dicatat dan dapat digunakan untuk pembayaran berikutnya.</small>
+            <strong>Pembayaran Tidak Mencukupi</strong>
+            <br>Nominal pembayaran <strong>Rp <?php echo e(number_format($nominal_pembayaran, 0, ',', '.')); ?></strong>
+            lebih kecil dari total tagihan terpilih <strong>Rp
+                <?php echo e(number_format($totalTagihanTerpilih, 0, ',', '.')); ?></strong>
+            <br><small>Tagihan akan berstatus <span class="badge badge-warning">Dibayar Sebagian</span></small>
         </div>
     <?php endif; ?>
 

@@ -1,5 +1,36 @@
 <?php $__env->startSection('title_page', 'Riwayat Pembayaran'); ?>
 
+<?php $__env->startSection('css_inline'); ?>
+    <style>
+        /* Fix z-index conflict between SweetAlert2 and Bootstrap Modal */
+        .swal2-container {
+            z-index: 10000 !important;
+            /* Higher than Bootstrap modal (1050) */
+        }
+
+        /* Ensure modal backdrop doesn't interfere */
+        .modal-backdrop {
+            z-index: 1040 !important;
+        }
+
+        .modal {
+            z-index: 1050 !important;
+        }
+
+        /* Fix untuk multiple backdrop */
+        .modal-backdrop+.modal-backdrop {
+            opacity: 0;
+            display: none;
+        }
+
+        .modal-backdrop.show {
+            opacity: 0 !important;
+            /* Transparan sepenuhnya */
+            pointer-events: none !important;
+            background-color: transparent !important;
+        }
+    </style>
+<?php $__env->stopSection(); ?>
 <?php $__env->startSection('content'); ?>
     <div class="container">
         <div class="row mb-3">
@@ -29,8 +60,8 @@
                         <label>Status</label>
                         <select name="status" class="form-control">
                             <option value="">Semua</option>
-                            <option value="active" <?php echo e(request('status') == 'active' ? 'selected' : ''); ?>>Aktif</option>
-                            <option value="void" <?php echo e(request('status') == 'void' ? 'selected' : ''); ?>>Void</option>
+                            <option value="0" <?php echo e(request('status') === '0' ? 'selected' : ''); ?>>Aktif</option>
+                            <option value="1" <?php echo e(request('status') === '1' ? 'selected' : ''); ?>>Void</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -264,6 +295,8 @@
         `;
                 $('#voidInfoContent').html(content);
                 $('#voidInfoModal').modal('show');
+            }).fail(function() {
+                alert('Gagal memuat informasi void');
             });
         }
 
@@ -272,6 +305,44 @@
             if ($('input[name="start_date"]').val() && $('input[name="end_date"]').val()) {
                 $(this).closest('form').submit();
             }
+        });
+
+        // Handle void form submission with AJAX
+        $('#voidForm').on('submit', function(e) {
+            e.preventDefault();
+
+            const form = $(this);
+            const submitBtn = form.find('button[type="submit"]');
+            const originalText = submitBtn.html();
+
+            // Disable button dan show loading
+            submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+
+            $.ajax({
+                url: form.attr('action'),
+                method: 'POST',
+                data: form.serialize(),
+                success: function(response) {
+                    $('#voidModal').modal('hide');
+
+                    // Show success message
+                    if (response.success) {
+                        // Reload page untuk refresh data
+                        location.reload();
+                    }
+                },
+                error: function(xhr) {
+                    let message = 'Terjadi kesalahan';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        message = xhr.responseJSON.message;
+                    }
+                    alert(message);
+                },
+                complete: function() {
+                    // Re-enable button
+                    submitBtn.prop('disabled', false).html(originalText);
+                }
+            });
         });
     </script>
 <?php $__env->stopSection(); ?>

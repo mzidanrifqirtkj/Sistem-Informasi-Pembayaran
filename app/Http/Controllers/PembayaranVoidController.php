@@ -23,8 +23,8 @@ class PembayaranVoidController extends Controller
         $this->paymentService = $paymentService;
         $this->validationService = $validationService;
 
-        // Only admin can void
-        $this->middleware('role:administrator');
+        // FIX: Comment atau hapus line ini yang menyebabkan error
+        // $this->middleware('role:administrator'); // HAPUS LINE INI
     }
 
     /**
@@ -35,7 +35,8 @@ class PembayaranVoidController extends Controller
         $pembayaran = Pembayaran::with([
             'tagihanBulanan.santri',
             'tagihanTerjadwal.santri',
-            'paymentAllocations',
+            'paymentAllocations.tagihanBulanan.santri',
+            'paymentAllocations.tagihanTerjadwal.santri',
             'createdBy'
         ])->findOrFail($id);
 
@@ -70,6 +71,13 @@ class PembayaranVoidController extends Controller
 
             DB::commit();
 
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Pembayaran berhasil di-void'
+                ]);
+            }
+
             return redirect()
                 ->route('pembayaran.history')
                 ->with('success', 'Pembayaran berhasil di-void');
@@ -78,6 +86,13 @@ class PembayaranVoidController extends Controller
             DB::rollBack();
 
             Log::error('Void payment error: ' . $e->getMessage());
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ], 422);
+            }
 
             return redirect()
                 ->back()

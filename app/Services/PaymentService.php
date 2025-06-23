@@ -370,22 +370,37 @@ class PaymentService
     /**
      * Void pembayaran
      */
-    public function voidPayment(Pembayaran $pembayaran, string $reason): bool
+    public function voidPayment(Pembayaran $pembayaran, string $reason)
     {
+        DB::beginTransaction();
+
         try {
-            DB::beginTransaction();
+            // 1. Backup tagihan yang terkena dampak sebelum void
+            $affectedTagihanBulanan = [];
+            $affectedTagihanTerjadwal = [];
 
-            // Validasi
-            if ($pembayaran->is_void) {
-                throw new \Exception('Pembayaran sudah di-void sebelumnya');
+            // Collect tagihan dari direct payment
+            if ($pembayaran->tagihan_bulanan_id) {
+                $affectedTagihanBulanan[] = $pembayaran->tagihan_bulanan_id;
             }
 
-            // Check if can void (within 24 hours)
-            if ($pembayaran->created_at->diffInHours(now()) > 24) {
-                throw new \Exception('Pembayaran hanya bisa di-void dalam 24 jam');
+            if ($pembayaran->tagihan_terjadwal_id) {
+                $affectedTagihanTerjadwal[] = $pembayaran->tagihan_terjadwal_id;
             }
 
-            // Update pembayaran
+            // Collect tagihan dari payment allocations
+            if ($pembayaran->payment_type === 'allocated') {
+                foreach ($pembayaran->paymentAllocations as $allocation) {
+                    if ($allocation->tagihan_bulanan_id) {
+                        $affectedTagihanBulanan[] = $allocation->tagihan_bulanan_id;
+                    }
+                    if ($allocation->tagihan_terjadwal_id) {
+                        $affectedTagihanTerjadwal[] = $allocation->tagihan_terjadwal_id;
+                    }
+                }
+            }
+
+            // 2. Void pembayaran
             $pembayaran->update([
                 'is_void' => true,
                 'voided_at' => now(),
@@ -393,26 +408,59 @@ class PaymentService
                 'void_reason' => $reason
             ]);
 
-            // Delete allocations
+            // 3. Delete payment allocations jika ada
             if ($pembayaran->payment_type === 'allocated') {
                 $pembayaran->paymentAllocations()->delete();
             }
 
-            // Status tagihan akan di-update oleh observer
+            // 4. UPDATE STATUS TAGIHAN KEMBALI - INI YANG PENTING!
+
+            // Update tagihan bulanan
+            foreach (array_unique($affectedTagihanBulanan) as $tagihanId) {
+                $tagihan = \App\Models\TagihanBulanan::find($tagihanId);
+                if ($tagihan) {
+                    $tagihan->updateStatus(); // Method yang sudah ada di model
+                }
+            }
+
+            // Update tagihan terjadwal
+            foreach (array_unique($affectedTagihanTerjadwal) as $tagihanId) {
+                $tagihan = \App\Models\TagihanTerjadwal::find($tagihanId);
+                if ($tagihan) {
+                    // Hitung ulang status berdasarkan pembayaran yang tidak void
+                    $totalPembayaran = $tagihan->pembayarans()
+                        ->where('is_void', false)
+                        ->sum('nominal_pembayaran');
+
+                    $totalAlokasi = \App\Models\PaymentAllocation::whereHas('pembayaran', function ($q) {
+                        $q->where('is_void', false);
+                    })->where('tagihan_terjadwal_id', $tagihanId)
+                        ->sum('allocated_amount');
+
+                    $totalDibayar = $totalPembayaran + $totalAlokasi;
+
+                    if ($totalDibayar == 0) {
+                        $status = 'belum_lunas';
+                    } elseif ($totalDibayar >= $tagihan->nominal) {
+                        $status = 'lunas';
+                    } else {
+                        $status = 'dibayar_sebagian';
+                    }
+
+                    $tagihan->update(['status' => $status]);
+                }
+            }
 
             DB::commit();
 
-            Log::info('Pembayaran berhasil di-void', [
+            \Log::info('Payment voided successfully', [
                 'pembayaran_id' => $pembayaran->id_pembayaran,
-                'voided_by' => auth()->user()->name,
-                'reason' => $reason
+                'affected_bulanan' => $affectedTagihanBulanan,
+                'affected_terjadwal' => $affectedTagihanTerjadwal
             ]);
-
-            return true;
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error void payment: ' . $e->getMessage());
             throw $e;
         }
     }

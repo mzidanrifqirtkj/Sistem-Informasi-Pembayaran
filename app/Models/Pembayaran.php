@@ -29,6 +29,7 @@ class Pembayaran extends Model
     protected $casts = [
         'is_void' => 'boolean',
         'voided_at' => 'datetime',
+        'tanggal_pembayaran' => 'datetime', // tambahkan ini
     ];
 
     // Add relationship
@@ -135,6 +136,9 @@ class Pembayaran extends Model
 
     public function getPaymentDescriptionAttribute()
     {
+        // Refresh relationships
+        $this->load(['paymentAllocations', 'tagihanBulanan', 'tagihanTerjadwal']);
+
         if ($this->payment_type === 'allocated') {
             $count = $this->paymentAllocations->count();
             return "Pembayaran untuk {$count} tagihan";
@@ -147,9 +151,8 @@ class Pembayaran extends Model
 
         if ($this->tagihan_terjadwal_id) {
             $tagihan = $this->tagihanTerjadwal;
-            // Update bagian ini sesuai struktur yang benar
-            if ($tagihan && $tagihan->biayaSantri && $tagihan->biayaSantri->daftarBiaya && $tagihan->biayaSantri->daftarBiaya->kategoriBiaya) {
-                return $tagihan->biayaSantri->daftarBiaya->kategoriBiaya->nama_kategori;
+            if ($tagihan && $tagihan->daftarBiaya && $tagihan->daftarBiaya->kategoriBiaya) {
+                return $tagihan->daftarBiaya->kategoriBiaya->nama_kategori;
             }
             return 'Tagihan Terjadwal';
         }
@@ -179,4 +182,91 @@ class Pembayaran extends Model
             ->sum('nominal_pembayaran'); // sesuaikan jika field berbeda
     }
 
+    // Accessor untuk mendapatkan NIS Santri
+    public function getSantriNisAttribute()
+    {
+        // Refresh relationships untuk data terbaru
+        $this->load(['tagihanBulanan.santri', 'tagihanTerjadwal.santri', 'paymentAllocations.tagihanBulanan.santri', 'paymentAllocations.tagihanTerjadwal.santri']);
+
+        if ($this->tagihanBulanan && $this->tagihanBulanan->santri) {
+            return $this->tagihanBulanan->santri->nis;
+        }
+
+        if ($this->tagihanTerjadwal && $this->tagihanTerjadwal->santri) {
+            return $this->tagihanTerjadwal->santri->nis;
+        }
+
+        // Cek dari payment allocations
+        $allocation = $this->paymentAllocations->first();
+        if ($allocation) {
+            if ($allocation->tagihanBulanan && $allocation->tagihanBulanan->santri) {
+                return $allocation->tagihanBulanan->santri->nis;
+            }
+            if ($allocation->tagihanTerjadwal && $allocation->tagihanTerjadwal->santri) {
+                return $allocation->tagihanTerjadwal->santri->nis;
+            }
+        }
+
+        return '-';
+    }
+
+    // Accessor untuk mendapatkan Nama Santri
+    public function getSantriNameAttribute()
+    {
+        // Refresh relationships untuk data terbaru
+        $this->load(['tagihanBulanan.santri', 'tagihanTerjadwal.santri', 'paymentAllocations.tagihanBulanan.santri', 'paymentAllocations.tagihanTerjadwal.santri']);
+
+        if ($this->tagihanBulanan && $this->tagihanBulanan->santri) {
+            return $this->tagihanBulanan->santri->nama_santri;
+        }
+
+        if ($this->tagihanTerjadwal && $this->tagihanTerjadwal->santri) {
+            return $this->tagihanTerjadwal->santri->nama_santri;
+        }
+
+        // Cek dari payment allocations
+        $allocation = $this->paymentAllocations->first();
+        if ($allocation) {
+            if ($allocation->tagihanBulanan && $allocation->tagihanBulanan->santri) {
+                return $allocation->tagihanBulanan->santri->nama_santri;
+            }
+            if ($allocation->tagihanTerjadwal && $allocation->tagihanTerjadwal->santri) {
+                return $allocation->tagihanTerjadwal->santri->nama_santri;
+            }
+        }
+
+        return '-';
+    }
+
+    // Accessor untuk format nominal
+    public function getFormattedNominalAttribute()
+    {
+        // Pastikan menggunakan data terbaru
+        $this->refresh();
+        return format_rupiah($this->nominal_pembayaran);
+    }
+
+    // Update method getSantriAttribute untuk relationship yang lebih efisien
+    public function getSantriAttribute()
+    {
+        if ($this->tagihanBulanan && $this->tagihanBulanan->santri) {
+            return $this->tagihanBulanan->santri;
+        }
+
+        if ($this->tagihanTerjadwal && $this->tagihanTerjadwal->santri) {
+            return $this->tagihanTerjadwal->santri;
+        }
+
+        $allocation = $this->paymentAllocations->first();
+        if ($allocation) {
+            if ($allocation->tagihanBulanan && $allocation->tagihanBulanan->santri) {
+                return $allocation->tagihanBulanan->santri;
+            }
+            if ($allocation->tagihanTerjadwal && $allocation->tagihanTerjadwal->santri) {
+                return $allocation->tagihanTerjadwal->santri;
+            }
+        }
+
+        return null;
+    }
 }

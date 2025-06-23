@@ -239,29 +239,31 @@ class PembayaranController extends Controller
         $query = Pembayaran::with([
             'tagihanBulanan.santri',
             'tagihanTerjadwal.santri',
+            'paymentAllocations.tagihanBulanan.santri',
+            'paymentAllocations.tagihanTerjadwal.santri',
             'createdBy',
             'voidedBy'
         ])->orderBy('created_at', 'desc');
 
         // Filter by date range
-        if ($request->has('start_date') && $request->has('end_date')) {
+        if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('tanggal_pembayaran', [
                 $request->start_date,
                 $request->end_date
             ]);
         }
 
-        // Filter by status
-        if ($request->has('status')) {
-            if ($request->status == 'void') {
+        // Filter by status - FIX INI
+        if ($request->filled('status')) {
+            if ($request->status === '1') { // Void
                 $query->where('is_void', true);
-            } elseif ($request->status == 'active') {
+            } elseif ($request->status === '0') { // Aktif
                 $query->where('is_void', false);
             }
         }
 
         // Search
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('receipt_number', 'like', "%{$search}%")
@@ -272,11 +274,22 @@ class PembayaranController extends Controller
                     ->orWhereHas('tagihanTerjadwal.santri', function ($q2) use ($search) {
                         $q2->where('nama_santri', 'like', "%{$search}%")
                             ->orWhere('nis', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('paymentAllocations.tagihanBulanan.santri', function ($q2) use ($search) {
+                        $q2->where('nama_santri', 'like', "%{$search}%")
+                            ->orWhere('nis', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('paymentAllocations.tagihanTerjadwal.santri', function ($q2) use ($search) {
+                        $q2->where('nama_santri', 'like', "%{$search}%")
+                            ->orWhere('nis', 'like', "%{$search}%");
                     });
             });
         }
 
         $pembayarans = $query->paginate(20);
+
+        // Append query parameters untuk pagination
+        $pembayarans->appends($request->query());
 
         return view('pembayaran.history', compact('pembayarans'));
     }

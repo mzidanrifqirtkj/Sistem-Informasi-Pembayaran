@@ -4,6 +4,7 @@ class PaymentForm {
         this.selectedTagihan = [];
         this.nominalPembayaran = 0;
         this.previewData = null;
+        this.totalTagihanTerpilih = 0;
 
         this.init();
     }
@@ -47,10 +48,11 @@ class PaymentForm {
             this.calculateSelectedTagihan();
         });
 
-        // Nominal input change
+        // Nominal input change with enhanced validation
         this.elements.nominalInput.on("input", () => {
             this.nominalPembayaran =
                 parseFloat(this.elements.nominalInput.val()) || 0;
+            this.validatePaymentAmount();
             this.updatePreviewButtons();
             this.calculateAllocation();
         });
@@ -58,34 +60,435 @@ class PaymentForm {
         // Preview button
         this.elements.previewButton.on("click", () => this.showPreview());
 
-        // Confirm payment button
-        this.elements.confirmButton.on("click", () => this.confirmPayment());
+        // Confirm payment button with overpayment handling
+        this.elements.confirmButton.on("click", () =>
+            this.confirmPaymentWithOptions()
+        );
 
-        // FIX: Handle form submission - langsung bayar tanpa preview
+        // Form submission - enhanced with validation
         this.elements.paymentForm.on("submit", (e) => {
-            e.preventDefault(); // Always prevent default form submission
-
-            // Validasi input
-            if (
-                this.nominalPembayaran <= 0 ||
-                this.selectedTagihan.length === 0
-            ) {
-                Swal.fire({
-                    title: "Peringatan",
-                    text: "Pilih tagihan dan masukkan nominal pembayaran",
-                    icon: "warning",
-                    backdrop: false,
-                });
-                return;
-            }
-
-            // Langsung proses pembayaran tanpa preview
+            e.preventDefault();
             this.processDirectPayment();
         });
     }
 
-    // TAMBAH method baru: processDirectPayment()
+    // ENHANCED: calculateSelectedTagihan with smart auto-fill
+    calculateSelectedTagihan() {
+        this.selectedTagihan = [];
+        this.totalTagihanTerpilih = 0;
+
+        $(".tagihan-checkbox:checked").each((index, element) => {
+            const $row = $(element).closest(".tagihan-row");
+            const type = $row.data("type");
+            const id = $row.data("id");
+            const sisa = parseFloat($row.data("sisa"));
+
+            this.selectedTagihan.push({
+                type: type,
+                id: id,
+                sisa: sisa,
+            });
+
+            this.totalTagihanTerpilih += sisa;
+        });
+
+        // Update display
+        this.elements.totalTagihanSpan.text(
+            this.formatRupiah(this.totalTagihanTerpilih)
+        );
+
+        // ENHANCED AUTO-FILL: Always sync with selected tagihan
+        if (this.selectedTagihan.length > 0) {
+            // Auto-fill jika nominal kosong atau 0
+            if (
+                this.nominalPembayaran === 0 ||
+                this.elements.nominalInput.val() === ""
+            ) {
+                this.elements.nominalInput.val(this.totalTagihanTerpilih);
+                this.nominalPembayaran = this.totalTagihanTerpilih;
+            }
+        } else {
+            // Clear nominal jika tidak ada tagihan terpilih
+            this.elements.nominalInput.val("");
+            this.nominalPembayaran = 0;
+        }
+
+        this.validatePaymentAmount();
+        this.updatePreviewButtons();
+        this.calculateAllocation();
+    }
+
+    // NEW: Enhanced payment amount validation
+    validatePaymentAmount() {
+        const $nominalGroup = this.elements.nominalInput.closest(".form-group");
+        const $helpText = $nominalGroup.find(".form-text");
+
+        // Remove existing validation classes
+        this.elements.nominalInput.removeClass("is-invalid is-valid");
+        $nominalGroup.find(".invalid-feedback").remove();
+
+        if (this.selectedTagihan.length === 0) {
+            $helpText
+                .text("Pilih tagihan terlebih dahulu")
+                .removeClass(
+                    "text-muted text-success text-danger text-warning text-info"
+                )
+                .addClass("text-muted");
+            return true;
+        }
+
+        if (this.nominalPembayaran <= 0) {
+            this.elements.nominalInput.addClass("is-invalid");
+            $nominalGroup.append(
+                '<div class="invalid-feedback">Nominal pembayaran harus lebih dari 0</div>'
+            );
+            return false;
+        }
+
+        if (this.nominalPembayaran < this.totalTagihanTerpilih) {
+            this.elements.nominalInput.addClass("is-invalid");
+            $nominalGroup.append(`<div class="invalid-feedback">
+                Nominal kurang dari total tagihan. Kekurangan: ${this.formatRupiah(
+                    this.totalTagihanTerpilih - this.nominalPembayaran
+                )}
+            </div>`);
+            $helpText
+                .html(
+                    `
+                <i class="fas fa-exclamation-triangle text-warning"></i>
+                Pembayaran tidak mencukupi - tagihan akan berstatus <span class="badge badge-warning">Dibayar Sebagian</span>
+            `
+                )
+                .removeClass("text-muted text-success text-danger text-info")
+                .addClass("text-warning");
+            return true; // Still allow, just warn
+        }
+
+        if (this.nominalPembayaran > this.totalTagihanTerpilih) {
+            this.elements.nominalInput.addClass("is-valid");
+            $helpText
+                .html(
+                    `
+                <i class="fas fa-info-circle text-info"></i>
+                Kelebihan: ${this.formatRupiah(
+                    this.nominalPembayaran - this.totalTagihanTerpilih
+                )}
+                <span class="badge badge-info">Akan dikonfirmasi saat preview</span>
+            `
+                )
+                .removeClass("text-muted text-warning text-danger text-success")
+                .addClass("text-info");
+            return true;
+        }
+
+        // Exact amount
+        this.elements.nominalInput.addClass("is-valid");
+        $helpText
+            .html(
+                `
+            <i class="fas fa-check-circle text-success"></i>
+            Nominal sesuai dengan total tagihan
+        `
+            )
+            .removeClass("text-muted text-warning text-danger text-info")
+            .addClass("text-success");
+        return true;
+    }
+
+    // ENHANCED: processDirectPayment with comprehensive validation
     processDirectPayment() {
+        if (!this.validateBeforeSubmit()) return;
+
+        const allocationResult = this.calculateProperAllocation();
+
+        // Check overpayment
+        if (allocationResult.overpayment > 0) {
+            this.handleOverpaymentConfirmation(allocationResult);
+            return;
+        }
+
+        // Check underpayment warning
+        if (this.nominalPembayaran < this.totalTagihanTerpilih) {
+            this.handleUnderpaymentConfirmation(allocationResult);
+            return;
+        }
+
+        // Perfect amount - process directly
+        this.submitPaymentData(
+            allocationResult.allocations,
+            allocationResult.overpayment
+        );
+    }
+
+    // NEW: Comprehensive validation before submit
+    validateBeforeSubmit() {
+        if (this.selectedTagihan.length === 0) {
+            Swal.fire({
+                title: "Peringatan",
+                text: "Pilih minimal satu tagihan",
+                icon: "warning",
+                backdrop: false,
+            });
+            return false;
+        }
+
+        if (this.nominalPembayaran <= 0) {
+            Swal.fire({
+                title: "Peringatan",
+                text: "Masukkan nominal pembayaran",
+                icon: "warning",
+                backdrop: false,
+            });
+            this.elements.nominalInput.focus();
+            return false;
+        }
+
+        return true;
+    }
+
+    // NEW: Handle underpayment confirmation
+    handleUnderpaymentConfirmation(allocationResult) {
+        const shortage = this.totalTagihanTerpilih - this.nominalPembayaran;
+
+        Swal.fire({
+            title: "Pembayaran Tidak Mencukupi",
+            html: `
+                <div class="text-left">
+                    <p><strong>Total Tagihan:</strong> ${this.formatRupiah(
+                        this.totalTagihanTerpilih
+                    )}</p>
+                    <p><strong>Nominal Pembayaran:</strong> ${this.formatRupiah(
+                        this.nominalPembayaran
+                    )}</p>
+                    <p><strong>Kekurangan:</strong> <span class="text-danger">${this.formatRupiah(
+                        shortage
+                    )}</span></p>
+                    <hr>
+                    <p>Tagihan akan berstatus <span class="badge badge-warning">Dibayar Sebagian</span></p>
+                    <p>Lanjutkan pembayaran?</p>
+                </div>
+            `,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Ya, Lanjutkan",
+            cancelButtonText: "Batal",
+            confirmButtonColor: "#ffc107",
+            cancelButtonColor: "#6c757d",
+            backdrop: false,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.submitPaymentData(
+                    allocationResult.allocations,
+                    allocationResult.overpayment
+                );
+            }
+        });
+    }
+
+    // ENHANCED: calculateProperAllocation
+    calculateProperAllocation() {
+        let remainingAmount = this.nominalPembayaran;
+        let allocations = [];
+
+        // Distribusi bertahap ke setiap tagihan yang dipilih
+        for (let tagihan of this.selectedTagihan) {
+            if (remainingAmount <= 0) break;
+
+            const allocatedAmount = Math.min(remainingAmount, tagihan.sisa);
+
+            allocations.push({
+                type: tagihan.type,
+                tagihan_id: tagihan.id,
+                allocated_amount: allocatedAmount,
+            });
+
+            remainingAmount -= allocatedAmount;
+        }
+
+        return {
+            allocations: allocations,
+            overpayment: remainingAmount,
+            totalAllocated: this.nominalPembayaran - remainingAmount,
+        };
+    }
+
+    // ENHANCED: handleOverpaymentConfirmation
+    handleOverpaymentConfirmation(allocationResult) {
+        const overpaymentFormatted = this.formatRupiah(
+            allocationResult.overpayment
+        );
+
+        Swal.fire({
+            title: "Kelebihan Pembayaran",
+            html: `
+            <div class="text-left">
+                <p><strong>Total Pembayaran:</strong> ${this.formatRupiah(
+                    this.nominalPembayaran
+                )}</p>
+                <p><strong>Total Tagihan:</strong> ${this.formatRupiah(
+                    allocationResult.totalAllocated
+                )}</p>
+                <p><strong>Kelebihan:</strong> <span class="text-danger">${overpaymentFormatted}</span></p>
+                <hr>
+                <p>Bagaimana dengan kelebihan pembayaran?</p>
+            </div>
+        `,
+            icon: "question",
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: "Lanjutkan ke Bulan Berikutnya",
+            denyButtonText: "Kembalikan Kelebihan",
+            cancelButtonText: "Batal",
+            confirmButtonColor: "#28a745",
+            denyButtonColor: "#ffc107",
+            cancelButtonColor: "#6c757d",
+            backdrop: false,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Option: Lanjutkan ke bulan berikutnya
+                this.allocateToNextMonths(allocationResult);
+            } else if (result.isDenied) {
+                // Option: Kembalikan kelebihan (proses dengan refund)
+                this.submitPaymentData(
+                    allocationResult.allocations,
+                    allocationResult.overpayment
+                );
+            }
+            // Jika cancel, tidak lakukan apa-apa
+        });
+    }
+
+    // ENHANCED: allocateToNextMonths
+    allocateToNextMonths(allocationResult) {
+        let remainingOverpayment = allocationResult.overpayment;
+        let allocations = [...allocationResult.allocations];
+
+        // Find next available tagihan
+        const nextTagihan = this.findNextAvailableTagihan();
+
+        if (nextTagihan.length > 0 && remainingOverpayment > 0) {
+            let allocatedToNext = [];
+
+            for (let tagihan of nextTagihan) {
+                if (remainingOverpayment <= 0) break;
+
+                const allocatedAmount = Math.min(
+                    remainingOverpayment,
+                    tagihan.sisa
+                );
+
+                allocations.push({
+                    type: tagihan.type,
+                    tagihan_id: tagihan.id,
+                    allocated_amount: allocatedAmount,
+                });
+
+                allocatedToNext.push({
+                    label: tagihan.label,
+                    amount: allocatedAmount,
+                });
+
+                remainingOverpayment -= allocatedAmount;
+            }
+
+            // Show confirmation of auto-allocation
+            const allocatedList = allocatedToNext
+                .map(
+                    (item) =>
+                        `<li>${item.label}: ${this.formatRupiah(
+                            item.amount
+                        )}</li>`
+                )
+                .join("");
+
+            Swal.fire({
+                title: "Konfirmasi Alokasi Otomatis",
+                html: `
+                    <div class="text-left">
+                        <p>Kelebihan dialokasikan ke:</p>
+                        <ul>${allocatedList}</ul>
+                        ${
+                            remainingOverpayment > 0
+                                ? `<p>Sisa kelebihan: <span class="text-warning">${this.formatRupiah(
+                                      remainingOverpayment
+                                  )}</span></p>`
+                                : ""
+                        }
+                    </div>
+                `,
+                icon: "info",
+                showCancelButton: true,
+                confirmButtonText: "Ya, Proses",
+                cancelButtonText: "Batal",
+                backdrop: false,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submitPaymentData(allocations, remainingOverpayment);
+                }
+            });
+        } else {
+            // No next tagihan available
+            Swal.fire({
+                title: "Tidak Ada Tagihan Berikutnya",
+                text: "Tidak ada tagihan lain yang tersedia. Kelebihan akan dikembalikan.",
+                icon: "info",
+                backdrop: false,
+            }).then(() => {
+                this.submitPaymentData(
+                    allocationResult.allocations,
+                    allocationResult.overpayment
+                );
+            });
+        }
+    }
+
+    // ENHANCED: findNextAvailableTagihan with labels
+    findNextAvailableTagihan() {
+        const selectedIds = this.selectedTagihan.map((t) => t.id);
+        const availableTagihan = [];
+
+        // Find unselected bulanan tagihan
+        $('.tagihan-row[data-type="bulanan"]').each((index, element) => {
+            const $row = $(element);
+            const id = parseInt($row.data("id"));
+            const sisa = parseFloat($row.data("sisa"));
+
+            if (!selectedIds.includes(id) && sisa > 0) {
+                const bulan = $row.find("td:eq(1)").text();
+                const tahun = $row.find("td:eq(2)").text();
+
+                availableTagihan.push({
+                    type: "bulanan",
+                    id: id,
+                    sisa: sisa,
+                    label: `${bulan} ${tahun}`,
+                });
+            }
+        });
+
+        // Find unselected terjadwal tagihan
+        $('.tagihan-row[data-type="terjadwal"]').each((index, element) => {
+            const $row = $(element);
+            const id = parseInt($row.data("id"));
+            const sisa = parseFloat($row.data("sisa"));
+
+            if (!selectedIds.includes(id) && sisa > 0) {
+                const nama = $row.find("td:eq(1)").text();
+
+                availableTagihan.push({
+                    type: "terjadwal",
+                    id: id,
+                    sisa: sisa,
+                    label: nama,
+                });
+            }
+        });
+
+        return availableTagihan;
+    }
+
+    // ENHANCED: submitPaymentData with better error handling
+    submitPaymentData(allocations, sisaPembayaran) {
         // Show loading
         Swal.fire({
             title: "Processing...",
@@ -97,39 +500,29 @@ class PaymentForm {
             },
         });
 
-        // Get current CSRF token
         const currentToken =
             $('meta[name="csrf-token"]').attr("content") ||
             this.config.csrfToken;
 
-        // Prepare allocations langsung dari selectedTagihan
-        const allocations = this.selectedTagihan.map((tagihan) => ({
-            type: tagihan.type,
-            tagihan_id: tagihan.id,
-            allocated_amount: Math.min(this.nominalPembayaran, tagihan.sisa), // Hitung di sini
-        }));
-
-        // Prepare form data
         const formData = {
             santri_id: this.config.santriId,
             nominal_pembayaran: this.nominalPembayaran,
             tanggal_pembayaran: $('[name="tanggal_pembayaran"]').val(),
             payment_note: $('[name="payment_note"]').val(),
             allocations: allocations,
-            sisa_pembayaran: 0, // For now, assume no overpayment
+            sisa_pembayaran: sisaPembayaran,
             _token: currentToken,
         };
 
-        console.log("Direct payment data:", formData);
+        console.log("Submitting payment:", formData);
 
-        // Submit dengan AJAX
         $.ajax({
             url: this.config.storeUrl,
             type: "POST",
             data: formData,
             dataType: "json",
             success: (response) => {
-                console.log("Direct payment success:", response);
+                console.log("Payment success:", response);
                 Swal.close();
 
                 if (response.success || response.redirect_url) {
@@ -153,7 +546,7 @@ class PaymentForm {
             },
             error: (xhr) => {
                 Swal.close();
-                console.error("Direct payment error:", xhr);
+                console.error("Payment error:", xhr);
 
                 let errorMessage =
                     "Terjadi kesalahan saat memproses pembayaran";
@@ -172,6 +565,9 @@ class PaymentForm {
                         errorMessage =
                             xhr.responseJSON?.message || "Data tidak valid";
                     }
+                } else if (xhr.status === 419) {
+                    errorMessage =
+                        "Sesi telah berakhir. Silakan refresh halaman.";
                 }
 
                 Swal.fire({
@@ -179,43 +575,16 @@ class PaymentForm {
                     text: errorMessage,
                     icon: "error",
                     backdrop: false,
+                }).then(() => {
+                    if (xhr.status === 419) {
+                        window.location.reload();
+                    }
                 });
             },
         });
     }
 
-    calculateSelectedTagihan() {
-        this.selectedTagihan = [];
-        let totalTagihan = 0;
-
-        $(".tagihan-checkbox:checked").each((index, element) => {
-            const $row = $(element).closest(".tagihan-row");
-            const type = $row.data("type");
-            const id = $row.data("id");
-            const sisa = parseFloat($row.data("sisa"));
-
-            this.selectedTagihan.push({
-                type: type,
-                id: id,
-                sisa: sisa,
-            });
-
-            totalTagihan += sisa;
-        });
-
-        // Update display
-        this.elements.totalTagihanSpan.text(this.formatRupiah(totalTagihan));
-
-        // Auto-fill nominal if empty
-        if (this.elements.nominalInput.val() === "" && totalTagihan > 0) {
-            this.elements.nominalInput.val(totalTagihan);
-            this.nominalPembayaran = totalTagihan;
-        }
-
-        this.updatePreviewButtons();
-        this.calculateAllocation();
-    }
-
+    // Standard allocation calculation
     calculateAllocation() {
         if (this.nominalPembayaran <= 0 || this.selectedTagihan.length === 0) {
             this.elements.allocationPreview.hide();
@@ -225,7 +594,6 @@ class PaymentForm {
         let sisaPembayaran = this.nominalPembayaran;
         let allocations = [];
 
-        // Calculate allocations
         for (let tagihan of this.selectedTagihan) {
             if (sisaPembayaran <= 0) break;
 
@@ -239,7 +607,6 @@ class PaymentForm {
             sisaPembayaran -= allocated;
         }
 
-        // Display allocation preview
         this.displayAllocationPreview(allocations, sisaPembayaran);
     }
 
@@ -266,10 +633,8 @@ class PaymentForm {
         });
 
         html += "</ul>";
-
         this.elements.allocationList.html(html);
 
-        // Show overpayment if any
         if (sisaPembayaran > 0) {
             this.elements.sisaPembayaran.html(
                 `<div class="alert alert-warning py-1 px-2 mb-0">
@@ -288,24 +653,12 @@ class PaymentForm {
     updatePreviewButtons() {
         const isValid =
             this.nominalPembayaran > 0 && this.selectedTagihan.length > 0;
-
         this.elements.previewButton.prop("disabled", !isValid);
         this.elements.submitButton.prop("disabled", !isValid);
     }
 
     showPreview() {
-        if (this.nominalPembayaran <= 0 || this.selectedTagihan.length === 0) {
-            Swal.fire({
-                title: "Peringatan",
-                text: "Pilih tagihan dan masukkan nominal pembayaran",
-                icon: "warning",
-                backdrop: false,
-                customClass: {
-                    container: "high-z-index-swal",
-                },
-            });
-            return;
-        }
+        if (!this.validateBeforeSubmit()) return;
 
         Swal.fire({
             title: "Loading...",
@@ -340,169 +693,166 @@ class PaymentForm {
                         $(".modal-backdrop").remove();
                         $("body").removeClass("modal-open swal2-shown");
 
-                        // Bootstrap 4: tampilkan dengan jQuery
                         this.previewModal.modal("show");
                     } else {
-                        setTimeout(() => {
-                            Swal.fire({
-                                title: "Error",
-                                text: response.message || "Terjadi kesalahan",
-                                icon: "error",
-                                backdrop: false,
-                            });
-                        }, 100);
+                        Swal.fire({
+                            title: "Error",
+                            text: response.message || "Terjadi kesalahan",
+                            icon: "error",
+                            backdrop: false,
+                        });
                     }
                 }, 300);
             },
             error: (xhr) => {
                 Swal.close();
-
-                setTimeout(() => {
-                    console.log("Ajax Error:", xhr); // Debug log
-                    const message =
-                        xhr.responseJSON?.message || "Terjadi kesalahan server";
-                    Swal.fire({
-                        title: "Error",
-                        text: message,
-                        icon: "error",
-                        backdrop: false,
-                    });
-                }, 300);
+                const message =
+                    xhr.responseJSON?.message || "Terjadi kesalahan server";
+                Swal.fire({
+                    title: "Error",
+                    text: message,
+                    icon: "error",
+                    backdrop: false,
+                });
             },
         });
     }
 
-    // FIX confirmPayment() di payment.js
-    confirmPayment() {
+    // ENHANCED: confirmPaymentWithOptions - handles overpayment options from preview modal
+    confirmPaymentWithOptions() {
         if (!this.previewData) {
             console.error("No preview data available");
             return;
         }
 
-        // Close modal first
+        let overpaymentAction = "return"; // default
+        const $actionRadio = $('input[name="overpayment_action"]:checked');
+        if ($actionRadio.length > 0) {
+            overpaymentAction = $actionRadio.val();
+        }
+
+        // Handle overpayment based on selection
+        if (
+            this.previewData.sisa_pembayaran > 0 &&
+            overpaymentAction === "allocate"
+        ) {
+            this.allocateFromPreview(this.previewData);
+            return;
+        }
+
+        // Normal confirmation
+        this.processConfirmPayment(
+            this.previewData.allocations,
+            this.previewData.sisa_pembayaran
+        );
+    }
+
+    // NEW: Handle allocation from preview modal
+    allocateFromPreview(previewData) {
+        let remainingOverpayment = previewData.sisa_pembayaran;
+        let allocations = [...previewData.allocations];
+
+        // Find next available tagihan
+        const nextTagihan = this.findNextAvailableTagihan();
+
+        if (nextTagihan.length > 0 && remainingOverpayment > 0) {
+            let allocatedToNext = [];
+
+            for (let tagihan of nextTagihan) {
+                if (remainingOverpayment <= 0) break;
+
+                const allocatedAmount = Math.min(
+                    remainingOverpayment,
+                    tagihan.sisa
+                );
+
+                allocations.push({
+                    type: tagihan.type,
+                    tagihan_id: tagihan.id,
+                    allocated_amount: allocatedAmount,
+                });
+
+                allocatedToNext.push({
+                    label: tagihan.label,
+                    amount: allocatedAmount,
+                });
+
+                remainingOverpayment -= allocatedAmount;
+            }
+
+            // Show confirmation
+            const allocatedList = allocatedToNext
+                .map(
+                    (item) =>
+                        `<li>${item.label}: ${this.formatRupiah(
+                            item.amount
+                        )}</li>`
+                )
+                .join("");
+
+            this.previewModal.modal("hide");
+
+            Swal.fire({
+                title: "Konfirmasi Alokasi Otomatis",
+                html: `
+                    <div class="text-left">
+                        <p>Kelebihan dialokasikan ke:</p>
+                        <ul>${allocatedList}</ul>
+                        ${
+                            remainingOverpayment > 0
+                                ? `<p>Sisa kelebihan: <span class="text-warning">${this.formatRupiah(
+                                      remainingOverpayment
+                                  )}</span></p>`
+                                : ""
+                        }
+                    </div>
+                `,
+                icon: "info",
+                showCancelButton: true,
+                confirmButtonText: "Ya, Proses",
+                cancelButtonText: "Batal",
+                backdrop: false,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.processConfirmPayment(
+                        allocations,
+                        remainingOverpayment
+                    );
+                }
+            });
+        } else {
+            // No next tagihan available
+            this.previewModal.modal("hide");
+            Swal.fire({
+                title: "Tidak Ada Tagihan Berikutnya",
+                text: "Tidak ada tagihan lain yang tersedia. Kelebihan akan dikembalikan.",
+                icon: "info",
+                backdrop: false,
+            }).then(() => {
+                this.processConfirmPayment(
+                    previewData.allocations,
+                    previewData.sisa_pembayaran
+                );
+            });
+        }
+    }
+
+    // Process confirmation payment from preview
+    processConfirmPayment(allocations, sisaPembayaran) {
         this.previewModal.modal("hide");
 
-        // Show loading
-        Swal.fire({
-            title: "Processing...",
-            text: "Sedang memproses pembayaran...",
-            allowOutsideClick: false,
-            backdrop: false,
-            didOpen: () => {
-                Swal.showLoading();
-            },
-        });
+        // Convert preview data to submission format
+        const simplifiedAllocations = allocations.map((allocation) => ({
+            type: allocation.type,
+            tagihan_id:
+                allocation.tagihan_id ||
+                (allocation.type === "bulanan"
+                    ? allocation.tagihan.id_tagihan_bulanan
+                    : allocation.tagihan.id_tagihan_terjadwal),
+            allocated_amount: allocation.allocated_amount,
+        }));
 
-        // Get current CSRF token (fresh token)
-        const currentToken =
-            $('meta[name="csrf-token"]').attr("content") ||
-            this.config.csrfToken;
-
-        // FIX: Sesuaikan struktur allocations dengan StorePaymentRequest
-        const simplifiedAllocations = this.previewData.allocations.map(
-            (allocation) => ({
-                type: allocation.type,
-                // FIX: Kirim tagihan_id langsung (bukan nested object)
-                tagihan_id:
-                    allocation.type === "bulanan"
-                        ? allocation.tagihan.id_tagihan_bulanan
-                        : allocation.tagihan.id_tagihan_terjadwal,
-                allocated_amount: allocation.allocated_amount,
-            })
-        );
-
-        // Prepare form data sesuai dengan StorePaymentRequest
-        const formData = {
-            santri_id: this.config.santriId,
-            nominal_pembayaran: this.nominalPembayaran,
-            tanggal_pembayaran: $('[name="tanggal_pembayaran"]').val(),
-            payment_note: $('[name="payment_note"]').val(),
-            // Kirim allocations dengan struktur yang benar
-            allocations: simplifiedAllocations,
-            sisa_pembayaran: this.previewData.sisa_pembayaran,
-            _token: currentToken,
-        };
-
-        console.log("Sending payment data:", formData); // Debug log
-        console.log("Simplified allocations:", simplifiedAllocations); // Debug allocations
-
-        // Submit menggunakan AJAX dengan error handling yang lebih baik
-        $.ajax({
-            url: this.config.storeUrl,
-            type: "POST",
-            data: formData,
-            dataType: "json",
-            success: (response) => {
-                console.log("Payment success:", response);
-                Swal.close();
-
-                if (response.success || response.redirect_url) {
-                    // Redirect to receipt page
-                    const redirectUrl =
-                        response.redirect_url || response.redirect;
-                    if (redirectUrl) {
-                        window.location.href = redirectUrl;
-                    } else {
-                        // Fallback: reload page with success message
-                        window.location.reload();
-                    }
-                } else {
-                    Swal.fire({
-                        title: "Error",
-                        text:
-                            response.message ||
-                            "Terjadi kesalahan saat memproses pembayaran",
-                        icon: "error",
-                        backdrop: false,
-                    });
-                }
-            },
-            error: (xhr) => {
-                Swal.close();
-                console.error("Payment error:", xhr);
-
-                let errorMessage =
-                    "Terjadi kesalahan saat memproses pembayaran";
-
-                if (xhr.status === 302) {
-                    // Handle redirect case - might be successful but Laravel is redirecting
-                    console.log("Received 302 redirect, following...");
-                    const redirectLocation = xhr.getResponseHeader("Location");
-                    if (redirectLocation) {
-                        window.location.href = redirectLocation;
-                        return;
-                    }
-                } else if (xhr.status === 422) {
-                    // Validation error
-                    const errors = xhr.responseJSON?.errors;
-                    if (errors) {
-                        errorMessage = Object.values(errors).flat().join("\n");
-                        console.log("Validation errors:", errors);
-                    } else {
-                        errorMessage =
-                            xhr.responseJSON?.message || "Data tidak valid";
-                    }
-                } else if (xhr.status === 419) {
-                    // CSRF token mismatch
-                    errorMessage =
-                        "Sesi telah berakhir. Silakan refresh halaman.";
-                } else if (xhr.responseJSON?.message) {
-                    errorMessage = xhr.responseJSON.message;
-                }
-
-                Swal.fire({
-                    title: "Error",
-                    text: errorMessage,
-                    icon: "error",
-                    backdrop: false,
-                }).then(() => {
-                    if (xhr.status === 419) {
-                        // Refresh page on CSRF error
-                        window.location.reload();
-                    }
-                });
-            },
-        });
+        this.submitPaymentData(simplifiedAllocations, sisaPembayaran);
     }
 
     formatRupiah(number) {
@@ -510,7 +860,7 @@ class PaymentForm {
     }
 }
 
-// Check for duplicate payment warning
+// Enhanced duplicate payment check
 function checkDuplicatePayment(santriId, nominal, callback) {
     const lastPaymentKey = `lastPayment_${santriId}`;
     const lastPayment = localStorage.getItem(lastPaymentKey);
@@ -528,6 +878,7 @@ function checkDuplicatePayment(santriId, nominal, callback) {
                 showCancelButton: true,
                 confirmButtonText: "Ya, Lanjutkan",
                 cancelButtonText: "Batal",
+                backdrop: false,
             }).then((result) => {
                 if (result.isConfirmed) {
                     callback(true);
@@ -551,10 +902,27 @@ function checkDuplicatePayment(santriId, nominal, callback) {
     callback(true);
 }
 
+// Enhanced styling
 const style = document.createElement("style");
 style.textContent = `
     .high-z-index-swal {
         z-index: 10000 !important;
+    }
+
+    .form-control.is-valid {
+        border-color: #28a745;
+    }
+
+    .form-control.is-invalid {
+        border-color: #dc3545;
+    }
+
+    .invalid-feedback {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875em;
+        color: #dc3545;
     }
 `;
 document.head.appendChild(style);
