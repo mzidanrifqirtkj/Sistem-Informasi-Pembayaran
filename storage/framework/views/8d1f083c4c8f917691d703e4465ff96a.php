@@ -54,16 +54,19 @@
     <div id="app">
         <div class="main-wrapper main-wrapper-1">
             <div class="navbar-bg"></div>
-            <nav class="navbar navbar-expand-lg main-navbar">
-                <form class="form-inline mr-auto">
-                    <ul class="navbar-nav mr-3">
+            <nav class="navbar navbar-expand-lg main-navbar d-flex justify-content-between">
+                <!-- Left side - Sidebar toggle -->
+                <form class="form-inline">
+                    <ul class="navbar-nav">
                         <li>
-                            <a href="#" data-bs-toggle="offcanvas" class="nav-link nav-link-lg">
+                            <a href="#" data-toggle="sidebar" class="nav-link nav-link-lg">
                                 <i class="fas fa-bars"></i>
                             </a>
                         </li>
                     </ul>
                 </form>
+
+                <!-- Right side - Header/User menu -->
                 <?php echo $__env->make('layouts.header', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
             </nav>
 
