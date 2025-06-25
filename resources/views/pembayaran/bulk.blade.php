@@ -2,6 +2,17 @@
 @section('title_page', 'Pembayaran Massal')
 
 @section('content')
+    @if (session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
+
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </div>
+    @endif
     <div class="container">
         <div class="row mb-3">
             <div class="col-md-8">
