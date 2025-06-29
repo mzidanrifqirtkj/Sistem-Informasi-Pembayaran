@@ -45,14 +45,11 @@
                 </a>
             </li>
 
-
-
             <li class="<?php echo e(request()->routeIs('permissions.*') ? 'active' : ''); ?>">
                 <a href="<?php echo e(route('permissions.index')); ?>" class="nav-link">
                     <i class="fas fa-key"></i><span>Permissions</span>
                 </a>
             </li>
-
 
             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_user')): ?>
                 <li class="menu-header">User</li>
@@ -73,46 +70,50 @@
             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['view_biaya_terjadwal', 'view_kategori'])): ?>
                 <li class="dropdown <?php echo e(request()->routeIs('biaya_terjadwal*') ? 'active' : ''); ?>">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
-                        <i class="fas fa-file-invoice"></i> <span>List Biaya</span>
+                        <i class="fas fa-money-bill-alt"></i> <span>List Biaya</span>
                     </a>
                     <ul class="dropdown-menu">
-
                         <li class="<?php echo e(request()->routeIs('biaya-santris*') ? 'active' : ''); ?>">
-                            <a class="nav-link" href="<?php echo e(route('biaya-santris.index')); ?>">Biaya Santri</a>
+                            <a class="nav-link" href="<?php echo e(route('biaya-santris.index')); ?>">
+                                <i class="fas fa-user-graduate"></i> Biaya Santri
+                            </a>
                         </li>
 
-
                         <li class="<?php echo e(request()->routeIs('daftar-biayas*') ? 'active' : ''); ?>">
-                            <a class="nav-link" href="<?php echo e(route('daftar-biayas.index')); ?>">Daftar Biaya</a>
+                            <a class="nav-link" href="<?php echo e(route('daftar-biayas.index')); ?>">
+                                <i class="fas fa-list-ul"></i> Daftar Biaya
+                            </a>
                         </li>
 
                         <li class="<?php echo e(request()->routeIs('kategori-biayas*') ? 'active' : ''); ?>">
-                            <a class="nav-link" href="<?php echo e(route('kategori-biayas.index')); ?>">Kategori Biaya</a>
+                            <a class="nav-link" href="<?php echo e(route('kategori-biayas.index')); ?>">
+                                <i class="fas fa-tags"></i> Kategori Biaya
+                            </a>
                         </li>
-
                     </ul>
                 </li>
             <?php endif; ?>
-
-            <!-- Menu Tambahan Bulanan -->
-            
 
             <!-- Menu Tagihan -->
             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['view_tagihan_terjadwal', 'view_tagihan_bulanan'])): ?>
                 <li
                     class="dropdown <?php echo e(request()->routeIs('tagihan_bulanan*') || request()->routeIs('tagihan_terjadwal*') ? 'active' : ''); ?>">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
-                        <i class="fas fa-file-invoice"></i> <span>Tagihan</span>
+                        <i class="fas fa-file-invoice-dollar"></i> <span>Tagihan</span>
                     </a>
                     <ul class="dropdown-menu">
                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_tagihan_terjadwal')): ?>
                             <li class="<?php echo e(request()->routeIs('tagihan_terjadwal*') ? 'active' : ''); ?>">
-                                <a class="nav-link" href="<?php echo e(route('tagihan_terjadwal.index')); ?>">Tagihan Terjadwal</a>
+                                <a class="nav-link" href="<?php echo e(route('tagihan_terjadwal.index')); ?>">
+                                    <i class="fas fa-calendar-check"></i> Tagihan Terjadwal
+                                </a>
                             </li>
                         <?php endif; ?>
                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_tagihan_bulanan')): ?>
                             <li class="<?php echo e(request()->routeIs('tagihan_bulanan*') ? 'active' : ''); ?>">
-                                <a class="nav-link" href="<?php echo e(route('tagihan_bulanan.index')); ?>">Tagihan Bulanan</a>
+                                <a class="nav-link" href="<?php echo e(route('tagihan_bulanan.index')); ?>">
+                                    <i class="fas fa-calendar-alt"></i> Tagihan Bulanan
+                                </a>
                             </li>
                         <?php endif; ?>
                     </ul>
@@ -123,20 +124,21 @@
             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['view_pembayaran', 'view_riwayat_pembayaran'])): ?>
                 <li class="dropdown <?php echo e(request()->routeIs('pembayaran*') ? 'active' : ''); ?>">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
-                        <i class="fas fa-file-invoice"></i> <span>Pembayaran</span>
+                        <i class="fas fa-money-check"></i> <span>Pembayaran</span>
                     </a>
                     <ul class="dropdown-menu">
                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['pembayaran-list', 'pembayaran-create'])): ?>
                             <li class="nav-item">
                                 <a href="<?php echo e(route('pembayaran.index')); ?>" class="nav-link">
-                                    <i class="nav-icon fas fa-money-bill-wave"></i>
-                                    <p>Pembayaran</p>
+                                    <i class="fas fa-money-bill-wave"></i> Pembayaran
                                 </a>
                             </li>
                         <?php endif; ?>
                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_riwayat_pembayaran')): ?>
-                            <li class="<?php echo e(request()->routeIs('pembayaran.riwayat') ? 'active' : ''); ?>">
-                                <a class="nav-link" href="<?php echo e(route('pembayaran.riwayat')); ?>">Riwayat Pembayaran</a>
+                            <li class="<?php echo e(request()->routeIs('pembayaran.history') ? 'active' : ''); ?>">
+                                <a class="nav-link" href="<?php echo e(route('pembayaran.history')); ?>">
+                                    <i class="fas fa-history"></i> Riwayat
+                                </a>
                             </li>
                         <?php endif; ?>
                     </ul>
@@ -150,38 +152,48 @@
                 <li
                     class="dropdown <?php echo e(request()->routeIs('mapel*') || request()->routeIs('kelas*') || request()->routeIs('mapel_kelas*') ? 'active' : ''); ?>">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
-                        <i class="fas fa-file-invoice"></i> <span>Kurikulum</span>
+                        <i class="fas fa-graduation-cap"></i> <span>Kurikulum</span>
                     </a>
                     <ul class="dropdown-menu">
                         <li class="<?php echo e(request()->routeIs('riwayat-kelas*') ? 'active' : ''); ?>">
-                            <a class="nav-link" href="<?php echo e(route('riwayat-kelas.index')); ?>">Riwayat Kelas</a>
+                            <a class="nav-link" href="<?php echo e(route('riwayat-kelas.index')); ?>">
+                                <i class="fas fa-clock"></i> Riwayat Kelas
+                            </a>
                         </li>
                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_mapel_kelas')): ?>
                             <li class="<?php echo e(request()->routeIs('mapel_kelas*') ? 'active' : ''); ?>">
-                                <a class="nav-link" href="<?php echo e(route('mapel_kelas.index')); ?>">Mapel Kelas</a>
+                                <a class="nav-link" href="<?php echo e(route('mapel_kelas.index')); ?>">
+                                    <i class="fas fa-chalkboard-teacher"></i> Mapel Kelas
+                                </a>
                             </li>
                         <?php endif; ?>
                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_kelas')): ?>
                             <li class="<?php echo e(request()->routeIs('kelas*') ? 'active' : ''); ?>">
-                                <a class="nav-link" href="<?php echo e(route('kelas.index')); ?>">Kelas</a>
+                                <a class="nav-link" href="<?php echo e(route('kelas.index')); ?>">
+                                    <i class="fas fa-door-open"></i> Kelas
+                                </a>
                             </li>
                         <?php endif; ?>
                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_tahun_ajar')): ?>
                             <li class="<?php echo e(request()->routeIs('tahun_ajar*') ? 'active' : ''); ?>">
-                                <a class="nav-link" href="<?php echo e(route('tahun_ajar.index')); ?>">Tahun Ajar</a>
+                                <a class="nav-link" href="<?php echo e(route('tahun_ajar.index')); ?>">
+                                    <i class="fas fa-calendar"></i> Tahun Ajar
+                                </a>
                             </li>
                         <?php endif; ?>
                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view_mapel')): ?>
                             <li class="<?php echo e(request()->routeIs('mapel*') ? 'active' : ''); ?>">
-                                <a class="nav-link" href="<?php echo e(route('mapel.index')); ?>">Mata Pelajaran</a>
+                                <a class="nav-link" href="<?php echo e(route('mapel.index')); ?>">
+                                    <i class="fas fa-book-open"></i> Mata Pelajaran
+                                </a>
                             </li>
                         <?php endif; ?>
 
-                        <li class="<?php echo e(request()->routeIs('mapel*') ? 'active' : ''); ?>">
-                            <a class="nav-link" href="<?php echo e(route('qori_kelas.index')); ?>">Qori Kelas</a>
+                        <li class="<?php echo e(request()->routeIs('qori_kelas*') ? 'active' : ''); ?>">
+                            <a class="nav-link" href="<?php echo e(route('qori_kelas.index')); ?>">
+                                <i class="fas fa-quran"></i> Qori Kelas
+                            </a>
                         </li>
-
-                        
                     </ul>
                 </li>
             <?php endif; ?>

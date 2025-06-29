@@ -14,9 +14,6 @@
                             <i class="fas fa-users"></i> Pembayaran Massal
                         </a>
                     @endcan
-                    <a href="{{ route('pembayaran.history') }}" class="btn btn-info">
-                        <i class="fas fa-history"></i> Riwayat
-                    </a>
                 </div>
             </div>
         </div>

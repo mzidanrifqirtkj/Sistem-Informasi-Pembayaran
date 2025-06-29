@@ -13,9 +13,6 @@
                             <i class="fas fa-users"></i> Pembayaran Massal
                         </a>
                     <?php endif; ?>
-                    <a href="<?php echo e(route('pembayaran.history')); ?>" class="btn btn-info">
-                        <i class="fas fa-history"></i> Riwayat
-                    </a>
                 </div>
             </div>
         </div>

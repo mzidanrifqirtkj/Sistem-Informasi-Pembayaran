@@ -28,7 +28,7 @@ class BiayaSantriController extends Controller
     public function create()
     {
         $daftarBiayas = DaftarBiaya::with('kategoriBiaya')->get();
-        $santris = Santri::all();
+        $santris = Santri::orderBy('nama_santri', 'asc')->get(); // ✅ Sort di database
         return view('biaya-santris.create', compact('daftarBiayas', 'santris'));
     }
 
@@ -64,13 +64,16 @@ class BiayaSantriController extends Controller
     public function searchBiaya(Request $request)
     {
         $search = $request->q;
-        $biayas = DaftarBiaya::with('kategoriBiaya')
-            ->whereHas('kategoriBiaya', function ($query) use ($search) {
-                $query->where('nama_kategori', 'like', "%$search%");
-            })
-            ->orWhere('nominal', 'like', "%$search%")
-            ->get();
 
+        $query = DaftarBiaya::with('kategoriBiaya');
+
+        if (!empty($search)) {
+            $query->whereHas('kategoriBiaya', function ($q) use ($search) {
+                $q->where('nama_kategori', 'like', "%$search%");
+            });
+        }
+
+        $biayas = $query->get();
         return response()->json($biayas);
     }
 
