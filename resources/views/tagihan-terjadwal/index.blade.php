@@ -97,6 +97,34 @@
                                 </div>
                                 <div class="col-md-3">
                                     <div class="form-group">
+                                        <label for="jenis_kelamin">Jenis Kelamin</label>
+                                        <select name="jenis_kelamin" id="jenis_kelamin" class="form-control">
+                                            <option value="">-- Semua --</option>
+                                            @foreach ($jenisKelaminOptions as $kode => $label)
+                                                <option value="{{ $kode }}"
+                                                    {{ request('jenis_kelamin') == $kode ? 'selected' : '' }}>
+                                                    {{ $label }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="kelas_id">Kelas</label>
+                                        <select name="kelas_id" id="kelas_id" class="form-control">
+                                            <option value="">-- Semua --</option>
+                                            @foreach ($kelasOptions as $kelas)
+                                                <option value="{{ $kelas->id_kelas }}"
+                                                    {{ request('kelas_id') == $kelas->id_kelas ? 'selected' : '' }}>
+                                                    {{ $kelas->nama_kelas }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
                                         <label for="search">Cari Santri</label>
                                         <input type="text" name="search" id="search" class="form-control"
                                             placeholder="Nama atau NIS..." value="{{ request('search') }}">
@@ -252,6 +280,27 @@
                 </div>
             </div>
         </div>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                <form method="GET" action="{{ route('tagihan_terjadwal.index') }}" class="form-inline">
+                    @foreach (request()->except('per_page') as $key => $val)
+                        <input type="hidden" name="{{ $key }}" value="{{ $val }}">
+                    @endforeach
+                    <label class="mr-2">Tampilkan</label>
+                    <select name="per_page" onchange="this.form.submit()" class="form-control form-control-sm">
+                        <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                        <option value="20" {{ request('per_page') == 20 ? 'selected' : '' }}>20</option>
+                        <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                    </select>
+                    <span class="ml-2">data per halaman</span>
+                </form>
+            </div>
+
+            <div>
+                {{ $tagihanTerjadwals->links() }}
+            </div>
+        </div>
+
     </div>
 
     <!-- Loading Modal for Export -->
@@ -275,7 +324,7 @@
     <script>
         $(document).ready(function() {
             // Auto submit form when filter changes
-            $('#tahun, #status, #jenis_biaya').on('change', function() {
+            $('#tahun, #status, #jenis_biaya, #jenis_kelamin, #kelas_id').on('change', function() {
                 $('#filterForm').submit();
             });
 

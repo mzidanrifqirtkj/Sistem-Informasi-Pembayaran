@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BiayaSantri;
 use App\Models\DaftarBiaya;
+use App\Models\Kelas;
 use App\Models\Santri;
 use App\Models\TagihanTerjadwal;
 use App\Models\TahunAjar;
@@ -28,35 +29,66 @@ class TagihanTerjadwalController extends Controller
 
         // Apply role-based filtering
         if ($user->hasRole('admin')) {
-            // Admin dapat melihat semua tagihan
             $query->with(['santri', 'daftarBiaya.kategoriBiaya', 'biayaSantri', 'tahunAjar']);
         } elseif ($user->hasRole('santri')) {
             $santri = $user->santri;
             if ($santri) {
-                // Santri hanya melihat tagihannya sendiri
                 $query->where('santri_id', $santri->id_santri)
                     ->with(['santri', 'daftarBiaya.kategoriBiaya', 'biayaSantri', 'tahunAjar']);
             } else {
-                // Jika santri tidak ditemukan, return empty collection
                 $query->whereRaw('1 = 0');
             }
         }
 
-        // Apply filters
+        // Filter by tahun
         if ($request->filled('tahun')) {
             $query->where('tahun', $request->tahun);
         }
 
+        // Filter by status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
+        // Filter by jenis_biaya
         if ($request->filled('jenis_biaya')) {
             $query->whereHas('daftarBiaya.kategoriBiaya', function ($q) use ($request) {
                 $q->where('id_kategori_biaya', $request->jenis_biaya);
             });
         }
 
+        // Filter by jenis_kelamin
+        if ($request->filled('jenis_kelamin')) {
+            $query->whereHas('santri', function ($q) use ($request) {
+                $q->where('jenis_kelamin', $request->jenis_kelamin);
+            });
+        }
+
+        // Filter by kelas_id (kelas terakhir dari riwayat_kelas)
+        if ($request->filled('kelas_id')) {
+            // Ambil riwayat_kelas terbaru berdasarkan tahun_ajar_id terbesar per santri
+            $latestRiwayatIds = DB::table('riwayat_kelas as rk')
+                ->select('rk.id_riwayat_kelas')
+                ->join('mapel_kelas as mk', 'rk.mapel_kelas_id', '=', 'mk.id_mapel_kelas')
+                ->whereIn('rk.id_riwayat_kelas', function ($sub) {
+                    $sub->select(DB::raw('MAX(rk2.id_riwayat_kelas)'))
+                        ->from('riwayat_kelas as rk2')
+                        ->join('mapel_kelas as mk2', 'rk2.mapel_kelas_id', '=', 'mk2.id_mapel_kelas')
+                        ->groupBy('rk2.santri_id');
+                })
+                ->where('mk.kelas_id', $request->kelas_id)
+                ->pluck('rk.id_riwayat_kelas')
+                ->toArray();
+
+            // Terapkan ke query tagihan
+            $query->whereHas('santri.riwayatKelas', function ($q) use ($latestRiwayatIds) {
+                $q->whereIn('id_riwayat_kelas', $latestRiwayatIds);
+            });
+        }
+
+
+
+        // Search by nama_santri or NIS
         if ($request->filled('search')) {
             $searchTerm = $request->search;
             $query->whereHas('santri', function ($q) use ($searchTerm) {
@@ -65,9 +97,11 @@ class TagihanTerjadwalController extends Controller
             });
         }
 
-        $tagihanTerjadwals = $query->paginate(10);
+        // Pagination per_page
+        $perPage = $request->input('per_page', 10);
+        $tagihanTerjadwals = $query->paginate($perPage)->appends($request->query());
 
-        // Get filter options
+        // Filter options
         $tahunOptions = TagihanTerjadwal::select('tahun')->distinct()->orderBy('tahun', 'desc')->pluck('tahun');
         $statusOptions = ['belum_lunas', 'dibayar_sebagian', 'lunas'];
         $jenisBiayaOptions = DaftarBiaya::with('kategoriBiaya')
@@ -77,13 +111,23 @@ class TagihanTerjadwalController extends Controller
                 return $items->first()->kategoriBiaya;
             });
 
+        $jenisKelaminOptions = [
+            'L' => 'Laki-laki',
+            'P' => 'Perempuan',
+        ];
+
+        $kelasOptions = Kelas::orderBy('nama_kelas')->get();
+
         return view('tagihan-terjadwal.index', compact(
             'tagihanTerjadwals',
             'tahunOptions',
             'statusOptions',
-            'jenisBiayaOptions'
+            'jenisBiayaOptions',
+            'jenisKelaminOptions',
+            'kelasOptions'
         ));
     }
+
 
     public function create()
     {
@@ -319,11 +363,11 @@ class TagihanTerjadwalController extends Controller
                                 'tahun' => $selectedTahun,
                                 'tahun_ajar_id' => $selectedTahunAjarId,
                                 'rincian' => [
-                                        [
-                                            'keterangan' => 'Tagihan otomatis: ' . $biayaSantri->daftarBiaya->kategoriBiaya->nama_kategori,
-                                            'nominal' => $nominalTagihan
-                                        ],
+                                    [
+                                        'keterangan' => 'Tagihan otomatis: ' . $biayaSantri->daftarBiaya->kategoriBiaya->nama_kategori,
+                                        'nominal' => $nominalTagihan
                                     ],
+                                ],
                             ]);
                         }
 
