@@ -10,179 +10,239 @@ use Spatie\Permission\Models\Role;
 
 class RolePermissionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Nonaktifkan foreign key checks
+        // Reset database
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-
-        // Hapus data lama tanpa truncate
         Role::query()->delete();
         Permission::query()->delete();
-        DB::table('model_has_roles')->delete(); // Hapus relasi agar tidak error
-
-        // Reset auto-increment (opsional)
+        DB::table('model_has_roles')->delete();
+        DB::table('model_has_permissions')->delete();
+        DB::table('role_has_permissions')->delete();
         DB::statement('ALTER TABLE roles AUTO_INCREMENT = 1;');
         DB::statement('ALTER TABLE permissions AUTO_INCREMENT = 1;');
-
-        // Aktifkan kembali foreign key checks
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        // Membuat role
-        $roleAdmin = Role::create(['name' => 'admin']);
-        $roleSantri = Role::create(['name' => 'santri']);
+        // Reset cached roles and permissions
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Membuat permission untuk setiap fitur
-        $adminPermissions = [
-            // Dashboard
-            'view_dashboard',
+        // All permissions dengan Laravel standard format
+        $permissions = [
+            // Dashboard & Profile
+            'dashboard.view',
+            'profile.view',
+            'profile.edit',
 
-            // Profile
-            'view_profile',
+            // Santri Management
+            'santri.view',
+            'santri.create',
+            'santri.edit',
+            'santri.delete',
+            'santri.import',
 
-            // Santri
-            'view_santri',
-            'create_santri',
-            'edit_santri',
-            'delete_santri',
-            'import_santri',
+            // User Management
+            'user.view',
+            'user.create',
+            'user.edit',
+            'user.delete',
+            'user.import',
 
-            // User
-            'view_user',
-            'create_user',
-            'edit_user',
-            'delete_user',
-            'import_user',
+            // Roles & Permissions Management
+            'roles.view',
+            'roles.create',
+            'roles.edit',
+            'roles.delete',
+            'permissions.view',
+            'permissions.create',
+            'permissions.edit',
+            'permissions.delete',
 
-            // Kategori Santri
-            'view_kategori_santri',
-            'create_kategori_santri',
-            'edit_kategori_santri',
-            'delete_kategori_santri',
+            // Financial - Biaya
+            'biaya-santri.view',
+            'biaya-santri.create',
+            'biaya-santri.edit',
+            'biaya-santri.delete',
+            'daftar-biaya.view',
+            'daftar-biaya.create',
+            'daftar-biaya.edit',
+            'daftar-biaya.delete',
+            'kategori-biaya.view',
+            'kategori-biaya.create',
+            'kategori-biaya.edit',
+            'kategori-biaya.delete',
 
-            // Tagihan Terjadwal
-            'view_tagihan_terjadwal',
-            'create_tagihan_terjadwal',
-            'edit_tagihan_terjadwal',
-            'delete_tagihan_terjadwal',
-            'bulk_generate_tagihan_terjadwal',
+            // Financial - Tagihan
+            'tagihan-terjadwal.view',
+            'tagihan-terjadwal.create',
+            'tagihan-terjadwal.edit',
+            'tagihan-terjadwal.delete',
+            'tagihan-terjadwal.export',
+            'tagihan-bulanan.view',
+            'tagihan-bulanan.create',
+            'tagihan-bulanan.edit',
+            'tagihan-bulanan.delete',
+            'tagihan-bulanan.export',
+            'tambahan-bulanan.view',
+            'tambahan-bulanan.create',
+            'tambahan-bulanan.edit',
+            'tambahan-bulanan.delete',
+            'item-santri.view',
+            'item-santri.edit',
 
-            // Tambahan Bulanan
-            'view_tambahan_bulanan',
-            'create_tambahan_bulanan',
-            'edit_tambahan_bulanan',
-            'delete_tambahan_bulanan',
-            'view_item_santri',
-            'edit_item_santri',
+            // Financial - Pembayaran
+            'pembayaran.list',
+            'pembayaran.create',
+            'pembayaran.view',
+            'pembayaran.void',
+            'pembayaran.bulk',
+            'pembayaran.history',
 
-            // Tagihan Bulanan
-            'view_tagihan_bulanan',
-            'create_tagihan_bulanan',
-            'edit_tagihan_bulanan',
-            'delete_tagihan_bulanan',
-            'bulk_generate_tagihan_bulanan',
+            // Academic - Kurikulum
+            'kelas.view',
+            'kelas.create',
+            'kelas.edit',
+            'kelas.delete',
+            'mapel.view',
+            'mapel.create',
+            'mapel.edit',
+            'mapel.delete',
+            'mapel-kelas.view',
+            'mapel-kelas.create',
+            'mapel-kelas.edit',
+            'mapel-kelas.delete',
+            'tahun-ajar.view',
+            'tahun-ajar.create',
+            'tahun-ajar.edit',
+            'tahun-ajar.delete',
+            'qori-kelas.view',
+            'qori-kelas.create',
+            'qori-kelas.edit',
+            'qori-kelas.delete',
+            'riwayat-kelas.view',
+            'riwayat-kelas.create',
+            'riwayat-kelas.edit',
+            'riwayat-kelas.delete',
 
-            // Pembayaran
-            'view_pembayaran',
-            'create_pembayaran',
-            'edit_pembayaran',
-            'delete_pembayaran',
-            'view_riwayat_pembayaran',
+            // Academic - Ustadz Management
+            'ustadz.view',
+            'ustadz.create',
+            'ustadz.edit',
+            'ustadz.delete',
+            'penugasan-ustadz.view',
+            'penugasan-ustadz.create',
+            'penugasan-ustadz.edit',
+            'penugasan-ustadz.delete',
 
-            // Biaya Terjadwal
-            'view_biaya_terjadwal',
-            'create_biaya_terjadwal',
-            'edit_biaya_terjadwal',
-            'delete_biaya_terjadwal',
-
-            // Kelas
-            'view_kelas',
-            'create_kelas',
-            'edit_kelas',
-            'delete_kelas',
-
-            // Mapel Kelas
-            'view_mapel_kelas',
-            'create_mapel_kelas',
-            'edit_mapel_kelas',
-            'delete_mapel_kelas',
-
-            // Tahun Ajar
-            'view_tahun_ajar',
-            'create_tahun_ajar',
-            'edit_tahun_ajar',
-            'delete_tahun_ajar',
-
-            // Mata Pelajaran
-            'view_mapel',
-            'create_mapel',
-            'edit_mapel',
-            'delete_mapel',
-
-            // Ustadz
-            'view_ustadz',
-            'create_ustadz',
-            'edit_ustadz',
-            'delete_ustadz',
-
-            // Penugasan Ustadz
-            'view_penugasan_ustadz',
-            'create_penugasan_ustadz',
-            'edit_penugasan_ustadz',
-            'delete_penugasan_ustadz',
-            'get_wali_kelas',
-            'get_qori',
-            'create_qori',
-            'get_pelajaran',
-            'store_qori',
-            'create_mustahiq',
-            'get_kelas',
-            'store_mustahiq',
-
-            // Absensi
-            'view_absensi',
-            'create_absensi',
-            'edit_absensi',
-            'delete_absensi',
-            'import_absensi',
-            'get_santri_list',
-
-            // Profile
-            'view_profile',
-            'edit_profile',
+            // Future: Absensi & Penilaian (template for later)
+            // 'absensi.view',
+            // 'absensi.create',
+            // 'absensi.edit',
+            // 'absensi.delete',
+            // 'penilaian.view',
+            // 'penilaian.create',
+            // 'penilaian.edit',
+            // 'penilaian.delete',
         ];
 
-        // Memberikan permission terbatas ke role santri
+        // Create all permissions
+        foreach ($permissions as $permission) {
+            Permission::create(['name' => $permission]);
+        }
+
+        // Create roles
+        $adminRole = Role::create(['name' => 'admin']);
+        $santriRole = Role::create(['name' => 'santri']);
+        $ustadzRole = Role::create(['name' => 'ustadz']);
+
+        // ADMIN: Full access to everything
+        $adminPermissions = $permissions; // All permissions
+        $adminRole->givePermissionTo($adminPermissions);
+
+        // SANTRI: Limited view permissions (own data only via policy)
         $santriPermissions = [
-            'view_dashboard', // Santri bisa melihat dashboard
-            'view_santri',   // Santri bisa melihat data santri (mungkin hanya data dirinya sendiri)
-            'view_absensi',  // Santri bisa melihat absensi
-            'view_item_santri',
-            'view_tagihan_terjadwal',
-            'view_tagihan_bulanan',
-            'view_riwayat_pembayaran',
-            'view_profile',
-            'edit_profile',
-            'view_absensi'
+            // Basic access
+            'dashboard.view',
+            'profile.view',
+            'profile.edit',
+
+            // View own santri data (policy will restrict to own data)
+            'santri.view',
+
+            // View financial data (policy will restrict to own data)
+            'biaya-santri.view',
+            'daftar-biaya.view',
+            'kategori-biaya.view',
+            'tagihan-terjadwal.view',
+            'tagihan-bulanan.view',
+            'tambahan-bulanan.view',
+            'item-santri.view',
+            'pembayaran.list',
+            'pembayaran.view',
+            'pembayaran.history',
+
+            // View academic data (policy will restrict to own data)
+            'kelas.view',
+            'mapel.view',
+            'mapel-kelas.view',
+            'tahun-ajar.view',
+            'qori-kelas.view',
+            'riwayat-kelas.view',
+
+            // Future: Own academic data
+            // 'absensi.view',
+            // 'penilaian.view',
         ];
+        $santriRole->givePermissionTo($santriPermissions);
 
-        // Menambahkan permission ke database
-        foreach ($adminPermissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
-        }
+        // USTADZ: Academic permissions + own data + limited student academic data
+        $ustadzPermissions = [
+            // Basic access (same as santri)
+            'dashboard.view',
+            'profile.view',
+            'profile.edit',
 
-        foreach ($santriPermissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
-        }
+            // View own santri data
+            'santri.view',
 
-        // Memberikan permission ke role admin
-        $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
-        $roleAdmin->syncPermissions($adminPermissions);
+            // View financial data (own data only via policy)
+            'biaya-santri.view',
+            'daftar-biaya.view',
+            'kategori-biaya.view',
+            'tagihan-terjadwal.view',
+            'tagihan-bulanan.view',
+            'tambahan-bulanan.view',
+            'item-santri.view',
+            'pembayaran.list',
+            'pembayaran.view',
+            'pembayaran.history',
 
-        // Memberikan permission ke role santri
-        $roleSantri = Role::firstOrCreate(['name' => 'santri']);
-        $roleSantri->syncPermissions($santriPermissions);
+            // Academic permissions (full access to manage classes)
+            'kelas.view',
+            'mapel.view',
+            'mapel-kelas.view',
+            'tahun-ajar.view',
+            'qori-kelas.view',
+            'riwayat-kelas.view', // Can view student class history in taught classes
+
+            // Ustadz management (view only)
+            'ustadz.view',
+            'penugasan-ustadz.view',
+
+            // Future: Academic data for students in taught classes
+            // 'absensi.view',
+            // 'absensi.create',
+            // 'absensi.edit',
+            // 'absensi.delete',
+            // 'penilaian.view',
+            // 'penilaian.create',
+            // 'penilaian.edit',
+            // 'penilaian.delete',
+        ];
+        $ustadzRole->givePermissionTo($ustadzPermissions);
+
+        echo "✅ Roles and Permissions created successfully!\n";
+        echo "📊 Admin: " . count($adminPermissions) . " permissions\n";
+        echo "👨‍🎓 Santri: " . count($santriPermissions) . " permissions\n";
+        echo "👨‍🏫 Ustadz: " . count($ustadzPermissions) . " permissions\n";
     }
 }
