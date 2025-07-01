@@ -51,6 +51,6 @@ class UserSeeder extends Seeder
         //     }
         // }
 
-        $this->command->info('Data admin dan santri berhasil ditambahkan!');
+        $this->command->info('Data admin ditambahkan!');
     }
 }

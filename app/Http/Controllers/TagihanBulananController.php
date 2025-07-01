@@ -33,6 +33,16 @@ class TagihanBulananController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('tagihan-bulanan.view');
+
+        $user = auth()->user();
+
+        // Role-based filtering
+        if ($user->hasRole('santri') && !$user->santri->is_ustadz) {
+            // Santri hanya lihat data sendiri - redirect ke show
+            return redirect()->route('tagihan_bulanan.show', $user->santri->id_santri);
+        }
+
         // Get filter parameters
         $filters = $request->only(['nama_santri', 'kelas_id', 'tahun', 'status', 'bulan']);
         $tahun = $filters['tahun'] ?? Carbon::now()->year;
@@ -91,6 +101,19 @@ class TagihanBulananController extends Controller
             'tagihanBulanan.pembayarans',
             'tagihanBulanan.paymentAllocations'
         ]);
+
+        // Role-based access control
+        if ($user->hasRole('ustadz') && $user->santri && $user->santri->is_ustadz) {
+            // Ustadz can see: own data + santri they teach
+            $santriIds = [$user->santri->id_santri]; // Own data
+
+            // Add santri that ustadz teaches
+            $taughtSantriIds = $this->getSantriIdsUstadzTeaches($user->santri);
+            $santriIds = array_merge($santriIds, $taughtSantriIds);
+
+            $query->whereIn('id_santri', array_unique($santriIds));
+        }
+        // Admin sees all (no additional filter needed)
 
         // Apply filters
         if (!empty($filters['nama_santri'])) {
@@ -171,10 +194,21 @@ class TagihanBulananController extends Controller
      */
     public function create()
     {
-        $santris = Santri::where('status', 'aktif')
-            ->orderBy('nama_santri')
-            ->get();
+        $this->authorize('tagihan-bulanan.create');
 
+        $user = auth()->user();
+        $query = Santri::where('status', 'aktif')->orderBy('nama_santri');
+
+        // Role-based filtering for santri selection
+        if ($user->hasRole('ustadz') && $user->santri && $user->santri->is_ustadz) {
+            // Ustadz can create for: own data + santri they teach
+            $santriIds = [$user->santri->id_santri]; // Own data
+            $taughtSantriIds = $this->getSantriIdsUstadzTeaches($user->santri);
+            $santriIds = array_merge($santriIds, $taughtSantriIds);
+            $query->whereIn('id_santri', array_unique($santriIds));
+        }
+
+        $santris = $query->get();
         $currentYear = Carbon::now()->year;
         $years = range($currentYear - 1, $currentYear + 1);
         $months = TagihanBulanan::$bulanMapping;
@@ -187,6 +221,8 @@ class TagihanBulananController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('tagihan-bulanan.create');
+
         $request->validate([
             'santri_id' => 'required|exists:santris,id_santri',
             'bulan' => 'required|in:Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
@@ -196,6 +232,9 @@ class TagihanBulananController extends Controller
             'custom_rincian.*.nama' => 'required_with:custom_rincian|string',
             'custom_rincian.*.nominal' => 'required_with:custom_rincian|numeric|min:0'
         ]);
+
+        // Check access to santri
+        $this->checkSantriAccess($request->santri_id);
 
         // Check for duplicate
         $exists = TagihanBulanan::where('santri_id', $request->santri_id)
@@ -279,16 +318,18 @@ class TagihanBulananController extends Controller
     /**
      * Display the specified resource.
      */
-    /**
-     * Display the specified resource.
-     */
     public function show($id, $tahun = null)
     {
+        $this->authorize('tagihan-bulanan.view');
+
         // $id adalah santri_id, bukan tagihan_id
         $santri = Santri::with([
             'riwayatKelas.mapelKelas.kelas',
             'biayaSantris.daftarBiaya.kategoriBiaya'
         ])->findOrFail($id);
+
+        // Check access to santri
+        $this->checkSantriAccess($santri->id_santri);
 
         // Get tahun from parameter or current year
         $tahun = $tahun ?? request('tahun') ?? Carbon::now()->year;
@@ -368,7 +409,12 @@ class TagihanBulananController extends Controller
      */
     public function edit($id)
     {
+        $this->authorize('tagihan-bulanan.edit');
+
         $tagihan = TagihanBulanan::with('santri')->findOrFail($id);
+
+        // Check access to santri
+        $this->checkSantriAccess($tagihan->santri_id);
 
         // Check if can edit
         if (!$tagihan->canEdit()) {
@@ -388,7 +434,12 @@ class TagihanBulananController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $this->authorize('tagihan-bulanan.edit');
+
         $tagihan = TagihanBulanan::findOrFail($id);
+
+        // Check access to santri
+        $this->checkSantriAccess($tagihan->santri_id);
 
         // Check if can edit
         if (!$tagihan->canEdit()) {
@@ -435,7 +486,12 @@ class TagihanBulananController extends Controller
      */
     public function destroy($id)
     {
+        $this->authorize('tagihan-bulanan.delete');
+
         $tagihan = TagihanBulanan::findOrFail($id);
+
+        // Check access to santri
+        $this->checkSantriAccess($tagihan->santri_id);
 
         // Check if can delete
         if (!$tagihan->canDelete()) {
@@ -464,6 +520,8 @@ class TagihanBulananController extends Controller
      */
     public function createBulkBulanan(Request $request)
     {
+        $this->authorize('tagihan-bulanan.create');
+
         $currentYear = Carbon::now()->year;
         $years = range($currentYear - 1, $currentYear + 1);
         $months = TagihanBulanan::$bulanMapping;
@@ -471,11 +529,19 @@ class TagihanBulananController extends Controller
         // Get kelas list
         $kelasList = Kelas::orderBy('nama_kelas')->get();
 
-        // Get santri list for selection
-        $santris = Santri::where('status', 'aktif')
-            ->with('riwayatKelas.mapelKelas.kelas')
-            ->orderBy('nama_santri')
-            ->get();
+        $user = auth()->user();
+        $query = Santri::where('status', 'aktif')->with('riwayatKelas.mapelKelas.kelas')->orderBy('nama_santri');
+
+        // Role-based filtering for santri selection
+        if ($user->hasRole('ustadz') && $user->santri && $user->santri->is_ustadz) {
+            // Ustadz can create for: own data + santri they teach
+            $santriIds = [$user->santri->id_santri]; // Own data
+            $taughtSantriIds = $this->getSantriIdsUstadzTeaches($user->santri);
+            $santriIds = array_merge($santriIds, $taughtSantriIds);
+            $query->whereIn('id_santri', array_unique($santriIds));
+        }
+
+        $santris = $query->get();
 
         return view('tagihan_bulanan.createBulk', compact('years', 'months', 'kelasList', 'santris'));
     }
@@ -485,6 +551,8 @@ class TagihanBulananController extends Controller
      */
     public function generateBulkBulanan(Request $request)
     {
+        $this->authorize('tagihan-bulanan.create');
+
         $request->validate([
             'tahun' => 'required|integer|min:2020|max:' . (Carbon::now()->year + 1),
             'bulan' => 'required|array|min:1',
@@ -519,6 +587,17 @@ class TagihanBulananController extends Controller
 
             // Build santri query
             $query = Santri::where('status', 'aktif');
+
+            $user = auth()->user();
+
+            // Role-based filtering
+            if ($user->hasRole('ustadz') && $user->santri && $user->santri->is_ustadz) {
+                // Ustadz can generate for: own data + santri they teach
+                $allowedSantriIds = [$user->santri->id_santri]; // Own data
+                $taughtSantriIds = $this->getSantriIdsUstadzTeaches($user->santri);
+                $allowedSantriIds = array_merge($allowedSantriIds, $taughtSantriIds);
+                $query->whereIn('id_santri', array_unique($allowedSantriIds));
+            }
 
             // Filter by selected santri IDs if provided
             if (!empty($request->santri_ids)) {
@@ -681,6 +760,8 @@ class TagihanBulananController extends Controller
      */
     public function export(Request $request)
     {
+        $this->authorize('tagihan-bulanan.export');
+
         $filters = $request->only(['nama_santri', 'kelas_id', 'tahun', 'status', 'bulan']);
         $tahun = $filters['tahun'] ?? Carbon::now()->year;
 
@@ -698,6 +779,8 @@ class TagihanBulananController extends Controller
      */
     public function getAvailableMonths(Request $request)
     {
+        $this->authorize('tagihan-bulanan.view');
+
         $request->validate([
             'tahun' => 'required|integer',
             'santri_ids' => 'nullable|array'
@@ -761,12 +844,17 @@ class TagihanBulananController extends Controller
      */
     public function createPayment(Request $request, $id)
     {
+        $this->authorize('tagihan-bulanan.edit');
+
         $request->validate([
             'nominal_pembayaran' => 'required|numeric|min:1',
             'tanggal_pembayaran' => 'required|date'
         ]);
 
         $tagihan = TagihanBulanan::findOrFail($id);
+
+        // Check access to santri
+        $this->checkSantriAccess($tagihan->santri_id);
 
         if ($tagihan->status === 'lunas') {
             return back()->with('error', 'Tagihan sudah lunas.');
@@ -817,6 +905,8 @@ class TagihanBulananController extends Controller
      */
     public function handleOverpayment(Request $request)
     {
+        $this->authorize('tagihan-bulanan.edit');
+
         $request->validate([
             'pembayaran_id' => 'required|exists:pembayarans,id_pembayaran',
             'action' => 'required|in:refund,next_month'
@@ -836,10 +926,14 @@ class TagihanBulananController extends Controller
      */
     public function getSantriBiayaInfo(Request $request)
     {
+        $this->authorize('tagihan-bulanan.view');
 
         $request->validate([
             'santri_id' => 'required|exists:santris,id_santri'
         ]);
+
+        // Check access to santri
+        $this->checkSantriAccess($request->santri_id);
 
         $santri = Santri::with(['biayaSantris.daftarBiaya.kategoriBiaya'])->findOrFail($request->santri_id);
 
@@ -882,6 +976,8 @@ class TagihanBulananController extends Controller
      */
     public function dashboard(Request $request)
     {
+        $this->authorize('tagihan-bulanan.view');
+
         $tahun = $request->get('tahun', Carbon::now()->year);
 
         // Get comprehensive stats
@@ -941,11 +1037,10 @@ class TagihanBulananController extends Controller
     /**
      * Get santri yearly tagihan data for create form
      */
-    /**
-     * Get santri yearly tagihan data for create form
-     */
     public function getSantriYearlyData(Request $request)
     {
+        $this->authorize('tagihan-bulanan.view');
+
         // Debug log untuk melihat data yang diterima
         Log::info('getSantriYearlyData called', [
             'all_input' => $request->all(),
@@ -963,6 +1058,9 @@ class TagihanBulananController extends Controller
         try {
             $santriId = $request->input('santri_id');
             $tahun = $request->input('tahun');
+
+            // Check access to santri
+            $this->checkSantriAccess($santriId);
 
             $santri = Santri::findOrFail($santriId);
 
@@ -1089,5 +1187,57 @@ class TagihanBulananController extends Controller
                 'message' => 'Terjadi kesalahan saat memuat data: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Check if user has access to santri data
+     */
+    private function checkSantriAccess($santriId)
+    {
+        $user = auth()->user();
+
+        // Admin has access to all
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        // Santri can only access own data
+        if ($user->hasRole('santri') && !$user->santri->is_ustadz) {
+            if ($user->santri->id_santri != $santriId) {
+                abort(403, 'Unauthorized access to santri data');
+            }
+            return true;
+        }
+
+        // Ustadz can access own data + santri they teach
+        if ($user->hasRole('ustadz') && $user->santri && $user->santri->is_ustadz) {
+            // Own data
+            if ($user->santri->id_santri == $santriId) {
+                return true;
+            }
+
+            // Check if ustadz teaches this santri
+            $santri = Santri::findOrFail($santriId);
+            $santriPolicy = new \App\Policies\SantriPolicy();
+
+            if ($santriPolicy->ustadzTeachesSantri($user, $santri)) {
+                return true;
+            }
+
+            abort(403, 'Unauthorized access to santri data');
+        }
+
+        abort(403, 'Unauthorized access');
+    }
+
+    /**
+     * Get santri IDs that ustadz teaches
+     */
+    private function getSantriIdsUstadzTeaches($ustadz)
+    {
+        $santriPolicy = new \App\Policies\SantriPolicy();
+        $santriCollection = $santriPolicy->getSantriDiKelasUstadz($ustadz);
+
+        return $santriCollection->pluck('id_santri')->toArray();
     }
 }

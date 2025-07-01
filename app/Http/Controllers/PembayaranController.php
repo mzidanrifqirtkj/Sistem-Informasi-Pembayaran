@@ -25,13 +25,18 @@ class PembayaranController extends Controller
         $this->validationService = $validationService;
     }
 
-    /**
-     * Display listing of santri untuk pembayaran
-     */
     public function index(Request $request)
     {
-        $query = Santri::with('kategoriSantri')
-            ->where('status', 'aktif');
+        $this->authorize('pembayaran.list');
+
+        $user = auth()->user();
+        $query = Santri::with('kategoriSantri')->where('status', 'aktif');
+
+        // Role-based filtering
+        if ($user->hasRole('santri') && !$user->santri->is_ustadz) {
+            // Santri hanya lihat data sendiri - redirect ke form pembayaran sendiri
+            return redirect()->route('pembayaran.show', $user->santri->id_santri);
+        }
 
         // Search functionality
         if ($request->has('search')) {
@@ -52,18 +57,23 @@ class PembayaranController extends Controller
         return view('pembayaran.index', compact('santris'));
     }
 
-    /**
-     * Show payment form untuk santri
-     */
     public function show($santriId)
     {
+        $this->authorize('pembayaran.create');
+
         try {
             $santri = Santri::findOrFail($santriId);
 
-            // Validate santri aktif
-            $this->validationService->validateSantriActive($santri);
+            // Check if user can access this santri's payment data
+            $user = auth()->user();
+            if ($user->hasRole('santri') && !$user->santri->is_ustadz) {
+                // Santri can only access own payment
+                if ($user->santri->id_santri != $santri->id_santri) {
+                    abort(403, 'Unauthorized access to payment data');
+                }
+            }
 
-            // Get tagihan data
+            $this->validationService->validateSantriActive($santri);
             $data = $this->paymentService->getTagihanSantri($santri);
 
             return view('pembayaran.create', $data);
@@ -75,11 +85,10 @@ class PembayaranController extends Controller
         }
     }
 
-    /**
-     * Preview payment allocation
-     */
     public function preview(Request $request)
     {
+        $this->authorize('pembayaran.create');
+
         try {
             \Log::info('Preview request received', $request->all());
 
@@ -128,17 +137,15 @@ class PembayaranController extends Controller
         }
     }
 
-    /**
-     * Store pembayaran
-     */
     public function store(StorePaymentRequest $request)
     {
+        $this->authorize('pembayaran.create');
+
         try {
             DB::beginTransaction();
 
             \Log::info('Payment store request:', $request->all());
 
-            // Process payment menggunakan service
             $pembayaran = $this->paymentService->processPayment($request->validated());
 
             DB::commit();
@@ -148,20 +155,17 @@ class PembayaranController extends Controller
                 'receipt_number' => $pembayaran->receipt_number
             ]);
 
-            // Check if request is AJAX
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Pembayaran berhasil diproses',
                     'pembayaran_id' => $pembayaran->id_pembayaran,
                     'redirect_url' => route('pembayaran.receipt', $pembayaran->id_pembayaran),
-                    // TAMBAH: Status refresh data
                     'should_refresh' => true,
                     'refresh_url' => route('pembayaran.show', $request->santri_id)
                 ]);
             }
 
-            // Regular form submission
             return redirect()
                 ->route('pembayaran.receipt', $pembayaran->id_pembayaran)
                 ->with('success', 'Pembayaran berhasil diproses');
@@ -188,11 +192,10 @@ class PembayaranController extends Controller
         }
     }
 
-    /**
-     * Show receipt/kwitansi
-     */
     public function receipt($id)
     {
+        $this->authorize('pembayaran.view');
+
         $pembayaran = Pembayaran::with([
             'tagihanBulanan.santri',
             'tagihanTerjadwal.santri',
@@ -201,9 +204,20 @@ class PembayaranController extends Controller
             'createdBy'
         ])->findOrFail($id);
 
-        $isReprint = request()->has('reprint');
+        // Check if user can view this payment receipt
+        $user = auth()->user();
+        if ($user->hasRole('santri') && !$user->santri->is_ustadz) {
+            $santriId = $pembayaran->tagihanBulanan?->santri_id
+                ?? $pembayaran->tagihanTerjadwal?->santri_id
+                ?? $pembayaran->paymentAllocations->first()?->tagihanBulanan?->santri_id
+                ?? $pembayaran->paymentAllocations->first()?->tagihanTerjadwal?->santri_id;
 
-        // Log reprint if needed
+            if ($user->santri->id_santri != $santriId) {
+                abort(403, 'Unauthorized access to payment receipt');
+            }
+        }
+
+        $isReprint = request()->has('reprint');
         if ($isReprint) {
             Log::info('Kwitansi reprint', [
                 'pembayaran_id' => $id,
@@ -214,11 +228,10 @@ class PembayaranController extends Controller
         return view('pembayaran.receipt', compact('pembayaran', 'isReprint'));
     }
 
-    /**
-     * Print receipt
-     */
     public function printReceipt($id)
     {
+        $this->authorize('pembayaran.view');
+
         $pembayaran = Pembayaran::with([
             'tagihanBulanan.santri',
             'tagihanTerjadwal.santri',
@@ -231,11 +244,11 @@ class PembayaranController extends Controller
         return view('pembayaran.print-receipt', compact('pembayaran', 'isReprint'));
     }
 
-    /**
-     * History pembayaran
-     */
     public function history(Request $request)
     {
+        $this->authorize('pembayaran.list');
+
+        $user = auth()->user();
         $query = Pembayaran::with([
             'tagihanBulanan.santri',
             'tagihanTerjadwal.santri',
@@ -245,6 +258,22 @@ class PembayaranController extends Controller
             'voidedBy'
         ])->orderBy('created_at', 'desc');
 
+        // Role-based filtering
+        if ($user->hasRole('santri') && !$user->santri->is_ustadz) {
+            // Santri only sees own payments
+            $query->where(function ($q) use ($user) {
+                $q->whereHas('tagihanBulanan.santri', function ($sq) use ($user) {
+                    $sq->where('id_santri', $user->santri->id_santri);
+                })->orWhereHas('tagihanTerjadwal.santri', function ($sq) use ($user) {
+                    $sq->where('id_santri', $user->santri->id_santri);
+                })->orWhereHas('paymentAllocations.tagihanBulanan.santri', function ($sq) use ($user) {
+                    $sq->where('id_santri', $user->santri->id_santri);
+                })->orWhereHas('paymentAllocations.tagihanTerjadwal.santri', function ($sq) use ($user) {
+                    $sq->where('id_santri', $user->santri->id_santri);
+                });
+            });
+        }
+
         // Filter by date range
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('tanggal_pembayaran', [
@@ -253,11 +282,11 @@ class PembayaranController extends Controller
             ]);
         }
 
-        // Filter by status - FIX INI
+        // Filter by status
         if ($request->filled('status')) {
-            if ($request->status === '1') { // Void
+            if ($request->status === '1') {
                 $query->where('is_void', true);
-            } elseif ($request->status === '0') { // Aktif
+            } elseif ($request->status === '0') {
                 $query->where('is_void', false);
             }
         }
@@ -287,8 +316,6 @@ class PembayaranController extends Controller
         }
 
         $pembayarans = $query->paginate(20);
-
-        // Append query parameters untuk pagination
         $pembayarans->appends($request->query());
 
         return view('pembayaran.history', compact('pembayarans'));

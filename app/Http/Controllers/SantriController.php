@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Exports\SantriImportTemplateExport;
@@ -19,28 +18,82 @@ class SantriController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Santri::class);
 
-        $santris = Santri::select('*')
-            ->orderBy('created_at', 'desc');
+        $user = auth()->user();
+
+        // Role-based data access
+        if ($user->hasRole('santri') && !$user->santri->is_ustadz) {
+            // Santri regular redirect to own profile
+            return redirect()->route('santri.show', $user->santri->id_santri);
+        }
+
+        $query = Santri::select('*')->orderBy('created_at', 'desc');
+
+        // Apply role-based filtering
+        if ($user->hasRole('ustadz') && $user->santri && $user->santri->is_ustadz) {
+            // Ustadz can only see santri in classes they teach
+            $santriPolicy = app(\App\Policies\SantriPolicy::class);
+            $santriIds = $santriPolicy->getSantriDiKelasUstadz($user->santri)->pluck('id_santri');
+            $query->whereIn('id_santri', $santriIds);
+        }
+
+        // Search functionality
         $keyword = $request->keyword;
-        if ($keyword)
-            $santris = Santri::where('nama_santri', 'LIKE', "%$keyword%")
-                ->orWhere('alamat', 'LIKE', "%$keyword%")
-                ->orWhere('no_hp', 'LIKE', "%$keyword%")
-                ->latest();
+        if ($keyword) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('nama_santri', 'LIKE', "%$keyword%")
+                    ->orWhere('alamat', 'LIKE', "%$keyword%")
+                    ->orWhere('no_hp', 'LIKE', "%$keyword%")
+                    ->orWhere('nis', 'LIKE', "%$keyword%");
+            });
+        }
+
+        $santris = $query->get();
+
         return view('santri.index', compact('santris'));
     }
 
     public function getSantri()
     {
-        try {
-            $santris = Santri::select('id_santri', 'nis', 'nama_santri', 'alamat', 'no_hp');
+        $this->authorize('viewAny', Santri::class);
 
-            return DataTables::of($santris)
+        try {
+            $user = auth()->user();
+            $query = Santri::select('id_santri', 'nis', 'nama_santri', 'alamat', 'no_hp');
+
+            // Apply role-based filtering
+            if ($user->hasRole('ustadz') && $user->santri && $user->santri->is_ustadz) {
+                $santriPolicy = app(\App\Policies\SantriPolicy::class);
+                $santriIds = $santriPolicy->getSantriDiKelasUstadz($user->santri)->pluck('id_santri');
+                $query->whereIn('id_santri', $santriIds);
+            }
+
+            return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    return '<a href="' . route('santri.edit', $row->id_santri) . '" class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a>
-                            <button class="btn btn-sm btn-danger" onclick="deleteData(' . $row->id_santri . ')"><i class="fas fa-trash"></i></button>';
+                    $actions = '';
+
+                    // View button - check individual permission
+                    $santri = Santri::find($row->id_santri);
+                    if (auth()->user()->can('view', $santri)) {
+                        $actions .= '<a href="' . route('santri.show', $row->id_santri) . '" class="btn btn-sm btn-info me-1"><i
+        class="fas fa-eye"></i></a>';
+                    }
+
+                    // Edit button - admin only
+                    if (auth()->user()->can('update', $santri)) {
+                        $actions .= '<a href="' . route('santri.edit', $row->id_santri) . '" class="btn btn-sm btn-warning me-1"><i
+        class="fas fa-pen"></i></a>';
+                    }
+
+                    // Delete button - admin only
+                    if (auth()->user()->can('delete', $santri)) {
+                        $actions .= '<button class="btn btn-sm btn-danger" onclick="deleteData(' . $row->id_santri . ')"><i
+        class="fas fa-trash"></i></button>';
+                    }
+
+                    return $actions ?: '<span class="text-muted">No actions</span>';
                 })
                 ->rawColumns(['action'])
                 ->make(true);
@@ -51,19 +104,17 @@ class SantriController extends Controller
             ], 500);
         }
     }
-    /**
-     * Menampilkan halaman impor data santri.
-     */
+
     public function importForm()
     {
+        $this->authorize('santri.import');
         return view('santri.import');
     }
 
-    /**
-     * Menangani proses impor data santri.
-     */
     public function import(Request $request)
     {
+        $this->authorize('santri.import');
+
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv|max:2048',
         ]);
@@ -78,26 +129,26 @@ class SantriController extends Controller
 
     public function downloadTemplate(): BinaryFileResponse
     {
+        $this->authorize('santri.import');
+
         $filePath = storage_path('app/public/template_santri.xlsx');
         return response()->download($filePath, 'template_import_santri.xlsx');
     }
-    /**
-     * Show the form for creating a new resource.
-     */
+
     public function create()
     {
+        $this->authorize('create', Santri::class);
+
         $kategori_santris = \App\Models\KategoriBiaya::where('status', 'jalur')->get();
         $users = User::all();
         return view('santri.create', compact('kategori_santris', 'users'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
+        $this->authorize('create', Santri::class);
+
         try {
-            // dd($request->all()); // Debugging - hapus setelah selesai
             $validated = $request->validate([
                 'nama_santri' => 'required|max:100',
                 'nis' => 'required|integer|unique:santris',
@@ -115,10 +166,7 @@ class SantriController extends Controller
                 'foto_kk' => 'nullable|image',
                 'tanggal_masuk' => 'required|date',
                 'is_ustadz' => 'required|boolean',
-                // 'user_id' => 'required|exists:users,id_user|unique:santris',
-                //kategori_santri
                 'kategori_santri_id' => 'required|exists:kategori_santris,id_kategori_santri',
-                // 'status' => 'required|in:aktif,non_aktif',
                 'nama_ayah' => 'required|string',
                 'no_hp_ayah' => 'required|string',
                 'pekerjaan_ayah' => 'required|string',
@@ -140,7 +188,6 @@ class SantriController extends Controller
             ]);
 
             Santri::create($validated);
-            // ketika baru di create, buat tagihan pendaftaran
 
             return redirect()->route('santri.index')->with('success', 'Data berhasil disimpan');
         } catch (\Exception $e) {
@@ -148,31 +195,27 @@ class SantriController extends Controller
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Santri $santri)
     {
+        $this->authorize('view', $santri);
+
         $santri->load('tambahanBulanans', 'user', 'kategoriSantri');
         return view('santri.show', compact('santri'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Santri $santri)
     {
+        $this->authorize('update', $santri);
+
         $kategori_santris = \App\Models\KategoriBiaya::where('status', 'jalur')->get();
         $users = User::all();
-        // $kategori_santris = KategoriSantri::all();
         return view('santri.edit', compact('santri', 'kategori_santris', 'users'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Santri $santri)
     {
+        $this->authorize('update', $santri);
+
         try {
             $validated = $request->validate([
                 'nama_santri' => 'required|max:100',
@@ -191,7 +234,6 @@ class SantriController extends Controller
                 'foto_kk' => 'nullable|image',
                 'tanggal_masuk' => 'required|date',
                 'is_ustadz' => 'required|boolean',
-                // 'user_id' => 'required|exists:users,id_user|unique:santris,user_id,' . $santri->id_santri . ',id_santri',
                 'kategori_santri_id' => 'nullable|exists:kategori_santris,id_kategori_santri',
                 'nama_ayah' => 'required|string',
                 'no_hp_ayah' => 'required|string',
@@ -215,7 +257,7 @@ class SantriController extends Controller
             ]);
 
             $validated['kategori_santri_id'] = $validated['kategori_santri_id'] ?? $santri->kategori_santri_id;
-            // Inisialisasi dataToUpdate
+
             $dataToUpdate = [];
             foreach ($validated as $key => $value) {
                 if ($santri->$key != $value) {
@@ -224,44 +266,36 @@ class SantriController extends Controller
             }
 
             if ($request->hasFile('foto')) {
-                // Hapus file lama jika ada
                 if ($santri->foto && Storage::disk('public')->exists($santri->foto)) {
                     Storage::disk('public')->delete($santri->foto);
                 }
-                // Simpan file baru
                 $fotoPath = $request->file('foto')->store('santri/foto', 'public');
                 $dataToUpdate['foto'] = $fotoPath;
             }
 
             if ($request->hasFile('foto_kk')) {
-                // Hapus file lama jika ada
                 if ($santri->foto_kk && Storage::disk('public')->exists($santri->foto_kk)) {
                     Storage::disk('public')->delete($santri->foto_kk);
                 }
-                // Simpan file baru
                 $fotoKkPath = $request->file('foto_kk')->store('santri/foto_kk', 'public');
                 $dataToUpdate['foto_kk'] = $fotoKkPath;
             }
 
-            // Update data jika ada perubahan
             if (!empty($dataToUpdate)) {
                 $santri->update($dataToUpdate);
             }
 
             return redirect()->route('santri.show', $santri)->with('alert', 'Santri updated successfully.');
         } catch (\Exception $e) {
-            // Log general exception
             return back()->with('error', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Santri $santri)
     {
+        $this->authorize('delete', $santri);
+
         $santri->delete();
         return redirect()->route('santri.index')->with('alert', 'Santri deleted successfully.');
     }
-
 }

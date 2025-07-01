@@ -24,13 +24,16 @@ class TagihanTerjadwalController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('tagihan-terjadwal.view');
+
         $user = Auth::user();
         $query = TagihanTerjadwal::query();
 
         // Apply role-based filtering
         if ($user->hasRole('admin')) {
             $query->with(['santri', 'daftarBiaya.kategoriBiaya', 'biayaSantri', 'tahunAjar']);
-        } elseif ($user->hasRole('santri')) {
+        } elseif ($user->hasRole('santri') && !$user->santri->is_ustadz) {
+            // Santri non-ustadz hanya lihat data sendiri
             $santri = $user->santri;
             if ($santri) {
                 $query->where('santri_id', $santri->id_santri)
@@ -38,6 +41,16 @@ class TagihanTerjadwalController extends Controller
             } else {
                 $query->whereRaw('1 = 0');
             }
+        } elseif ($user->hasRole('ustadz') && $user->santri && $user->santri->is_ustadz) {
+            // Ustadz dapat melihat data sendiri + santri yang diajar
+            $allowedSantriIds = [$user->santri->id_santri]; // Own data
+            $taughtSantriIds = $this->getSantriIdsUstadzTeaches($user->santri);
+            $allowedSantriIds = array_merge($allowedSantriIds, $taughtSantriIds);
+
+            $query->whereIn('santri_id', array_unique($allowedSantriIds))
+                ->with(['santri', 'daftarBiaya.kategoriBiaya', 'biayaSantri', 'tahunAjar']);
+        } else {
+            $query->whereRaw('1 = 0'); // No access
         }
 
         // Filter by tahun
@@ -86,8 +99,6 @@ class TagihanTerjadwalController extends Controller
             });
         }
 
-
-
         // Search by nama_santri or NIS
         if ($request->filled('search')) {
             $searchTerm = $request->search;
@@ -128,22 +139,41 @@ class TagihanTerjadwalController extends Controller
         ));
     }
 
-
     public function create()
     {
-        $santris = Santri::where('status', 'aktif')->get();
+        $this->authorize('tagihan-terjadwal.create');
+
+        $user = auth()->user();
+        $query = Santri::where('status', 'aktif');
+
+        // Role-based filtering for santri selection
+        if ($user->hasRole('ustadz') && $user->santri && $user->santri->is_ustadz) {
+            // Ustadz can create for: own data + santri they teach
+            $allowedSantriIds = [$user->santri->id_santri]; // Own data
+            $taughtSantriIds = $this->getSantriIdsUstadzTeaches($user->santri);
+            $allowedSantriIds = array_merge($allowedSantriIds, $taughtSantriIds);
+            $query->whereIn('id_santri', array_unique($allowedSantriIds));
+        }
+
+        $santris = $query->get();
         $tahunAjars = TahunAjar::all();
+
         return view('tagihan-terjadwal.create', compact('santris', 'tahunAjars'));
     }
 
     public function getBiayaSantriBySantriId(Request $request)
     {
+        $this->authorize('tagihan-terjadwal.view');
+
         try {
             $santriId = $request->query('santri_id');
 
             if (!$santriId) {
                 return response()->json(['error' => 'Santri ID is required'], 400);
             }
+
+            // Check access to santri
+            $this->checkSantriAccess($santriId);
 
             // Filter BiayaSantri yang memiliki KategoriBiaya dengan status 'tahunan' atau 'insidental'
             $biayaSantris = BiayaSantri::where('santri_id', $santriId)
@@ -184,6 +214,8 @@ class TagihanTerjadwalController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('tagihan-terjadwal.create');
+
         try {
             DB::beginTransaction();
 
@@ -195,6 +227,9 @@ class TagihanTerjadwalController extends Controller
                 'tahun_ajar_id' => 'nullable|exists:tahun_ajars,id_tahun_ajar',
                 'nominal' => 'required|numeric|min:0',
             ]);
+
+            // Check access to santri
+            $this->checkSantriAccess($validatedData['santri_id']);
 
             // Pengecekan duplikasi berdasarkan biaya_santri_id + tahun + tahun_ajar_id
             $existsQuery = TagihanTerjadwal::where('biaya_santri_id', $validatedData['biaya_santri_id'])
@@ -242,6 +277,8 @@ class TagihanTerjadwalController extends Controller
 
     public function createBulkTagihanTerjadwal()
     {
+        $this->authorize('tagihan-terjadwal.create');
+
         // Ambil status unik dari KategoriBiaya, namun hanya tampilkan 'tahunan' dan 'insidental'
         $kategoriBiayaStatus = ['tahunan', 'insidental']; // Hardcode untuk membatasi pilihan
 
@@ -265,6 +302,8 @@ class TagihanTerjadwalController extends Controller
 
     public function generateBulkTagihanTerjadwal(Request $request)
     {
+        $this->authorize('tagihan-terjadwal.create');
+
         try {
             $request->validate([
                 'kategori_biaya_status' => 'nullable|string',
@@ -309,6 +348,17 @@ class TagihanTerjadwalController extends Controller
                 $biayaSantriQuery->whereHas('daftarBiaya.kategoriBiaya', function ($query) use ($selectedJenisBiayaId) {
                     $query->where('id_kategori_biaya', $selectedJenisBiayaId);
                 });
+            }
+
+            $user = auth()->user();
+
+            // Role-based filtering for bulk generation
+            if ($user->hasRole('ustadz') && $user->santri && $user->santri->is_ustadz) {
+                // Ustadz can generate for: own data + santri they teach
+                $allowedSantriIds = [$user->santri->id_santri]; // Own data
+                $taughtSantriIds = $this->getSantriIdsUstadzTeaches($user->santri);
+                $allowedSantriIds = array_merge($allowedSantriIds, $taughtSantriIds);
+                $biayaSantriQuery->whereIn('santri_id', array_unique($allowedSantriIds));
             }
 
             // Get total count for progress tracking
@@ -425,6 +475,8 @@ class TagihanTerjadwalController extends Controller
 
     public function getBulkProgress()
     {
+        $this->authorize('tagihan-terjadwal.view');
+
         $userId = Auth::id();
         $cacheKey = "bulk_tagihan_{$userId}";
         $progress = Cache::get($cacheKey, ['status' => 'not_found']);
@@ -434,11 +486,28 @@ class TagihanTerjadwalController extends Controller
 
     public function edit($id_tagihan_terjadwal)
     {
+        $this->authorize('tagihan-terjadwal.edit');
+
         try {
             $tagihanTerjadwal = TagihanTerjadwal::with(['santri', 'daftarBiaya.kategoriBiaya', 'biayaSantri', 'tahunAjar'])
                 ->findOrFail($id_tagihan_terjadwal);
 
-            $santris = Santri::where('status', 'aktif')->get();
+            // Check access to santri
+            $this->checkSantriAccess($tagihanTerjadwal->santri_id);
+
+            $user = auth()->user();
+            $query = Santri::where('status', 'aktif');
+
+            // Role-based filtering for santri selection
+            if ($user->hasRole('ustadz') && $user->santri && $user->santri->is_ustadz) {
+                // Ustadz can edit for: own data + santri they teach
+                $allowedSantriIds = [$user->santri->id_santri]; // Own data
+                $taughtSantriIds = $this->getSantriIdsUstadzTeaches($user->santri);
+                $allowedSantriIds = array_merge($allowedSantriIds, $taughtSantriIds);
+                $query->whereIn('id_santri', array_unique($allowedSantriIds));
+            }
+
+            $santris = $query->get();
             $tahunAjars = TahunAjar::all();
 
             // Get BiayaSantri untuk santri yang sedang ditagih dengan filter status 'tahunan' dan 'insidental'
@@ -481,10 +550,15 @@ class TagihanTerjadwalController extends Controller
 
     public function update(Request $request, $id_tagihan_terjadwal)
     {
+        $this->authorize('tagihan-terjadwal.edit');
+
         try {
             DB::beginTransaction();
 
             $tagihanTerjadwal = TagihanTerjadwal::findOrFail($id_tagihan_terjadwal);
+
+            // Check access to santri
+            $this->checkSantriAccess($tagihanTerjadwal->santri_id);
 
             $validatedData = $request->validate([
                 'santri_id' => 'required|exists:santris,id_santri',
@@ -495,6 +569,9 @@ class TagihanTerjadwalController extends Controller
                 'tahun' => 'required|integer|min:2000|max:' . (now()->year + 2),
                 'tahun_ajar_id' => 'nullable|exists:tahun_ajars,id_tahun_ajar',
             ]);
+
+            // Check access to new santri if changed
+            $this->checkSantriAccess($validatedData['santri_id']);
 
             // Check for duplicates (excluding current record)
             $existsQuery = TagihanTerjadwal::where('biaya_santri_id', $validatedData['biaya_santri_id'])
@@ -540,10 +617,16 @@ class TagihanTerjadwalController extends Controller
 
     public function destroy($id_tagihan_terjadwal)
     {
+        $this->authorize('tagihan-terjadwal.delete');
+
         try {
             DB::beginTransaction();
 
             $tagihanTerjadwal = TagihanTerjadwal::findOrFail($id_tagihan_terjadwal);
+
+            // Check access to santri
+            $this->checkSantriAccess($tagihanTerjadwal->santri_id);
+
             $tagihanTerjadwal->delete(); // Soft delete
 
             DB::commit();
@@ -561,6 +644,8 @@ class TagihanTerjadwalController extends Controller
 
     public function export(Request $request)
     {
+        $this->authorize('tagihan-terjadwal.export');
+
         try {
             // Apply same filters as index
             $filters = $request->only(['tahun', 'status', 'jenis_biaya', 'search']);
@@ -580,5 +665,57 @@ class TagihanTerjadwalController extends Controller
             Log::error('Export error: ' . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan saat export: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Check if user has access to santri data
+     */
+    private function checkSantriAccess($santriId)
+    {
+        $user = auth()->user();
+
+        // Admin has access to all
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        // Santri can only access own data
+        if ($user->hasRole('santri') && !$user->santri->is_ustadz) {
+            if ($user->santri->id_santri != $santriId) {
+                abort(403, 'Unauthorized access to santri data');
+            }
+            return true;
+        }
+
+        // Ustadz can access own data + santri they teach
+        if ($user->hasRole('ustadz') && $user->santri && $user->santri->is_ustadz) {
+            // Own data
+            if ($user->santri->id_santri == $santriId) {
+                return true;
+            }
+
+            // Check if ustadz teaches this santri
+            $santri = Santri::findOrFail($santriId);
+            $santriPolicy = new \App\Policies\SantriPolicy();
+
+            if ($santriPolicy->ustadzTeachesSantri($user, $santri)) {
+                return true;
+            }
+
+            abort(403, 'Unauthorized access to santri data');
+        }
+
+        abort(403, 'Unauthorized access');
+    }
+
+    /**
+     * Get santri IDs that ustadz teaches
+     */
+    private function getSantriIdsUstadzTeaches($ustadz)
+    {
+        $santriPolicy = new \App\Policies\SantriPolicy();
+        $santriCollection = $santriPolicy->getSantriDiKelasUstadz($ustadz);
+
+        return $santriCollection->pluck('id_santri')->toArray();
     }
 }

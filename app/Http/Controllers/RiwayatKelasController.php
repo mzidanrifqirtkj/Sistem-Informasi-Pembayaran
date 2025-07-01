@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\RiwayatKelas;
@@ -15,6 +14,8 @@ class RiwayatKelasController extends Controller
 {
     public function index()
     {
+        $this->authorize('viewAny', RiwayatKelas::class);
+
         $kelas = Kelas::all();
         $mapel = MataPelajaran::all();
         $tahunAjar = TahunAjar::all();
@@ -24,6 +25,9 @@ class RiwayatKelasController extends Controller
 
     public function getData(Request $request)
     {
+        $this->authorize('viewAny', RiwayatKelas::class);
+
+        $user = auth()->user();
         $query = RiwayatKelas::with([
             'santri',
             'mapelKelas.kelas',
@@ -31,6 +35,18 @@ class RiwayatKelasController extends Controller
             'mapelKelas.tahunAjar'
         ]);
 
+        // Apply role-based filtering
+        if ($user->hasRole('santri') && !$user->santri->is_ustadz) {
+            // Santri only sees own data
+            $query->where('santri_id', $user->santri->id_santri);
+        } elseif ($user->hasRole('ustadz') && $user->santri && $user->santri->is_ustadz) {
+            // Ustadz sees santri in classes they teach
+            $santriPolicy = app(\App\Policies\SantriPolicy::class);
+            $santriIds = $santriPolicy->getSantriDiKelasUstadz($user->santri)->pluck('id_santri');
+            $query->whereIn('santri_id', $santriIds);
+        }
+
+        // Apply filters
         if ($request->kelas_id) {
             $query->whereHas('mapelKelas', function ($q) use ($request) {
                 $q->where('kelas_id', $request->kelas_id);
@@ -55,27 +71,35 @@ class RiwayatKelasController extends Controller
             ->addColumn('mapel', fn($row) => $row->mapelKelas->mataPelajaran->nama_mapel ?? '-')
             ->addColumn('tahun_ajar', fn($row) => $row->mapelKelas->tahunAjar->tahun_ajar ?? '-')
             ->addColumn('action', function ($row) {
-                $editUrl = route('riwayat-kelas.edit', $row->id_riwayat_kelas);
-                $deleteUrl = route('riwayat-kelas.destroy', $row->id_riwayat_kelas);
-                $csrf = csrf_field();
-                $method = method_field('DELETE');
+                $riwayat = RiwayatKelas::find($row->id_riwayat_kelas);
+                $actions = '';
 
-                return <<<HTML
-                        <a href="{$editUrl}" class="btn btn-sm btn-warning">Edit</a>
-                        <form action="{$deleteUrl}" method="POST" style="display:inline;" onsubmit="return confirm('Yakin hapus data ini?')">
-                            {$csrf}
-                            {$method}
-                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                        </form>
-                    HTML;
+                if (auth()->user()->can('update', $riwayat)) {
+                    $editUrl = route('riwayat-kelas.edit', $row->id_riwayat_kelas);
+                    $actions .= '<a href="' . $editUrl . '" class="btn btn-sm btn-warning me-1">Edit</a>';
+                }
+
+                if (auth()->user()->can('delete', $riwayat)) {
+                    $deleteUrl = route('riwayat-kelas.destroy', $row->id_riwayat_kelas);
+                    $csrf = csrf_field();
+                    $method = method_field('DELETE');
+                    $actions .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline;"
+    onsubmit="return confirm(\'Yakin hapus data ini?\')">
+    ' . $csrf . $method . '
+    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+</form>';
+                }
+
+                return $actions ?: '<span class="text-muted">No actions</span>';
             })
-            ->rawColumns(['action']) // Agar HTML tidak di-escape
-
+            ->rawColumns(['action'])
             ->make(true);
     }
 
     public function create()
     {
+        $this->authorize('create', RiwayatKelas::class);
+
         $santri = Santri::where('is_ustadz', false)->get();
         $mapelKelas = \App\Models\MapelKelas::with(['kelas', 'mataPelajaran', 'tahunAjar'])->get();
 
@@ -84,6 +108,8 @@ class RiwayatKelasController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', RiwayatKelas::class);
+
         $validator = Validator::make($request->all(), [
             'santri_id' => 'required|exists:santris,id_santri',
             'mapel_kelas_id' => 'required|exists:mapel_kelas,id_mapel_kelas',
@@ -104,6 +130,8 @@ class RiwayatKelasController extends Controller
     public function edit($id)
     {
         $riwayat = RiwayatKelas::findOrFail($id);
+        $this->authorize('update', $riwayat);
+
         $santri = Santri::where('is_ustadz', false)->get();
         $mapelKelas = \App\Models\MapelKelas::with(['kelas', 'mataPelajaran', 'tahunAjar'])->get();
 
@@ -112,6 +140,9 @@ class RiwayatKelasController extends Controller
 
     public function update(Request $request, $id)
     {
+        $riwayat = RiwayatKelas::findOrFail($id);
+        $this->authorize('update', $riwayat);
+
         $validator = Validator::make($request->all(), [
             'santri_id' => 'required|exists:santris,id_santri',
             'mapel_kelas_id' => 'required|exists:mapel_kelas,id_mapel_kelas',
@@ -121,7 +152,6 @@ class RiwayatKelasController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $riwayat = RiwayatKelas::findOrFail($id);
         $riwayat->update([
             'santri_id' => $request->santri_id,
             'mapel_kelas_id' => $request->mapel_kelas_id,
@@ -133,9 +163,10 @@ class RiwayatKelasController extends Controller
     public function destroy($id)
     {
         $riwayat = RiwayatKelas::findOrFail($id);
+        $this->authorize('delete', $riwayat);
+
         $riwayat->delete();
 
         return redirect()->route('riwayat-kelas.index')->with('alert', 'Riwayat Kelas berhasil dihapus.');
     }
-
 }
