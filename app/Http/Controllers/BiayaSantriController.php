@@ -1,40 +1,65 @@
 <?php
 
-// app/Http/Controllers/BiayaSantriController.php
 namespace App\Http\Controllers;
 
 use App\Models\BiayaSantri;
 use App\Models\DaftarBiaya;
 use App\Models\Santri;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class BiayaSantriController extends Controller
 {
     public function index()
     {
-        $santris = Santri::with(['biayaSantris.daftarBiaya.kategoriBiaya'])
-            ->whereHas('biayaSantris')
-            ->get()
-            ->map(function ($santri) {
-                $santri->total_biaya = $santri->biayaSantris->sum(function ($biaya) {
-                    return $biaya->daftarBiaya->nominal * $biaya->jumlah;
-                });
-                return $santri;
+        $this->authorize('viewAny', BiayaSantri::class);
+
+        $user = Auth::user();
+
+        // Jika user adalah santri, hanya tampilkan data dirinya sendiri
+        if ($user->hasRole('santri')) {
+            $santri = $user->santri;
+
+            if (!$santri) {
+                abort(403, 'Data santri tidak ditemukan untuk akun ini.');
+            }
+
+            $santri->load('biayaSantris.daftarBiaya.kategoriBiaya');
+            $santri->total_biaya = $santri->biayaSantris->sum(function ($biaya) {
+                return $biaya->daftarBiaya->nominal * $biaya->jumlah;
             });
+
+            $santris = collect([$santri]); // agar bisa dipakai di view yang sama
+        } else {
+            // Admin atau ustadz bisa melihat semua santri
+            $santris = Santri::with(['biayaSantris.daftarBiaya.kategoriBiaya'])
+                ->whereHas('biayaSantris')
+                ->get()
+                ->map(function ($santri) {
+                    $santri->total_biaya = $santri->biayaSantris->sum(function ($biaya) {
+                        return $biaya->daftarBiaya->nominal * $biaya->jumlah;
+                    });
+                    return $santri;
+                });
+        }
 
         return view('biaya-santris.index', compact('santris'));
     }
 
     public function create()
     {
+        $this->authorize('create', BiayaSantri::class);
+
         $daftarBiayas = DaftarBiaya::with('kategoriBiaya')->get();
-        $santris = Santri::orderBy('nama_santri', 'asc')->get(); // ✅ Sort di database
+        $santris = Santri::orderBy('nama_santri', 'asc')->get();
+
         return view('biaya-santris.create', compact('daftarBiayas', 'santris'));
     }
 
-
     public function store(Request $request)
     {
+        $this->authorize('create', BiayaSantri::class);
+
         $request->validate([
             'santri_id' => 'required|exists:santris,id_santri',
             'biaya' => 'required|array',
@@ -55,6 +80,8 @@ class BiayaSantriController extends Controller
 
     public function searchSantri(Request $request)
     {
+        $this->authorize('viewAny', BiayaSantri::class);
+
         $search = $request->q;
         $santris = Santri::where('nama_santri', 'like', "%$search%")->get();
 
@@ -63,8 +90,9 @@ class BiayaSantriController extends Controller
 
     public function searchBiaya(Request $request)
     {
-        $search = $request->q;
+        $this->authorize('viewAny', BiayaSantri::class);
 
+        $search = $request->q;
         $query = DaftarBiaya::with('kategoriBiaya');
 
         if (!empty($search)) {
@@ -73,14 +101,14 @@ class BiayaSantriController extends Controller
             });
         }
 
-        $biayas = $query->get();
-        return response()->json($biayas);
+        return response()->json($query->get());
     }
 
     public function show($id)
     {
-        $santri = Santri::with(['biayaSantris.daftarBiaya.kategoriBiaya'])
-            ->findOrFail($id);
+        $santri = Santri::with(['biayaSantris.daftarBiaya.kategoriBiaya'])->findOrFail($id);
+
+        $this->authorize('view', $santri->biayaSantris->first() ?? BiayaSantri::class);
 
         $totalBiaya = $santri->biayaSantris->sum(function ($biaya) {
             return $biaya->daftarBiaya->nominal * $biaya->jumlah;
@@ -91,9 +119,11 @@ class BiayaSantriController extends Controller
 
     public function edit($id)
     {
-        $santri = Santri::with(['biayaSantris.daftarBiaya.kategoriBiaya'])
-            ->findOrFail($id);
+        $biaya = BiayaSantri::where('santri_id', $id)->firstOrFail();
 
+        $this->authorize('update', $biaya);
+
+        $santri = Santri::with(['biayaSantris.daftarBiaya.kategoriBiaya'])->findOrFail($id);
         $daftarBiayas = DaftarBiaya::with('kategoriBiaya')->get();
         $santris = Santri::all();
 
@@ -102,6 +132,9 @@ class BiayaSantriController extends Controller
 
     public function update(Request $request, $id)
     {
+        $biaya = BiayaSantri::where('santri_id', $id)->firstOrFail();
+        $this->authorize('update', $biaya);
+
         $request->validate([
             'santri_id' => 'required|exists:santris,id_santri',
             'biaya' => 'required|array',
@@ -109,10 +142,8 @@ class BiayaSantriController extends Controller
             'biaya.*.jumlah' => 'required|numeric|min:1',
         ]);
 
-        // Delete all existing biaya for this santri
         BiayaSantri::where('santri_id', $id)->delete();
 
-        // Create new biaya records
         foreach ($request->biaya as $item) {
             BiayaSantri::create([
                 'santri_id' => $request->santri_id,
@@ -127,7 +158,9 @@ class BiayaSantriController extends Controller
 
     public function destroy($id)
     {
-        // Delete all biaya records for this santri
+        $biaya = BiayaSantri::where('santri_id', $id)->firstOrFail();
+        $this->authorize('delete', $biaya);
+
         BiayaSantri::where('santri_id', $id)->delete();
 
         return redirect()->route('biaya-santris.index')

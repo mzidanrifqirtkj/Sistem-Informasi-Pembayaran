@@ -45,18 +45,20 @@
                         </table>
 
                         <div class="text-right mt-3">
-                            <a href="{{ route('biaya-santris.edit', $santri->id_santri) }}" class="btn btn-warning">
-                                <i class="fas fa-edit"></i> Edit Paket
-                            </a>
-                            <form action="{{ route('biaya-santris.destroy', $santri->id_santri) }}" method="POST"
-                                class="d-inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger"
-                                    onclick="return confirm('Hapus paket biaya ini?')">
-                                    <i class="fas fa-trash"></i> Hapus Paket
-                                </button>
-                            </form>
+                            @if (!auth()->user()->hasRole('santri'))
+                                <a href="{{ route('biaya-santris.edit', $santri->id_santri) }}" class="btn btn-warning">
+                                    <i class="fas fa-edit"></i> Edit Paket
+                                </a>
+                                <form action="{{ route('biaya-santris.destroy', $santri->id_santri) }}" method="POST"
+                                    class="d-inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger"
+                                        onclick="return confirm('Hapus paket biaya ini?')">
+                                        <i class="fas fa-trash"></i> Hapus Paket
+                                    </button>
+                                </form>
+                            @endif
                             <a href="{{ route('biaya-santris.index') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left"></i> Kembali
                             </a>

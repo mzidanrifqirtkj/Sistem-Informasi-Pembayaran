@@ -383,33 +383,5 @@ Route::middleware(['auth', 'role:admin|santri'])->group(function () {
     Route::get('/riwayat-kelas/data', [RiwayatKelasController::class, 'getData'])->name('riwayat-kelas.data');
 });
 
-// Route untuk admin dan santri
-Route::middleware(['auth', 'role:admin|santri'])->group(function () {
-    // Dashboard
-    Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard')->middleware('permission:dashboard.view');
-
-    // Data Santri (Hanya untuk melihat data diri sendiri)
-    Route::get('santri/{santri}', [SantriController::class, 'show'])->name('santri.show')->middleware('permission:santri.view');
-
-    // Tambahan Bulanan Santri
-    Route::get('tambahan-bulanan/item-santri', [TambahanBulananController::class, 'itemSantri'])->name('tambahan_bulanan.item_santri')->middleware('permission:item-santri.view');
-
-    // Tagihan Terjadwal Santri
-    Route::get('tagihan-terjadwal', [TagihanTerjadwalController::class, 'index'])->name('tagihan_terjadwal.index')->middleware('permission:tagihan-terjadwal.view');
-
-    // Tagihan Bulanan Santri
-    Route::get('tagihan-bulanan', [TagihanBulananController::class, 'index'])->name('tagihan_bulanan.index')->middleware('permission:tagihan-bulanan.view');
-
-    // Riwayat Pembayaran Santri
-    Route::get('pembayaran/riwayat', [PembayaranController::class, 'riwayat'])->name('pembayaran.riwayat')->middleware('permission:pembayaran.history');
-
-    // Absensi
-    Route::get('absensi', [AbsensiController::class, 'index'])->name('absensi.index')->middleware('permission:view_absensi');
-    Route::get('absensi/data', [AbsensiController::class, 'getAbsensi'])->name('absensi.data')->middleware('permission:view_absensi');
-
-    // Profile Santri
-    Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit')->middleware('permission:profile.view');
-    Route::post('profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update_password')->middleware('permission:profile.edit');
-});
 
 require __DIR__ . '/auth.php';

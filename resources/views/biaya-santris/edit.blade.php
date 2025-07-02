@@ -1,4 +1,3 @@
-<!-- resources/views/biaya-santris/edit.blade.php -->
 @extends('layouts.home')
 @section('title_page', 'Edit Paket Biaya Santri')
 
@@ -17,14 +16,19 @@
 
                             <div class="form-group">
                                 <label for="santri_id">Santri</label>
-                                <select class="form-control" name="santri_id" id="santri_id" required>
-                                    @foreach ($santris as $item)
-                                        <option value="{{ $item->id_santri }}"
-                                            {{ $item->id_santri == $santri->id_santri ? 'selected' : '' }}>
-                                            {{ $item->nama_santri }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                @if (auth()->user()->hasRole('santri'))
+                                    <input type="hidden" name="santri_id" value="{{ $santri->id_santri }}">
+                                    <input type="text" class="form-control" value="{{ $santri->nama_santri }}" readonly>
+                                @else
+                                    <select class="form-control" name="santri_id" id="santri_id" required>
+                                        @foreach ($santris as $item)
+                                            <option value="{{ $item->id_santri }}"
+                                                {{ $item->id_santri == $santri->id_santri ? 'selected' : '' }}>
+                                                {{ $item->nama_santri }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                @endif
                             </div>
 
                             <div class="form-group">
@@ -84,7 +88,6 @@
 @section('script')
     <script>
         $(document).ready(function() {
-            // Add new biaya item
             $('#tambah-biaya').click(function() {
                 const index = Date.now();
                 const newItem = `
@@ -102,9 +105,7 @@
                         </div>
                         <div class="col-md-4">
                             <input type="number" name="biaya[${index}][jumlah]"
-                                class="form-control jumlah"
-                                value="1"
-                                min="1" required>
+                                class="form-control jumlah" value="1" min="1" required>
                         </div>
                         <div class="col-md-3">
                             <button type="button" class="btn btn-danger btn-sm remove-biaya">
@@ -113,11 +114,10 @@
                         </div>
                     </div>
                 </div>
-            `;
+                `;
                 $('#biaya-container').append(newItem);
             });
 
-            // Remove biaya item
             $(document).on('click', '.remove-biaya', function() {
                 $(this).closest('.biaya-item').remove();
             });

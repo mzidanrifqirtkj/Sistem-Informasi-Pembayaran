@@ -55,7 +55,9 @@
         <div class="row mb-4">
             <div class="col-md-8">
                 <h2 class="mb-0">Detail Tagihan - {{ $santri->nama_santri }}</h2>
-                <p class="text-muted mb-0">NIS: {{ $santri->nis }} | Kelas: {{ $santri->nama_kelas_aktif }}</p>
+                @if (!auth()->user()->hasRole('santri'))
+                    <p class="text-muted mb-0">NIS: {{ $santri->nis }} | Kelas: {{ $santri->nama_kelas_aktif }}</p>
+                @endif
             </div>
             <div class="col-md-4 text-end">
                 <div class="btn-group">

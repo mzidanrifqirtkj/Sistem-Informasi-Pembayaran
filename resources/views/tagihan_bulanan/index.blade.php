@@ -371,168 +371,178 @@
         <div class="row mb-4">
             <div class="col-md-6">
                 <h2 class="mb-0 text-dark fw-bold">Tagihan Bulanan</h2>
-                <p class="text-muted mb-0">Kelola tagihan bulanan santri</p>
+                @if (!auth()->user()->hasRole('santri'))
+                    <p class="text-muted mb-0">Kelola tagihan bulanan santri</p>
+                @endif
             </div>
-            <div class="col-md-6 text-end">
-                <div class="btn-group" role="group">
-                    <a href="{{ route('tagihan_bulanan.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus-circle me-1"></i> Buat Individual
-                    </a>
-                    <a href="{{ route('tagihan_bulanan.createBulkBulanan') }}" class="btn btn-success">
-                        <i class="fas fa-file-invoice me-1"></i> Generate Massal
-                    </a>
-                    <button type="button" class="btn btn-info text-white" onclick="exportData()">
-                        <i class="fas fa-file-excel me-1"></i> Export
-                    </button>
+            @if (!auth()->user()->hasRole('santri'))
+                <div class="col-md-6 text-end">
+                    <div class="btn-group" role="group">
+                        <a href="{{ route('tagihan_bulanan.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-1"></i> Buat Individual
+                        </a>
+                        <a href="{{ route('tagihan_bulanan.createBulkBulanan') }}" class="btn btn-success">
+                            <i class="fas fa-file-invoice me-1"></i> Generate Massal
+                        </a>
+                        <button type="button" class="btn btn-info text-white" onclick="exportData()">
+                            <i class="fas fa-file-excel me-1"></i> Export
+                        </button>
+                    </div>
                 </div>
-            </div>
+            @endif
         </div>
 
         <!-- Statistics Cards -->
-        <div class="row mb-4">
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-2">Total Tagihan</h6>
-                                <h3 class="mb-0 fw-bold">{{ number_format($stats['total_tagihan']) }}</h3>
-                                <small class="text-muted">Tahun {{ $tahun }}</small>
-                            </div>
-                            <div class="stats-icon primary">
-                                <i class="fas fa-file-invoice"></i>
+        @if (!auth()->user()->hasRole('santri'))
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card stats-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Total Tagihan</h6>
+                                    <h3 class="mb-0 fw-bold">{{ number_format($stats['total_tagihan']) }}</h3>
+                                    <small class="text-muted">Tahun {{ $tahun }}</small>
+                                </div>
+                                <div class="stats-icon primary">
+                                    <i class="fas fa-file-invoice"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-2">Total Nominal</h6>
-                                <h4 class="mb-0 fw-bold">{{ number_format($stats['total_nominal'], 0, ',', '.') }}</h4>
-                                <small class="text-muted">Rupiah</small>
-                            </div>
-                            <div class="stats-icon info">
-                                <i class="fas fa-money-bill-wave"></i>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card stats-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Total Nominal</h6>
+                                    <h4 class="mb-0 fw-bold">{{ number_format($stats['total_nominal'], 0, ',', '.') }}</h4>
+                                    <small class="text-muted">Rupiah</small>
+                                </div>
+                                <div class="stats-icon info">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-2">Total Dibayar</h6>
-                                <h4 class="mb-0 fw-bold">{{ number_format($stats['total_dibayar'], 0, ',', '.') }}</h4>
-                                <small class="text-muted">Rupiah</small>
-                            </div>
-                            <div class="stats-icon success">
-                                <i class="fas fa-check-circle"></i>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card stats-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Total Dibayar</h6>
+                                    <h4 class="mb-0 fw-bold">{{ number_format($stats['total_dibayar'], 0, ',', '.') }}</h4>
+                                    <small class="text-muted">Rupiah</small>
+                                </div>
+                                <div class="stats-icon success">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-2">Collection Rate</h6>
-                                <h3 class="mb-0 fw-bold">{{ $stats['collection_rate'] }}%</h3>
-                                <small class="text-muted">Persentase</small>
-                            </div>
-                            <div class="stats-icon warning">
-                                <i class="fas fa-chart-line"></i>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card stats-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Collection Rate</h6>
+                                    <h3 class="mb-0 fw-bold">{{ $stats['collection_rate'] }}%</h3>
+                                    <small class="text-muted">Persentase</small>
+                                </div>
+                                <div class="stats-icon warning">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        @endif
 
         <!-- Filter Section -->
-        <div class="card filter-card">
-            <div class="card-body">
-                <h5 class="card-title mb-4">
-                    <i class="fas fa-filter me-2"></i>Filter Data
-                </h5>
-                <form method="GET" action="{{ route('tagihan_bulanan.index') }}" id="filterForm">
-                    <div class="filter-row">
-                        <div class="form-group">
-                            <label class="form-label">Nama Santri / NIS</label>
-                            <input type="text" name="nama_santri" class="form-control"
-                                placeholder="Cari nama atau NIS..." value="{{ request('nama_santri') }}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Kelas</label>
-                            <select name="kelas_id" class="form-select">
-                                <option value="">Semua Kelas</option>
-                                <option value="tanpa_kelas" {{ request('kelas_id') == 'tanpa_kelas' ? 'selected' : '' }}>
-                                    Tanpa Kelas
-                                </option>
-                                @foreach ($kelasList as $kelas)
-                                    <option value="{{ $kelas->id_kelas }}"
-                                        {{ request('kelas_id') == $kelas->id_kelas ? 'selected' : '' }}>
-                                        {{ $kelas->nama_kelas }}
+        @if (!auth()->user()->hasRole('santri'))
+            <div class="card filter-card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-filter me-2"></i>Filter Data
+                    </h5>
+                    <form method="GET" action="{{ route('tagihan_bulanan.index') }}" id="filterForm">
+                        <div class="filter-row">
+                            <div class="form-group">
+                                <label class="form-label">Nama Santri / NIS</label>
+                                <input type="text" name="nama_santri" class="form-control"
+                                    placeholder="Cari nama atau NIS..." value="{{ request('nama_santri') }}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Kelas</label>
+                                <select name="kelas_id" class="form-select">
+                                    <option value="">Semua Kelas</option>
+                                    <option value="tanpa_kelas"
+                                        {{ request('kelas_id') == 'tanpa_kelas' ? 'selected' : '' }}>
+                                        Tanpa Kelas
                                     </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Tahun</label>
-                            <select name="tahun" class="form-select">
-                                @foreach ($availableYears as $year)
-                                    <option value="{{ $year }}" {{ $tahun == $year ? 'selected' : '' }}>
-                                        {{ $year }}
+                                    @foreach ($kelasList as $kelas)
+                                        <option value="{{ $kelas->id_kelas }}"
+                                            {{ request('kelas_id') == $kelas->id_kelas ? 'selected' : '' }}>
+                                            {{ $kelas->nama_kelas }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Tahun</label>
+                                <select name="tahun" class="form-select">
+                                    @foreach ($availableYears as $year)
+                                        <option value="{{ $year }}" {{ $tahun == $year ? 'selected' : '' }}>
+                                            {{ $year }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <select name="status" class="form-select">
+                                    <option value="">Semua Status</option>
+                                    <option value="lunas" {{ request('status') == 'lunas' ? 'selected' : '' }}>Lunas
                                     </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Status</label>
-                            <select name="status" class="form-select">
-                                <option value="">Semua Status</option>
-                                <option value="lunas" {{ request('status') == 'lunas' ? 'selected' : '' }}>Lunas</option>
-                                <option value="dibayar_sebagian"
-                                    {{ request('status') == 'dibayar_sebagian' ? 'selected' : '' }}>Dibayar Sebagian
-                                </option>
-                                <option value="belum_lunas" {{ request('status') == 'belum_lunas' ? 'selected' : '' }}>
-                                    Belum Lunas</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Bulan</label>
-                            <select name="bulan" class="form-select">
-                                <option value="">Semua Bulan</option>
-                                @foreach (['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as $bulan)
-                                    <option value="{{ $bulan }}"
-                                        {{ request('bulan') == $bulan ? 'selected' : '' }}>
-                                        {{ $bulan }}
+                                    <option value="dibayar_sebagian"
+                                        {{ request('status') == 'dibayar_sebagian' ? 'selected' : '' }}>Dibayar Sebagian
                                     </option>
-                                @endforeach
-                            </select>
+                                    <option value="belum_lunas" {{ request('status') == 'belum_lunas' ? 'selected' : '' }}>
+                                        Belum Lunas</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Bulan</label>
+                                <select name="bulan" class="form-select">
+                                    <option value="">Semua Bulan</option>
+                                    @foreach (['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as $bulan)
+                                        <option value="{{ $bulan }}"
+                                            {{ request('bulan') == $bulan ? 'selected' : '' }}>
+                                            {{ $bulan }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    <div class="filter-actions">
-                        <a href="{{ route('tagihan_bulanan.index') }}" class="btn btn-secondary">
-                            <i class="fas fa-redo me-1"></i> Reset
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-search me-1"></i> Filter
-                        </button>
-                    </div>
-                </form>
+                        <div class="filter-actions">
+                            <a href="{{ route('tagihan_bulanan.index') }}" class="btn btn-secondary">
+                                <i class="fas fa-redo me-1"></i> Reset
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i> Filter
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
+        @endif
 
         <!-- Data Table -->
         <div class="card table-card">
@@ -543,10 +553,12 @@
                             <tr>
                                 <th>No</th>
                                 <th>Nama Santri</th>
-                                <th class="hide-mobile sortable" onclick="sortTable('nis')">
-                                    NIS <i class="fas fa-sort ms-1"></i>
-                                </th>
-                                <th class="hide-mobile">Kelas</th>
+                                @if (!auth()->user()->hasRole('santri'))
+                                    <th class="hide-mobile sortable" onclick="sortTable('nis')">
+                                        NIS <i class="fas fa-sort ms-1"></i>
+                                    </th>
+                                    <th class="hide-mobile">Kelas</th>
+                                @endif
                                 <th class="text-center">Status Bulanan {{ $tahun }}</th>
                                 <th>Total Tagihan</th>
                                 <th class="hide-mobile">Total Dibayar</th>
@@ -559,10 +571,12 @@
                                 <tr>
                                     <td>{{ $santris->firstItem() + $index }}</td>
                                     <td class="fw-semibold">{{ $santri->nama_santri }}</td>
-                                    <td class="hide-mobile">{{ $santri->nis }}</td>
-                                    <td class="hide-mobile">
-                                        <span class="badge bg-secondary">{{ $santri->nama_kelas_aktif }}</span>
-                                    </td>
+                                    @if (!auth()->user()->hasRole('santri'))
+                                        <td class="hide-mobile">{{ $santri->nis }}</td>
+                                        <td class="hide-mobile">
+                                            <span class="badge bg-secondary">{{ $santri->nama_kelas_aktif }}</span>
+                                        </td>
+                                    @endif
                                     <td>
                                         <div class="monthly-grid">
                                             @foreach (['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as $bulan)

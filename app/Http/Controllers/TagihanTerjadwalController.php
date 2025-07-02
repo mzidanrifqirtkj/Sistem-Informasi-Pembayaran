@@ -24,7 +24,7 @@ class TagihanTerjadwalController extends Controller
 {
     public function index(Request $request)
     {
-        $this->authorize('tagihan-terjadwal.view');
+        $this->authorize('viewAny', TagihanTerjadwal::class);
 
         $user = Auth::user();
         $query = TagihanTerjadwal::query();
@@ -141,7 +141,7 @@ class TagihanTerjadwalController extends Controller
 
     public function create()
     {
-        $this->authorize('tagihan-terjadwal.create');
+        $this->authorize('create', TagihanTerjadwal::class);
 
         $user = auth()->user();
         $query = Santri::where('status', 'aktif');
@@ -214,7 +214,7 @@ class TagihanTerjadwalController extends Controller
 
     public function store(Request $request)
     {
-        $this->authorize('tagihan-terjadwal.create');
+        $this->authorize('create', TagihanTerjadwal::class);
 
         try {
             DB::beginTransaction();
@@ -486,7 +486,7 @@ class TagihanTerjadwalController extends Controller
 
     public function edit($id_tagihan_terjadwal)
     {
-        $this->authorize('tagihan-terjadwal.edit');
+        $this->authorize('update', $id_tagihan_terjadwal);
 
         try {
             $tagihanTerjadwal = TagihanTerjadwal::with(['santri', 'daftarBiaya.kategoriBiaya', 'biayaSantri', 'tahunAjar'])
@@ -550,7 +550,7 @@ class TagihanTerjadwalController extends Controller
 
     public function update(Request $request, $id_tagihan_terjadwal)
     {
-        $this->authorize('tagihan-terjadwal.edit');
+        $this->authorize('update', $id_tagihan_terjadwal);
 
         try {
             DB::beginTransaction();
@@ -617,7 +617,7 @@ class TagihanTerjadwalController extends Controller
 
     public function destroy($id_tagihan_terjadwal)
     {
-        $this->authorize('tagihan-terjadwal.delete');
+        $this->authorize('delete', $id_tagihan_terjadwal);
 
         try {
             DB::beginTransaction();

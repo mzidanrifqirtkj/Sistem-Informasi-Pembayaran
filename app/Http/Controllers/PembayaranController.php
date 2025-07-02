@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Santri;
 use App\Models\Pembayaran;
 use App\Services\PaymentService;
@@ -27,18 +26,15 @@ class PembayaranController extends Controller
 
     public function index(Request $request)
     {
-        $this->authorize('pembayaran.list');
+        $this->authorize('viewAny', Pembayaran::class);
 
         $user = auth()->user();
         $query = Santri::with('kategoriSantri')->where('status', 'aktif');
 
-        // Role-based filtering
         if ($user->hasRole('santri') && !$user->santri->is_ustadz) {
-            // Santri hanya lihat data sendiri - redirect ke form pembayaran sendiri
             return redirect()->route('pembayaran.show', $user->santri->id_santri);
         }
 
-        // Search functionality
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -47,7 +43,6 @@ class PembayaranController extends Controller
             });
         }
 
-        // Filter by kategori
         if ($request->has('kategori') && $request->kategori != '') {
             $query->where('kategori_santri_id', $request->kategori);
         }
@@ -59,15 +54,13 @@ class PembayaranController extends Controller
 
     public function show($santriId)
     {
-        $this->authorize('pembayaran.create');
+        $this->authorize('create', Pembayaran::class);
 
         try {
             $santri = Santri::findOrFail($santriId);
 
-            // Check if user can access this santri's payment data
             $user = auth()->user();
             if ($user->hasRole('santri') && !$user->santri->is_ustadz) {
-                // Santri can only access own payment
                 if ($user->santri->id_santri != $santri->id_santri) {
                     abort(403, 'Unauthorized access to payment data');
                 }
@@ -79,15 +72,13 @@ class PembayaranController extends Controller
             return view('pembayaran.create', $data);
 
         } catch (\Exception $e) {
-            return redirect()
-                ->route('pembayaran.index')
-                ->with('error', $e->getMessage());
+            return redirect()->route('pembayaran.index')->with('error', $e->getMessage());
         }
     }
 
     public function preview(Request $request)
     {
-        $this->authorize('pembayaran.create');
+        $this->authorize('create', Pembayaran::class);
 
         try {
             \Log::info('Preview request received', $request->all());
@@ -139,7 +130,7 @@ class PembayaranController extends Controller
 
     public function store(StorePaymentRequest $request)
     {
-        $this->authorize('pembayaran.create');
+        $this->authorize('create', Pembayaran::class);
 
         try {
             DB::beginTransaction();
@@ -185,26 +176,23 @@ class PembayaranController extends Controller
                 ], 500);
             }
 
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', $e->getMessage());
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
 
     public function receipt($id)
     {
-        $this->authorize('pembayaran.view');
+        $pembayaran = Pembayaran::findOrFail($id);
+        $this->authorize('view', $pembayaran);
 
-        $pembayaran = Pembayaran::with([
+        $pembayaran->load([
             'tagihanBulanan.santri',
             'tagihanTerjadwal.santri',
             'paymentAllocations.tagihanBulanan',
             'paymentAllocations.tagihanTerjadwal',
             'createdBy'
-        ])->findOrFail($id);
+        ]);
 
-        // Check if user can view this payment receipt
         $user = auth()->user();
         if ($user->hasRole('santri') && !$user->santri->is_ustadz) {
             $santriId = $pembayaran->tagihanBulanan?->santri_id
@@ -230,14 +218,15 @@ class PembayaranController extends Controller
 
     public function printReceipt($id)
     {
-        $this->authorize('pembayaran.view');
+        $pembayaran = Pembayaran::findOrFail($id);
+        $this->authorize('view', $pembayaran);
 
-        $pembayaran = Pembayaran::with([
+        $pembayaran->load([
             'tagihanBulanan.santri',
             'tagihanTerjadwal.santri',
             'paymentAllocations.tagihanBulanan',
             'paymentAllocations.tagihanTerjadwal'
-        ])->findOrFail($id);
+        ]);
 
         $isReprint = request()->has('reprint');
 
@@ -246,7 +235,7 @@ class PembayaranController extends Controller
 
     public function history(Request $request)
     {
-        $this->authorize('pembayaran.list');
+        $this->authorize('history', Pembayaran::class);
 
         $user = auth()->user();
         $query = Pembayaran::with([
@@ -258,9 +247,7 @@ class PembayaranController extends Controller
             'voidedBy'
         ])->orderBy('created_at', 'desc');
 
-        // Role-based filtering
         if ($user->hasRole('santri') && !$user->santri->is_ustadz) {
-            // Santri only sees own payments
             $query->where(function ($q) use ($user) {
                 $q->whereHas('tagihanBulanan.santri', function ($sq) use ($user) {
                     $sq->where('id_santri', $user->santri->id_santri);
@@ -274,7 +261,6 @@ class PembayaranController extends Controller
             });
         }
 
-        // Filter by date range
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('tanggal_pembayaran', [
                 $request->start_date,
@@ -282,7 +268,6 @@ class PembayaranController extends Controller
             ]);
         }
 
-        // Filter by status
         if ($request->filled('status')) {
             if ($request->status === '1') {
                 $query->where('is_void', true);
@@ -291,7 +276,6 @@ class PembayaranController extends Controller
             }
         }
 
-        // Search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -318,6 +302,16 @@ class PembayaranController extends Controller
         $pembayarans = $query->paginate(20);
         $pembayarans->appends($request->query());
 
-        return view('pembayaran.history', compact('pembayarans'));
+        $totalHariIni = $query->get()->filter(fn($p) => $p->tanggal_pembayaran->isToday())
+            ->sum(fn($p) => $p->paymentAllocations->sum('allocated_amount'));
+
+        $totalBulanIni = $query->get()->filter(fn($p) => $p->tanggal_pembayaran->isSameMonth(now()))
+            ->sum(fn($p) => $p->paymentAllocations->sum('allocated_amount'));
+
+        $totalSemua = $query->get()->sum(fn($p) => $p->paymentAllocations->sum('allocated_amount'));
+
+        return view('pembayaran.history', compact('pembayarans', 'totalHariIni', 'totalBulanIni', 'totalSemua'));
     }
+
+
 }

@@ -19,6 +19,10 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         Santri::class => SantriPolicy::class,
         RiwayatKelas::class => RiwayatKelasPolicy::class,
+        BiayaSantri::class => BiayaSantriPolicy::class,
+        \App\Models\TagihanBulanan::class => \App\Policies\TagihanBulananPolicy::class,
+        \App\Models\TagihanTerjadwal::class => \App\Policies\TagihanTerjadwalPolicy::class,
+        \App\Models\Pembayaran::class => \App\Policies\PembayaranPolicy::class,
 
         // Future policies (uncomment when models are ready)
         // Absensi::class => AbsensiPolicy::class,

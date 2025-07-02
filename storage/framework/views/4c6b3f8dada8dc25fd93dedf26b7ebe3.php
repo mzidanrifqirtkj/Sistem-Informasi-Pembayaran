@@ -32,6 +32,9 @@
     </style>
 <?php $__env->stopSection(); ?>
 <?php $__env->startSection('content'); ?>
+    <?php
+        $user = auth()->user();
+    ?>
     <div class="container">
         <div class="row mb-3">
             <div class="col-md-8">
@@ -44,7 +47,6 @@
             </div>
         </div>
 
-        <!-- Filter Section -->
         <div class="card mb-3">
             <div class="card-body">
                 <form action="<?php echo e(route('pembayaran.history')); ?>" method="GET" class="row g-3">
@@ -64,11 +66,13 @@
                             <option value="1" <?php echo e(request('status') === '1' ? 'selected' : ''); ?>>Void</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <label>Cari</label>
-                        <input type="text" name="search" class="form-control" placeholder="No/Nama/NIS"
-                            value="<?php echo e(request('search')); ?>">
-                    </div>
+                    <?php if (! (auth()->user()->hasRole('santri'))): ?>
+                        <div class="col-md-2">
+                            <label>Cari</label>
+                            <input type="text" name="search" class="form-control" placeholder="No/Nama/NIS"
+                                value="<?php echo e(request('search')); ?>">
+                        </div>
+                    <?php endif; ?>
                     <div class="col-md-2">
                         <label>&nbsp;</label>
                         <div>
@@ -84,13 +88,15 @@
             </div>
         </div>
 
-        <!-- Summary Cards -->
         <div class="row mb-3">
             <div class="col-md-3">
                 <div class="card bg-primary text-white">
                     <div class="card-body">
                         <h6>Total Hari Ini</h6>
-                        <h4>Rp <?php echo e(number_format(\App\Models\Pembayaran::getTodayTotal(), 0, ',', '.')); ?></h4>
+                        <h4>Rp
+                            <?php echo e(number_format($user->hasRole('santri') ? \App\Models\Pembayaran::getTodayTotalForSantri($user->santri->id_santri) : \App\Models\Pembayaran::getTodayTotal(), 0, ',', '.')); ?>
+
+                        </h4>
                     </div>
                 </div>
             </div>
@@ -98,7 +104,10 @@
                 <div class="card bg-success text-white">
                     <div class="card-body">
                         <h6>Total Bulan Ini</h6>
-                        <h4>Rp <?php echo e(number_format(\App\Models\Pembayaran::getMonthTotal(), 0, ',', '.')); ?></h4>
+                        <h4>Rp
+                            <?php echo e(number_format($user->hasRole('santri') ? \App\Models\Pembayaran::getMonthTotalForSantri($user->santri->id_santri) : \App\Models\Pembayaran::getMonthTotal(), 0, ',', '.')); ?>
+
+                        </h4>
                     </div>
                 </div>
             </div>
@@ -106,7 +115,10 @@
                 <div class="card bg-info text-white">
                     <div class="card-body">
                         <h6>Total Tahun Ini</h6>
-                        <h4>Rp <?php echo e(number_format(\App\Models\Pembayaran::getYearTotal(), 0, ',', '.')); ?></h4>
+                        <h4>Rp
+                            <?php echo e(number_format($user->hasRole('santri') ? \App\Models\Pembayaran::getYearTotalForSantri($user->santri->id_santri) : \App\Models\Pembayaran::getYearTotal(), 0, ',', '.')); ?>
+
+                        </h4>
                     </div>
                 </div>
             </div>

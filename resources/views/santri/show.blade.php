@@ -15,12 +15,14 @@
                     @endif
                 </div>
             </div>
-            <div class="col-sm-2">
-                <div class="form-group">
-                    <a href="{{ route('santri.edit', $santri->id_santri) }}" class="btn btn-info"><i class="fas fa-pen"></i>
-                        &nbsp;&nbsp;Edit Profil</a>
+            @can('santri.edit')
+                <div class="col-sm-2">
+                    <div class="form-group">
+                        <a href="{{ route('santri.edit', $santri->id_santri) }}" class="btn btn-info"><i class="fas fa-pen"></i>
+                            &nbsp;&nbsp;Edit Profil</a>
+                    </div>
                 </div>
-            </div>
+            @endcan
         </div>
         <div class="row">
             <div class="col-sm">

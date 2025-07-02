@@ -7,7 +7,6 @@
         <div class="row mb-4">
             <div class="col-md-12">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h2 class="mb-0">Daftar Tagihan Terjadwal</h2>
                     @if (auth()->user()->hasRole('admin'))
                         <div class="btn-group">
                             <a href="{{ route('tagihan_terjadwal.create') }}" class="btn btn-primary">
@@ -42,115 +41,117 @@
         @endif
 
         <!-- Filter Section -->
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-filter"></i> Filter & Export
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <form method="GET" action="{{ route('tagihan_terjadwal.index') }}" id="filterForm">
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="tahun">Tahun</label>
-                                        <select name="tahun" id="tahun" class="form-control">
-                                            <option value="">-- Semua Tahun --</option>
-                                            @foreach ($tahunOptions as $tahun)
-                                                <option value="{{ $tahun }}"
-                                                    {{ request('tahun') == $tahun ? 'selected' : '' }}>
-                                                    {{ $tahun }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+        @if (!auth()->user()->hasRole('santri'))
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-filter"></i> Filter & Export
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="GET" action="{{ route('tagihan_terjadwal.index') }}" id="filterForm">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="tahun">Tahun</label>
+                                            <select name="tahun" id="tahun" class="form-control">
+                                                <option value="">-- Semua Tahun --</option>
+                                                @foreach ($tahunOptions as $tahun)
+                                                    <option value="{{ $tahun }}"
+                                                        {{ request('tahun') == $tahun ? 'selected' : '' }}>
+                                                        {{ $tahun }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="status">Status</label>
+                                            <select name="status" id="status" class="form-control">
+                                                <option value="">-- Semua Status --</option>
+                                                @foreach ($statusOptions as $status)
+                                                    <option value="{{ $status }}"
+                                                        {{ request('status') == $status ? 'selected' : '' }}>
+                                                        {{ ucwords(str_replace('_', ' ', $status)) }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="jenis_biaya">Jenis Biaya</label>
+                                            <select name="jenis_biaya" id="jenis_biaya" class="form-control">
+                                                <option value="">-- Semua Jenis --</option>
+                                                @foreach ($jenisBiayaOptions as $jenisBiaya)
+                                                    <option value="{{ $jenisBiaya->id_kategori_biaya }}"
+                                                        {{ request('jenis_biaya') == $jenisBiaya->id_kategori_biaya ? 'selected' : '' }}>
+                                                        {{ $jenisBiaya->nama_kategori }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="jenis_kelamin">Jenis Kelamin</label>
+                                            <select name="jenis_kelamin" id="jenis_kelamin" class="form-control">
+                                                <option value="">-- Semua --</option>
+                                                @foreach ($jenisKelaminOptions as $kode => $label)
+                                                    <option value="{{ $kode }}"
+                                                        {{ request('jenis_kelamin') == $kode ? 'selected' : '' }}>
+                                                        {{ $label }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="kelas_id">Kelas</label>
+                                            <select name="kelas_id" id="kelas_id" class="form-control">
+                                                <option value="">-- Semua --</option>
+                                                @foreach ($kelasOptions as $kelas)
+                                                    <option value="{{ $kelas->id_kelas }}"
+                                                        {{ request('kelas_id') == $kelas->id_kelas ? 'selected' : '' }}>
+                                                        {{ $kelas->nama_kelas }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="search">Cari Santri</label>
+                                            <input type="text" name="search" id="search" class="form-control"
+                                                placeholder="Nama atau NIS..." value="{{ request('search') }}">
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="status">Status</label>
-                                        <select name="status" id="status" class="form-control">
-                                            <option value="">-- Semua Status --</option>
-                                            @foreach ($statusOptions as $status)
-                                                <option value="{{ $status }}"
-                                                    {{ request('status') == $status ? 'selected' : '' }}>
-                                                    {{ ucwords(str_replace('_', ' ', $status)) }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="btn-group">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-search"></i> Filter
+                                            </button>
+                                            <a href="{{ route('tagihan_terjadwal.index') }}" class="btn btn-secondary">
+                                                <i class="fas fa-times"></i> Reset
+                                            </a>
+                                            <button type="button" class="btn btn-success" onclick="exportData()">
+                                                <i class="fas fa-file-excel"></i> Export Excel
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="jenis_biaya">Jenis Biaya</label>
-                                        <select name="jenis_biaya" id="jenis_biaya" class="form-control">
-                                            <option value="">-- Semua Jenis --</option>
-                                            @foreach ($jenisBiayaOptions as $jenisBiaya)
-                                                <option value="{{ $jenisBiaya->id_kategori_biaya }}"
-                                                    {{ request('jenis_biaya') == $jenisBiaya->id_kategori_biaya ? 'selected' : '' }}>
-                                                    {{ $jenisBiaya->nama_kategori }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="jenis_kelamin">Jenis Kelamin</label>
-                                        <select name="jenis_kelamin" id="jenis_kelamin" class="form-control">
-                                            <option value="">-- Semua --</option>
-                                            @foreach ($jenisKelaminOptions as $kode => $label)
-                                                <option value="{{ $kode }}"
-                                                    {{ request('jenis_kelamin') == $kode ? 'selected' : '' }}>
-                                                    {{ $label }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="kelas_id">Kelas</label>
-                                        <select name="kelas_id" id="kelas_id" class="form-control">
-                                            <option value="">-- Semua --</option>
-                                            @foreach ($kelasOptions as $kelas)
-                                                <option value="{{ $kelas->id_kelas }}"
-                                                    {{ request('kelas_id') == $kelas->id_kelas ? 'selected' : '' }}>
-                                                    {{ $kelas->nama_kelas }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="search">Cari Santri</label>
-                                        <input type="text" name="search" id="search" class="form-control"
-                                            placeholder="Nama atau NIS..." value="{{ request('search') }}">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <div class="btn-group">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-search"></i> Filter
-                                        </button>
-                                        <a href="{{ route('tagihan_terjadwal.index') }}" class="btn btn-secondary">
-                                            <i class="fas fa-times"></i> Reset
-                                        </a>
-                                        <button type="button" class="btn btn-success" onclick="exportData()">
-                                            <i class="fas fa-file-excel"></i> Export Excel
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        @endif
 
         <!-- Data Table Section -->
         <div class="row">

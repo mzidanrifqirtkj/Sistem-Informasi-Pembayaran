@@ -486,4 +486,49 @@ class Pembayaran extends Model
             throw $e;
         }
     }
+
+    public static function getTodayTotalForSantri($santriId)
+    {
+        return self::query()
+            ->where(function ($query) use ($santriId) {
+                $query->whereHas('tagihanBulanan', fn($q) => $q->where('santri_id', $santriId))
+                    ->orWhereHas('tagihanTerjadwal', fn($q) => $q->where('santri_id', $santriId))
+                    ->orWhereHas('paymentAllocations.tagihanBulanan', fn($q) => $q->where('santri_id', $santriId))
+                    ->orWhereHas('paymentAllocations.tagihanTerjadwal', fn($q) => $q->where('santri_id', $santriId));
+            })
+            ->whereDate('tanggal_pembayaran', now())
+            ->where('is_void', false)
+            ->sum('nominal_pembayaran');
+    }
+
+    public static function getMonthTotalForSantri($santriId)
+    {
+        return self::query()
+            ->where(function ($query) use ($santriId) {
+                $query->whereHas('tagihanBulanan', fn($q) => $q->where('santri_id', $santriId))
+                    ->orWhereHas('tagihanTerjadwal', fn($q) => $q->where('santri_id', $santriId))
+                    ->orWhereHas('paymentAllocations.tagihanBulanan', fn($q) => $q->where('santri_id', $santriId))
+                    ->orWhereHas('paymentAllocations.tagihanTerjadwal', fn($q) => $q->where('santri_id', $santriId));
+            })
+            ->whereMonth('tanggal_pembayaran', now()->month)
+            ->whereYear('tanggal_pembayaran', now()->year)
+            ->where('is_void', false)
+            ->sum('nominal_pembayaran');
+    }
+
+    public static function getYearTotalForSantri($santriId)
+    {
+        return self::query()
+            ->where(function ($query) use ($santriId) {
+                $query->whereHas('tagihanBulanan', fn($q) => $q->where('santri_id', $santriId))
+                    ->orWhereHas('tagihanTerjadwal', fn($q) => $q->where('santri_id', $santriId))
+                    ->orWhereHas('paymentAllocations.tagihanBulanan', fn($q) => $q->where('santri_id', $santriId))
+                    ->orWhereHas('paymentAllocations.tagihanTerjadwal', fn($q) => $q->where('santri_id', $santriId));
+            })
+            ->whereYear('tanggal_pembayaran', now()->year)
+            ->where('is_void', false)
+            ->sum('nominal_pembayaran');
+    }
 }
+
+

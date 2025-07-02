@@ -33,34 +33,19 @@ class TagihanBulananController extends Controller
      */
     public function index(Request $request)
     {
-        $this->authorize('tagihan-bulanan.view');
+        $this->authorize('viewAny', TagihanBulanan::class);
 
         $user = auth()->user();
-
-        // Role-based filtering
-        if ($user->hasRole('santri') && !$user->santri->is_ustadz) {
-            // Santri hanya lihat data sendiri - redirect ke show
-            return redirect()->route('tagihan_bulanan.show', $user->santri->id_santri);
-        }
-
-        // Get filter parameters
         $filters = $request->only(['nama_santri', 'kelas_id', 'tahun', 'status', 'bulan']);
         $tahun = $filters['tahun'] ?? Carbon::now()->year;
 
-        // Get available years for filter
-        $availableYears = TagihanBulanan::select('tahun')
-            ->distinct()
-            ->orderBy('tahun', 'desc')
-            ->pluck('tahun');
-
+        $availableYears = TagihanBulanan::select('tahun')->distinct()->orderBy('tahun', 'desc')->pluck('tahun');
         if ($availableYears->isEmpty()) {
             $availableYears = collect([Carbon::now()->year]);
         }
 
-        // Get kelas list for filter
         $kelasList = Kelas::orderBy('nama_kelas')->get();
 
-        // Get stats from cache or calculate
         $stats = Cache::remember("dashboard_stats_{$tahun}", 300, function () use ($tahun) {
             return [
                 'total_tagihan' => TagihanBulanan::where('tahun', $tahun)->count(),
@@ -82,40 +67,31 @@ class TagihanBulananController extends Controller
             ? round(($stats['total_dibayar'] / $stats['total_nominal']) * 100, 2)
             : 0;
 
-        // Build query
         $query = Santri::with([
             'riwayatKelas.mapelKelas.kelas',
             'tagihanBulanan' => function ($q) use ($tahun, $filters) {
                 $q->where('tahun', $tahun);
-
                 if (!empty($filters['bulan'])) {
                     $q->where('bulan', $filters['bulan']);
                 }
-
                 if (!empty($filters['status'])) {
                     $q->where('status', $filters['status']);
                 }
-
                 $q->orderBy('bulan_urutan');
             },
             'tagihanBulanan.pembayarans',
             'tagihanBulanan.paymentAllocations'
         ]);
 
-        // Role-based access control
-        if ($user->hasRole('ustadz') && $user->santri && $user->santri->is_ustadz) {
-            // Ustadz can see: own data + santri they teach
-            $santriIds = [$user->santri->id_santri]; // Own data
-
-            // Add santri that ustadz teaches
+        if ($user->hasRole('santri')) {
+            $query->where('id_santri', $user->santri->id_santri);
+        } elseif ($user->hasRole('ustadz') && $user->santri && $user->santri->is_ustadz) {
+            $santriIds = [$user->santri->id_santri];
             $taughtSantriIds = $this->getSantriIdsUstadzTeaches($user->santri);
             $santriIds = array_merge($santriIds, $taughtSantriIds);
-
             $query->whereIn('id_santri', array_unique($santriIds));
         }
-        // Admin sees all (no additional filter needed)
 
-        // Apply filters
         if (!empty($filters['nama_santri'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('nama_santri', 'like', '%' . $filters['nama_santri'] . '%')
@@ -125,35 +101,24 @@ class TagihanBulananController extends Controller
 
         if (!empty($filters['kelas_id'])) {
             if ($filters['kelas_id'] === 'tanpa_kelas') {
-                // Santri tanpa kelas
                 $query->whereDoesntHave('riwayatKelas');
             } else {
-                // Santri dengan kelas tertentu
                 $query->whereHas('riwayatKelas.mapelKelas.kelas', function ($q) use ($filters) {
                     $q->where('id_kelas', $filters['kelas_id']);
                 });
             }
         }
 
-        // Filter by status if specified
         if (!empty($filters['status'])) {
             $query->whereHas('tagihanBulanan', function ($q) use ($tahun, $filters) {
-                $q->where('tahun', $tahun)
-                    ->where('status', $filters['status']);
+                $q->where('tahun', $tahun)->where('status', $filters['status']);
             });
         }
 
-        // Get santri yang punya tagihan atau potential tagihan
-        $santris = $query->where('status', 'aktif')
-            ->orderBy('nama_santri')
-            ->paginate(10); // Pagination, 10 data per halaman
+        $santris = $query->where('status', 'aktif')->orderBy('nama_santri')->paginate(10);
 
-        // Process data untuk tampilan
         $santris->each(function ($santri) use ($tahun) {
-            // Get kelas info
             $santri->kelas_aktif = $santri->kelasAktif;
-
-            // Calculate summary
             $tagihans = $santri->tagihanBulanan->where('tahun', $tahun);
             $santri->total_tagihan = $tagihans->count();
             $santri->total_lunas = $tagihans->where('status', 'lunas')->count();
@@ -163,7 +128,6 @@ class TagihanBulananController extends Controller
             $santri->total_dibayar = $tagihans->sum('total_pembayaran');
             $santri->total_kekurangan = $santri->total_nominal - $santri->total_dibayar;
 
-            // Create monthly status array
             $monthlyStatus = [];
             foreach (TagihanBulanan::$bulanMapping as $bulan => $urutan) {
                 $tagihan = $tagihans->firstWhere('bulan', $bulan);
@@ -189,12 +153,13 @@ class TagihanBulananController extends Controller
         ));
     }
 
+
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        $this->authorize('tagihan-bulanan.create');
+        $this->authorize('create', TagihanBulanan::class);
 
         $user = auth()->user();
         $query = Santri::where('status', 'aktif')->orderBy('nama_santri');
@@ -221,7 +186,7 @@ class TagihanBulananController extends Controller
      */
     public function store(Request $request)
     {
-        $this->authorize('tagihan-bulanan.create');
+        $this->authorize('create', TagihanBulanan::class);
 
         $request->validate([
             'santri_id' => 'required|exists:santris,id_santri',
@@ -409,7 +374,7 @@ class TagihanBulananController extends Controller
      */
     public function edit($id)
     {
-        $this->authorize('tagihan-bulanan.edit');
+        $this->authorize('update', $id);
 
         $tagihan = TagihanBulanan::with('santri')->findOrFail($id);
 
@@ -434,7 +399,7 @@ class TagihanBulananController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->authorize('tagihan-bulanan.edit');
+        $this->authorize('update', $id);
 
         $tagihan = TagihanBulanan::findOrFail($id);
 
@@ -486,7 +451,7 @@ class TagihanBulananController extends Controller
      */
     public function destroy($id)
     {
-        $this->authorize('tagihan-bulanan.delete');
+        $this->authorize('delete', $id);
 
         $tagihan = TagihanBulanan::findOrFail($id);
 
