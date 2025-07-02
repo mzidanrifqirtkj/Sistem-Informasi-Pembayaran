@@ -6,6 +6,7 @@ class PaymentForm {
         this.previewData = null;
         this.totalTagihanTerpilih = 0;
         this.isSubmitting = false;
+        this.minPayment = 20000; // Tambahkan ini
 
         // NEW: Track auto-fill status for smart behavior
         this.isAutoFilled = false;
@@ -301,6 +302,10 @@ class PaymentForm {
     validatePaymentAmount() {
         const $nominalGroup = this.elements.nominalInput.closest(".form-group");
         const $helpText = $nominalGroup.find(".form-text");
+
+        if (!this.validateMinPayment()) {
+            return false;
+        }
 
         this.elements.nominalInput.removeClass("is-invalid is-valid");
         $nominalGroup.find(".invalid-feedback").remove();
@@ -644,6 +649,19 @@ class PaymentForm {
             Swal.fire({
                 title: "Peringatan",
                 text: "Masukkan nominal pembayaran",
+                icon: "warning",
+                backdrop: false,
+            });
+            this.elements.nominalInput.focus();
+            return false;
+        }
+
+        if (this.nominalPembayaran < this.minPayment) {
+            Swal.fire({
+                title: "Peringatan",
+                text: `Minimal pembayaran adalah ${this.formatRupiah(
+                    this.minPayment
+                )}`,
                 icon: "warning",
                 backdrop: false,
             });
@@ -1014,6 +1032,25 @@ class PaymentForm {
                 this.submitPaymentData(allocations, remainingOverpayment);
             }
         });
+    }
+
+    validateMinPayment() {
+        if (
+            this.nominalPembayaran > 0 &&
+            this.nominalPembayaran < this.minPayment
+        ) {
+            this.elements.nominalInput.addClass("is-invalid");
+            const $nominalGroup =
+                this.elements.nominalInput.closest(".form-group");
+            $nominalGroup.find(".invalid-feedback").remove();
+            $nominalGroup.append(
+                `<div class="invalid-feedback">Minimal pembayaran adalah ${this.formatRupiah(
+                    this.minPayment
+                )}</div>`
+            );
+            return false;
+        }
+        return true;
     }
 }
 

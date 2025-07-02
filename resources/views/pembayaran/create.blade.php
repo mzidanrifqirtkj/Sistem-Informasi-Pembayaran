@@ -244,12 +244,16 @@
                                     </div>
                                     <input type="number" name="nominal_pembayaran" id="nominalPembayaran"
                                         class="form-control form-control-lg text-right" placeholder="0" required
-                                        min="1">
+                                        min="20000">
                                 </div>
                                 <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Minimal pembayaran: <strong>Rp 20.000</strong><br>
                                     Total tagihan terpilih: <span id="totalTagihanTerpilih" class="font-weight-bold">Rp
                                         0</span>
                                 </small>
+                                <div id="nominalError" class="invalid-feedback" style="display: none;">
+                                    Minimal pembayaran adalah Rp 20.000
+                                </div>
                             </div>
 
                             <div class="form-group">

@@ -15,6 +15,7 @@ class PembayaranController extends Controller
 {
     protected $paymentService;
     protected $validationService;
+    const MIN_PAYMENT_AMOUNT = 20000;
 
     public function __construct(
         PaymentService $paymentService,
@@ -85,11 +86,19 @@ class PembayaranController extends Controller
 
             $request->validate([
                 'santri_id' => 'required|exists:santris,id_santri',
-                'nominal_pembayaran' => 'required|numeric|min:1',
+                'nominal_pembayaran' => [
+                    'required',
+                    'numeric',
+                    'min:' . self::MIN_PAYMENT_AMOUNT
+                ],
                 'selected_tagihan' => 'nullable|array',
                 'selected_tagihan.*.type' => 'required_with:selected_tagihan|in:bulanan,terjadwal',
                 'selected_tagihan.*.id' => 'required_with:selected_tagihan|integer',
                 'selected_tagihan.*.sisa' => 'required_with:selected_tagihan|numeric'
+            ], [
+                'nominal_pembayaran.min' => 'Minimal pembayaran adalah Rp ' . number_format(self::MIN_PAYMENT_AMOUNT, 0, ',', '.'),
+                'nominal_pembayaran.required' => 'Nominal pembayaran harus diisi',
+                'nominal_pembayaran.numeric' => 'Nominal pembayaran harus berupa angka'
             ]);
 
             $previewData = $this->paymentService->previewPaymentAllocation(
@@ -134,7 +143,10 @@ class PembayaranController extends Controller
 
         try {
             DB::beginTransaction();
-
+            $nominalPembayaran = $request->input('nominal_pembayaran');
+            if ($nominalPembayaran < self::MIN_PAYMENT_AMOUNT) {
+                throw new \Exception('Minimal pembayaran adalah Rp ' . number_format(self::MIN_PAYMENT_AMOUNT, 0, ',', '.'));
+            }
             \Log::info('Payment store request:', $request->all());
 
             $pembayaran = $this->paymentService->processPayment($request->validated());

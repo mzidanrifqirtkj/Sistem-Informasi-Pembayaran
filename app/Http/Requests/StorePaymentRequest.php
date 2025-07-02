@@ -9,6 +9,8 @@ class StorePaymentRequest extends FormRequest
 {
     protected $validationService;
 
+    const MIN_PAYMENT_AMOUNT = 20000;
+
     public function __construct()
     {
         parent::__construct();
@@ -24,7 +26,7 @@ class StorePaymentRequest extends FormRequest
     {
         return [
             'santri_id' => 'required|exists:santris,id_santri',
-            'nominal_pembayaran' => 'required|numeric|min:1',
+            'nominal_pembayaran' => 'required|numeric|min:' . self::MIN_PAYMENT_AMOUNT,
             'tanggal_pembayaran' => 'nullable|date|before_or_equal:today',
             'payment_note' => 'nullable|string|max:255',
             'allocations' => 'required|array|min:1',
@@ -105,7 +107,7 @@ class StorePaymentRequest extends FormRequest
             'santri_id.exists' => 'Santri tidak ditemukan',
             'nominal_pembayaran.required' => 'Nominal pembayaran harus diisi',
             'nominal_pembayaran.numeric' => 'Nominal pembayaran harus berupa angka',
-            'nominal_pembayaran.min' => 'Nominal pembayaran minimal Rp 1',
+            'nominal_pembayaran.min' => 'Minimal pembayaran adalah Rp ' . number_format(self::MIN_PAYMENT_AMOUNT, 0, ',', '.'),
             'allocations.required' => 'Alokasi pembayaran harus ada',
             'allocations.array' => 'Format alokasi pembayaran tidak valid',
             'allocations.min' => 'Minimal harus ada 1 alokasi pembayaran',

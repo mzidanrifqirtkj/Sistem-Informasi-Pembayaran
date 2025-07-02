@@ -163,7 +163,7 @@
                             </li>
                         @endcan
 
-                        @if (Auth::user()->hasRole('admin'))
+                        {{-- @if (Auth::user()->hasRole('admin'))
                             @can('pembayaran.bulk')
                                 <li class="{{ request()->routeIs('pembayaran.bulk*') ? 'active' : '' }}">
                                     <a class="nav-link" href="{{ route('pembayaran.bulk.index') }}">
@@ -171,7 +171,7 @@
                                     </a>
                                 </li>
                             @endcan
-                        @endif
+                        @endif --}}
                     </ul>
                 </li>
             @endcanany

@@ -163,15 +163,7 @@
                             </li>
                         <?php endif; ?>
 
-                        <?php if(Auth::user()->hasRole('admin')): ?>
-                            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('pembayaran.bulk')): ?>
-                                <li class="<?php echo e(request()->routeIs('pembayaran.bulk*') ? 'active' : ''); ?>">
-                                    <a class="nav-link" href="<?php echo e(route('pembayaran.bulk.index')); ?>">
-                                        <i class="fas fa-layer-group"></i> Bulk
-                                    </a>
-                                </li>
-                            <?php endif; ?>
-                        <?php endif; ?>
+                        
                     </ul>
                 </li>
             <?php endif; ?>
