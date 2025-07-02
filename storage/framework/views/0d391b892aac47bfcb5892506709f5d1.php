@@ -135,14 +135,6 @@
                                 </a>
                             </li>
                         <?php endif; ?>
-
-                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('tambahan-bulanan.view')): ?>
-                            <li class="<?php echo e(request()->routeIs('tambahan_bulanan*') ? 'active' : ''); ?>">
-                                <a class="nav-link" href="<?php echo e(route('tambahan_bulanan.index')); ?>">
-                                    <i class="fas fa-plus-circle"></i> Tambahan Bulanan
-                                </a>
-                            </li>
-                        <?php endif; ?>
                     </ul>
                 </li>
             <?php endif; ?>
@@ -166,7 +158,7 @@
                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('pembayaran.history')): ?>
                             <li class="<?php echo e(request()->routeIs('pembayaran.history') ? 'active' : ''); ?>">
                                 <a class="nav-link" href="<?php echo e(route('pembayaran.history')); ?>">
-                                    <i class="fas fa-history"></i> Riwayat Pembayaran
+                                    <i class="fas fa-history"></i> Riwayat
                                 </a>
                             </li>
                         <?php endif; ?>
@@ -175,7 +167,7 @@
                             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('pembayaran.bulk')): ?>
                                 <li class="<?php echo e(request()->routeIs('pembayaran.bulk*') ? 'active' : ''); ?>">
                                     <a class="nav-link" href="<?php echo e(route('pembayaran.bulk.index')); ?>">
-                                        <i class="fas fa-layer-group"></i> Pembayaran Bulk
+                                        <i class="fas fa-layer-group"></i> Bulk
                                     </a>
                                 </li>
                             <?php endif; ?>
@@ -248,43 +240,11 @@
             <?php endif; ?>
 
             <!-- Menu Ustadz -->
-            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['ustadz.view', 'penugasan-ustadz.view'])): ?>
-                <li class="dropdown <?php echo e(request()->routeIs('ustadz*') ? 'active' : ''); ?>">
-                    <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
-                        <i class="fas fa-user-tie"></i> <span>Ustadz</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ustadz.view')): ?>
-                            <li class="<?php echo e(request()->routeIs('ustadz.get') ? 'active' : ''); ?>">
-                                <a class="nav-link" href="<?php echo e(route('ustadz.get')); ?>">
-                                    <i class="fas fa-users"></i> Data Ustadz
-                                </a>
-                            </li>
-                        <?php endif; ?>
-
-                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('penugasan-ustadz.view')): ?>
-                            <li class="<?php echo e(request()->routeIs('ustadz.penugasan*') ? 'active' : ''); ?>">
-                                <a class="nav-link" href="<?php echo e(route('ustadz.penugasan.index')); ?>">
-                                    <i class="fas fa-tasks"></i> Penugasan Ustadz
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </li>
-            <?php endif; ?>
+            
 
             <!-- Menu Absensi - Commented out as requested in original -->
             
 
-            <!-- Profile Menu - Available for all logged users -->
-            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('profile.view')): ?>
-                <li class="menu-header">Profile</li>
-                <li class="<?php echo e(request()->routeIs('profile*') ? 'active' : ''); ?>">
-                    <a href="<?php echo e(route('profile.edit')); ?>" class="nav-link">
-                        <i class="fas fa-user-circle"></i><span>Profile</span>
-                    </a>
-                </li>
-            <?php endif; ?>
         </ul>
     </aside>
 </div>

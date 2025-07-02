@@ -1,6 +1,38 @@
 @extends('layouts.home')
 @section('title_page', 'Buat Tagihan Individual')
 
+@section('css_inline')
+    <style>
+        /* Fix z-index conflict between SweetAlert2 and Bootstrap Modal */
+        .swal2-container {
+            z-index: 10000 !important;
+            /* Higher than Bootstrap modal (1050) */
+        }
+
+        /* Ensure modal backdrop doesn't interfere */
+        .modal-backdrop {
+            z-index: 1040 !important;
+        }
+
+        .modal {
+            z-index: 1050 !important;
+        }
+
+        /* Fix untuk multiple backdrop */
+        .modal-backdrop+.modal-backdrop {
+            opacity: 0;
+            display: none;
+        }
+
+        .modal-backdrop.show {
+            opacity: 0 !important;
+            /* Transparan sepenuhnya */
+            pointer-events: none !important;
+            background-color: transparent !important;
+        }
+    </style>
+@endsection
+
 @section('content')
     <div class="container">
         <!-- Header Section -->
@@ -124,7 +156,7 @@
                                 <!-- Tahun Ajar -->
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="tahun_ajar_id">Tahun Ajar (Opsional)</label>
+                                        <label for="tahun_ajar_id" class="required">Tahun Ajar</label>
                                         <select name="tahun_ajar_id" id="tahun_ajar_id"
                                             class="form-control @error('tahun_ajar_id') is-invalid @enderror">
                                             <option value="">-- Tidak Ada --</option>

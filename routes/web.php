@@ -33,12 +33,51 @@ use App\Models\PenugasanUstadz;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
+// Tambah di routes/web.php (temporary)
+Route::get('/test-santri-access', function () {
+    return [
+        'user' => auth()->user()->email,
+        'roles' => auth()->user()->getRoleNames(),
+        'can_access' => 'SUCCESS - Santri can access this route'
+    ];
+})->middleware(['auth', 'role:admin|santri']);
+
+Route::get('/test-admin-only', function () {
+    return [
+        'user' => auth()->user()->email,
+        'roles' => auth()->user()->getRoleNames(),
+        'can_access' => 'SUCCESS - Admin only route'
+    ];
+})->middleware(['auth', 'role:admin']);
+
+Route::get('/debug-browser', function () {
+    $user = auth()->user();
+
+    if (!$user) {
+        return ['error' => 'User not authenticated'];
+    }
+
+    return [
+        'user_id' => $user->id_user,
+        'email' => $user->email,
+        'roles' => $user->getRoleNames()->toArray(),
+        'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
+        'specific_checks' => [
+            'dashboard.view' => $user->can('dashboard.view'),
+            'santri.view' => $user->can('santri.view'),
+            'tagihan-bulanan.view' => $user->can('tagihan-bulanan.view'),
+            'tagihan-terjadwal.view' => $user->can('tagihan-terjadwal.view'),
+        ],
+        'middleware_test' => 'If you see this, route middleware passed'
+    ];
+})->middleware(['auth', 'role:admin|santri']);
+
 Route::get('/', function () {
     return view('auth.login');
 })->name('home');
 
 // Route untuk admin
-Route::middleware(['auth', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'role:admin|santri'])->group(function () {
     // Dashboard
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard')->middleware('permission:dashboard.view');
 
@@ -372,48 +411,5 @@ Route::middleware(['auth', 'role:admin|santri'])->group(function () {
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit')->middleware('permission:profile.view');
     Route::post('profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update_password')->middleware('permission:profile.edit');
 });
-
-// Route untuk admin dan ustadz
-Route::middleware(['auth', 'role:admin|ustadz'])->group(function () {
-    // Dashboard
-    Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard')->middleware('permission:dashboard.view');
-
-    // Data Santri (Ustadz bisa lihat santri yang diajar)
-    Route::get('santri', [SantriController::class, 'index'])->name('santri.index')->middleware('permission:santri.view');
-    Route::get('santri/data', [SantriController::class, 'getSantri'])->name('santri.data')->middleware('permission:santri.view');
-    Route::get('santri/{santri}', [SantriController::class, 'show'])->name('santri.show')->middleware('permission:santri.view');
-
-    // Tagihan Terjadwal (Ustadz bisa lihat data santri yang diajar)
-    Route::get('tagihan-terjadwal', [TagihanTerjadwalController::class, 'index'])->name('tagihan_terjadwal.index')->middleware('permission:tagihan-terjadwal.view');
-
-    // Tagihan Bulanan (Ustadz bisa lihat data santri yang diajar)
-    Route::get('tagihan-bulanan', [TagihanBulananController::class, 'index'])->name('tagihan_bulanan.index')->middleware('permission:tagihan-bulanan.view');
-    Route::get('tagihan-bulanan/{id}', [TagihanBulananController::class, 'show'])->name('tagihan_bulanan.show')->middleware('permission:tagihan-bulanan.view');
-
-    // Pembayaran (Ustadz bisa lihat data santri yang diajar)
-    Route::get('pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index')->middleware('permission:pembayaran.list');
-    Route::get('pembayaran/santri/{santri}', [PembayaranController::class, 'show'])->name('pembayaran.show')->middleware('permission:pembayaran.create');
-    Route::get('pembayaran/history', [PembayaranController::class, 'history'])->name('pembayaran.history')->middleware('permission:pembayaran.history');
-
-    // Academic data (Ustadz bisa akses data akademik)
-    Route::get('kelas', [KelasController::class, 'index'])->name('kelas.index')->middleware('permission:kelas.view');
-    Route::get('mapel', [MataPelajaranController::class, 'index'])->name('mapel.index')->middleware('permission:mapel.view');
-    Route::get('mapel-kelas', [MapelKelasController::class, 'index'])->name('mapel_kelas.index')->middleware('permission:mapel-kelas.view');
-    Route::get('tahun-ajar', [TahunAjarController::class, 'index'])->name('tahun_ajar.index')->middleware('permission:tahun-ajar.view');
-    Route::get('qori_kelas', [QoriKelasController::class, 'index'])->name('qori_kelas.index')->middleware('permission:qori-kelas.view');
-    Route::get('riwayat-kelas', [RiwayatKelasController::class, 'index'])->name('riwayat-kelas.index')->middleware('permission:riwayat-kelas.view');
-
-    // Ustadz data
-    Route::get('ustadz', [PenugasanUstadzController::class, 'getUstadzs'])->name('ustadz.get')->middleware('permission:ustadz.view');
-    Route::get('ustadz/penugasan', [PenugasanUstadzController::class, 'index'])->name('ustadz.penugasan.index')->middleware('permission:penugasan-ustadz.view');
-
-    // Profile
-    Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit')->middleware('permission:profile.view');
-    Route::post('profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update_password')->middleware('permission:profile.edit');
-});
-
-Route::get('tulisan', function () {
-    return view('tulisan');
-})->middleware(['auth', 'verified', 'role:santri|admin']);
 
 require __DIR__ . '/auth.php';

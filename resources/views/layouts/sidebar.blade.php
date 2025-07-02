@@ -135,14 +135,6 @@
                                 </a>
                             </li>
                         @endcan
-
-                        @can('tambahan-bulanan.view')
-                            <li class="{{ request()->routeIs('tambahan_bulanan*') ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('tambahan_bulanan.index') }}">
-                                    <i class="fas fa-plus-circle"></i> Tambahan Bulanan
-                                </a>
-                            </li>
-                        @endcan
                     </ul>
                 </li>
             @endcanany
@@ -166,7 +158,7 @@
                         @can('pembayaran.history')
                             <li class="{{ request()->routeIs('pembayaran.history') ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('pembayaran.history') }}">
-                                    <i class="fas fa-history"></i> Riwayat Pembayaran
+                                    <i class="fas fa-history"></i> Riwayat
                                 </a>
                             </li>
                         @endcan
@@ -175,7 +167,7 @@
                             @can('pembayaran.bulk')
                                 <li class="{{ request()->routeIs('pembayaran.bulk*') ? 'active' : '' }}">
                                     <a class="nav-link" href="{{ route('pembayaran.bulk.index') }}">
-                                        <i class="fas fa-layer-group"></i> Pembayaran Bulk
+                                        <i class="fas fa-layer-group"></i> Bulk
                                     </a>
                                 </li>
                             @endcan
@@ -248,7 +240,7 @@
             @endcanany
 
             <!-- Menu Ustadz -->
-            @canany(['ustadz.view', 'penugasan-ustadz.view'])
+            {{-- @canany(['ustadz.view', 'penugasan-ustadz.view'])
                 <li class="dropdown {{ request()->routeIs('ustadz*') ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-user-tie"></i> <span>Ustadz</span>
@@ -271,7 +263,7 @@
                         @endcan
                     </ul>
                 </li>
-            @endcanany
+            @endcanany --}}
 
             <!-- Menu Absensi - Commented out as requested in original -->
             {{-- @can('absensi.view')
@@ -289,15 +281,6 @@
                 </li>
             @endcan --}}
 
-            <!-- Profile Menu - Available for all logged users -->
-            @can('profile.view')
-                <li class="menu-header">Profile</li>
-                <li class="{{ request()->routeIs('profile*') ? 'active' : '' }}">
-                    <a href="{{ route('profile.edit') }}" class="nav-link">
-                        <i class="fas fa-user-circle"></i><span>Profile</span>
-                    </a>
-                </li>
-            @endcan
         </ul>
     </aside>
 </div>
