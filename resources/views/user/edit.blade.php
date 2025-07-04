@@ -54,10 +54,10 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="email">Email <span class="text-danger">*</span></label>
+                                    <label for="email">Email</label>
                                     <input type="email" name="email"
                                         class="form-control @error('email') is-invalid @enderror"
-                                        value="{{ old('email', $user->email) }}" required>
+                                        value="{{ old('email', $user->email) }}">
                                     @error('email')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

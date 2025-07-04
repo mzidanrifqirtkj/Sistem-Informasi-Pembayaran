@@ -30,7 +30,7 @@ class PembayaranController extends Controller
         $this->authorize('viewAny', Pembayaran::class);
 
         $user = auth()->user();
-        $query = Santri::with('kategoriSantri')->where('status', 'aktif');
+        $query = Santri::where('status', 'aktif');
 
         if ($user->hasRole('santri') && !$user->santri->is_ustadz) {
             return redirect()->route('pembayaran.show', $user->santri->id_santri);

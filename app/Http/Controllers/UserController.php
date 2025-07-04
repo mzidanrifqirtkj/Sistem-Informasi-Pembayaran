@@ -150,22 +150,22 @@ class UserController extends Controller
     {
         $request->validate([
             'santri_id' => 'nullable|exists:santris,id_santri|unique:users,id_user,' . $user->id_user . ',id_user',
-            'email' => [
-                'nullable',
-                'email',
-                'max:255',
-                Rule::unique('users')->ignore($user->id_user, 'id_user')
-            ],
+            // 'email' => [
+            //     'nullable',
+            //     'email',
+            //     'max:255',
+            //     Rule::unique('users')->ignore($user->id_user, 'id_user')
+            // ],
             'password' => 'nullable|min:6',
             'roles' => 'required|array',
             'roles.*' => 'exists:roles,name',
         ], [
             'santri_id.required_without' => 'Pilih santri atau isi email',
-            'email.required_without' => 'Isi email atau pilih santri',
+            // 'email.required_without' => 'Isi email atau pilih santri',
         ]);
 
         // Validasi minimal salah satu harus diisi
-        if (empty($request->santri_id) && empty($request->email)) {
+        if (empty($request->santri_id) && !empty($request->email)) {
             return back()->withErrors(['santri_id' => 'Harus memilih santri atau mengisi email', 'email' => 'Harus mengisi email atau memilih santri']);
         }
 
