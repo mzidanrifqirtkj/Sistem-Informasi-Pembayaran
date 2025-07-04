@@ -1,8 +1,6 @@
 @extends('layouts.home')
 @section('title_page', 'Data User')
 @section('content')
-
-
     <div class="row">
         <div class="col-md-4 d-flex justify-content-between">
             <a href="{{ route('user.create') }}" class="btn btn-primary">Tambah user</a>
@@ -17,17 +15,17 @@
                     <th width="5%">No</th>
                     <th>Nama Santri</th>
                     <th>Email</th>
+                    <th>Roles</th>
                     <th width="13%">Action</th>
                 </tr>
             </thead>
         </table>
     </div>
+
     <div class="mt-2 float-left">
         <span class="ml-3">Data Keseluruhan: <span
                 class="text-primary font-weight-bold">{{ DB::table('users')->count() }}</span> user.</span>
     </div>
-
-
 @endsection
 
 @section('modal')
@@ -65,26 +63,27 @@
                 serverSide: true,
                 ajax: "{{ route('user.data') }}",
                 columns: [{
-                        data: 'DT_RowIndex',
-                        name: 'DT_RowIndex',
-                        orderable: false,
-                        searchable: true
-                    },
-                    {
-                        data: 'santri',
-                        name: 'santri'
-                    },
-                    {
-                        data: 'email',
-                        name: 'email'
-                    },
-                    {
-                        data: 'action',
-                        name: 'action',
-                        orderable: false,
-                        searchable: false
-                    }
-                ]
+                    data: 'DT_RowIndex',
+                    name: 'DT_RowIndex',
+                    orderable: false,
+                    searchable: true
+                }, {
+                    data: 'santri',
+                    name: 'santri'
+                }, {
+                    data: 'email',
+                    name: 'email'
+                }, {
+                    data: 'roles',
+                    name: 'roles',
+                    orderable: false,
+                    searchable: false
+                }, {
+                    data: 'action',
+                    name: 'action',
+                    orderable: false,
+                    searchable: false
+                }]
             });
         });
 
@@ -99,8 +98,6 @@
             $("#deleteForm").attr('action', url);
             $("#deleteUserModal").modal('show');
         }
-
-
 
         function formSubmit() {
             $("#deleteForm").submit();

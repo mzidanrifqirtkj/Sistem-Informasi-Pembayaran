@@ -104,11 +104,11 @@
                     <div class="form-group">
                         <label for="jenis_kelamin">Jenis Kelamin</label>
                         <select class="form-control @error('jenis_kelamin') is-invalid @enderror" name="jenis_kelamin">
-                            <option value="Laki-laki"
-                                {{ old('jenis_kelamin', $santri->jenis_kelamin) == 'Laki-laki' ? 'selected' : '' }}>
+                            <option value="L"
+                                {{ old('jenis_kelamin', $santri->jenis_kelamin) == 'L' ? 'selected' : '' }}>
                                 Laki-laki</option>
-                            <option value="Perempuan"
-                                {{ old('jenis_kelamin', $santri->jenis_kelamin) == 'Perempuan' ? 'selected' : '' }}>
+                            <option value="P"
+                                {{ old('jenis_kelamin', $santri->jenis_kelamin) == 'P' ? 'selected' : '' }}>
                                 Perempuan</option>
                         </select>
                         @error('jenis_kelamin')
@@ -246,25 +246,31 @@
 
                 <div class="col-sm">
                     <div class="form-group">
-                        <label for="kategori_santri_id">Kategori Santri</label>
-                        <select class="form-control @error('kategori_santri_id') is-invalid @enderror"
-                            name="kategori_santri_id" id="kategori_santri_id">
-                            <option value="" disabled
-                                {{ old('kategori_santri_id', $santri->kategori_santri_id) ? '' : 'selected' }}>
-                                Pilih Kategori
-                            </option>
+                        <label for="kategori_biaya_jalur">Kategori Biaya Jalur</label>
+                        <select class="form-control @error('kategori_biaya_jalur') is-invalid @enderror"
+                            name="kategori_biaya_jalur">
+                            <option value="" disabled>Pilih Kategori Biaya</option>
                             @foreach ($kategori_santris as $kategori)
+                                @php
+                                    // Cari kategori biaya jalur yang aktif untuk santri ini
+                                    $kategoriBiayaAktif = $santri->biayaSantris
+                                        ->where('daftarBiaya.kategoriBiaya.status', 'jalur')
+                                        ->first()?->daftarBiaya?->kategoriBiaya?->id_kategori_biaya;
+                                @endphp
                                 <option value="{{ $kategori->id_kategori_biaya }}"
-                                    {{ old('kategori_santri_id', $santri->kategori_santri_id) == $kategori->id_kategori_biaya ? 'selected' : '' }}>
+                                    {{ old('kategori_biaya_jalur', $kategoriBiayaAktif) == $kategori->id_kategori_biaya ? 'selected' : '' }}>
                                     {{ $kategori->nama_kategori }}
                                 </option>
                             @endforeach
                         </select>
-                        @error('kategori_santri_id')
+                        @error('kategori_biaya_jalur')
                             <span class="invalid-feedback" role="alert">
                                 <strong>{{ $message }}</strong>
                             </span>
                         @enderror
+                        <small class="form-text text-muted">
+                            Kategori biaya utama untuk santri (status: jalur)
+                        </small>
                     </div>
                 </div>
 

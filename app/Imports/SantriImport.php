@@ -2,7 +2,9 @@
 
 namespace App\Imports;
 
-use App\Models\KategoriSantri;
+use App\Models\BiayaSantri;
+use App\Models\DaftarBiaya;
+use App\Models\KategoriBiaya;
 use App\Models\Santri;
 use App\Models\User;
 use DateTime;
@@ -42,24 +44,53 @@ class SantriImport implements ToModel, WithHeadingRow
             $email = !empty($row['email']) ? $row['email'] : null;
             $password = bcrypt($row['nis'] . '123');
 
+            if (!empty($row['email']) && filter_var($row['email'], FILTER_VALIDATE_EMAIL)) {
+                $email = $row['email'];
+            } else {
+                $email = null;
+            }
+
             $user = new User([
                 'email' => $email,
                 'password' => $password,
             ]);
-            $user->assignRole('santri');
             $user->save();
-
-            $default_kategori_santri = KategoriSantri::where('nama_kategori', 'Reguler')->first();
+            $user->assignRole('santri');
 
             $isUstadz = !empty($row['is_ustadz']) ? (bool) $row['is_ustadz'] : false;
-            $kategoriSantriId = !empty($row['kategori_santri_id']) ? $row['kategori_santri_id'] : $default_kategori_santri->id_kategori_santri;
+
+            // Mapping jenis kelamin ke format L/P
+            $jenisKelaminMapping = [
+                'Laki-laki' => 'L',
+                'Perempuan' => 'P',
+                'laki-laki' => 'L', // case insensitive
+                'perempuan' => 'P',
+                'LAKI-LAKI' => 'L',
+                'PEREMPUAN' => 'P',
+                // Fallback jika sudah format L/P
+                'L' => 'L',
+                'P' => 'P'
+            ];
+            // Jika jenis kelamin tidak ada atau tidak dikenali, akan tetap null
+            // Jika jenis kelamin sudah dalam format L/P, akan tetap L/P
+            // Jika jenis kelamin tidak ada, akan tetap null
+            // Jika jenis kelamin tidak dikenali, akan tetap null
+            // Jika jenis kelamin sudah dalam format L/P, akan tetap L/P
+            // Jika jenis kelamin tidak ada, akan tetap null
+            // Jika jenis kelamin tidak dikenali, akan tetap null
+            // Jika jenis kelamin sudah dalam format L/P, akan tetap L/P
+            $jenisKelamin = null;
+            if (!empty($row['jenis_kelamin'])) {
+                $jenisKelamin = $jenisKelaminMapping[$row['jenis_kelamin']] ?? null;
+            }
 
             $santri = Santri::create([
                 'nama_santri' => $row['nama_lengkap'] ?? null,
                 'nis' => !empty($row['nis']) ? (int) $row['nis'] : null,
                 'nik' => $row['nik'] ?? null,
                 'no_kk' => $row['no_kk'] ?? null,
-                'jenis_kelamin' => $row['jenis_kelamin'] ?? null,
+
+                'jenis_kelamin' => $jenisKelamin,
                 'tanggal_lahir' => $tanggalLahir ? $tanggalLahir->format('Y-m-d') : null,
                 'tempat_lahir' => $row['tempat_lahir'] ?? null,
                 'no_hp' => $row['no_telepon'] ?? null,
@@ -71,7 +102,6 @@ class SantriImport implements ToModel, WithHeadingRow
                 'tanggal_keluar' => $tanggalKeluar ? $tanggalKeluar->format('Y-m-d') : null,
                 'is_ustadz' => $isUstadz,
                 'user_id' => $user->id_user,
-                'kategori_santri_id' => $kategoriSantriId,
                 'nama_ayah' => $row['nama_ayah'] ?? null,
                 'no_hp_ayah' => $row['no_telepon_ayah'] ?? null,
                 'pekerjaan_ayah' => $row['pekerjaan_ayah'] ?? null,
@@ -84,7 +114,18 @@ class SantriImport implements ToModel, WithHeadingRow
                 'alamat_ibu' => $row['alamat_ibu'] ?? null,
                 'tempat_lahir_ibu' => $row['tempat_lahir_ibu'] ?? null,
                 'tanggal_lahir_ibu' => $tanggalLahirIbu ? $tanggalLahirIbu->format('Y-m-d') : null,
-                'status_santri' => $row['status_santri'] ?? null,
+                'status' => $row['status_santri'] ?? null,
+            ]);
+
+            $defaultKategoriBiaya = KategoriBiaya::where('nama_kategori', 'Reguler')
+                ->where('status', 'jalur')->first();
+
+            $defaultDaftarBiaya = DaftarBiaya::where('kategori_biaya_id', $defaultKategoriBiaya->id_kategori_biaya)->first();
+
+            BiayaSantri::create([
+                'santri_id' => $santri->id_santri,
+                'daftar_biaya_id' => $defaultDaftarBiaya->id_daftar_biaya,
+                'jumlah' => 1 // atau sesuai kebutuhan
             ]);
 
             DB::commit();

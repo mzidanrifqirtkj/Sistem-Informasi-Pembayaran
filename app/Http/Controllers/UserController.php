@@ -28,7 +28,9 @@ class UserController extends Controller
     public function getUser()
     {
         try {
-            $users = User::with(['santri', 'roles'])->select('id_user', 'email', 'password', 'created_at');
+            // ✅ Hapus select() agar relasi bisa diakses dengan benar
+            $users = User::with(['santri', 'roles']);
+
             return datatables()->of($users)
                 ->addIndexColumn()
                 ->addColumn('santri', function ($row) {
@@ -44,7 +46,7 @@ class UserController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     return '<a href="' . route('user.edit', $row->id_user) . '" class="btn btn-sm btn-info"><i class="fas fa-pen"></i></a>
-                    <button class="btn btn-sm btn-danger" onclick="deleteData(' . $row->id_user . ')"><i class="fas fa-trash"></i></button>';
+                <button class="btn btn-sm btn-danger" onclick="deleteData(' . $row->id_user . ')"><i class="fas fa-trash"></i></button>';
                 })
                 ->rawColumns(['santri', 'roles', 'action'])
                 ->make(true);

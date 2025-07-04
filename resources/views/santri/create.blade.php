@@ -103,10 +103,9 @@
                     <div class="form-group">
                         <label for="jenis_kelamin">Jenis Kelamin</label>
                         <select class="form-control @error('jenis_kelamin') is-invalid @enderror" name="jenis_kelamin">
-                            <option value="Laki-laki" {{ old('jenis_kelamin') == 'Laki-laki' ? 'selected' : '' }}>Laki-laki
-                            </option>
-                            <option value="Perempuan" {{ old('jenis_kelamin') == 'Perempuan' ? 'selected' : '' }}>Perempuan
-                            </option>
+                            {{-- ✅ Perbaikan: value harus L/P --}}
+                            <option value="L" {{ old('jenis_kelamin') == 'L' ? 'selected' : '' }}>Laki-laki</option>
+                            <option value="P" {{ old('jenis_kelamin') == 'P' ? 'selected' : '' }}>Perempuan</option>
                         </select>
                         @error('jenis_kelamin')
                             <span class="invalid-feedback" role="alert">
@@ -246,18 +245,38 @@
                 </div> --}}
                 <div class="col-sm">
                     <div class="form-group">
-                        <label for="kategori_santri_id">Kategori Santri</label>
-                        <select class="form-control @error('kategori_santri_id') is-invalid @enderror"
-                            name="kategori_santri_id">
-                            <option value="" selected disabled>Pilih Kategori</option>
+                        <label for="kategori_biaya_jalur">Kategori Biaya Jalur</label>
+                        <select class="form-control @error('kategori_biaya_jalur') is-invalid @enderror"
+                            name="kategori_biaya_jalur">
+                            <option value="" selected disabled>Pilih Kategori Biaya</option>
                             @foreach ($kategori_santris as $kategori)
                                 <option value="{{ $kategori->id_kategori_biaya }}"
-                                    {{ old('kategori_santri_id') == $kategori->id_kategori_biaya ? 'selected' : '' }}>
+                                    {{ old('kategori_biaya_jalur') == $kategori->id_kategori_biaya ? 'selected' : '' }}>
                                     {{ $kategori->nama_kategori }}
                                 </option>
                             @endforeach
                         </select>
-                        @error('kategori_santri_id')
+                        @error('kategori_biaya_jalur')
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
+                        @enderror
+                        <small class="form-text text-muted">
+                            Kategori biaya utama untuk santri (status: jalur)
+                        </small>
+                    </div>
+                </div>
+
+                <div class="col-sm">
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select class="form-control @error('status') is-invalid @enderror" name="status">
+                            <option value="aktif" {{ old('status', 'aktif') == 'aktif' ? 'selected' : '' }}>Aktif
+                            </option>
+                            <option value="non_aktif" {{ old('status') == 'non_aktif' ? 'selected' : '' }}>Non Aktif
+                            </option>
+                        </select>
+                        @error('status')
                             <span class="invalid-feedback" role="alert">
                                 <strong>{{ $message }}</strong>
                             </span>

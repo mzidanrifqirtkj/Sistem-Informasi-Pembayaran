@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Permission\Traits\HasRoles;
 
 class Santri extends Model
 {
@@ -31,7 +30,6 @@ class Santri extends Model
         'tanggal_masuk',
         'is_ustadz',
         'user_id',
-        'kategori_santri_id',
         'nama_ayah',
         'no_hp_ayah',
         'pekerjaan_ayah',
@@ -81,11 +79,6 @@ class Santri extends Model
     public function tambahanBulanans()
     {
         return $this->belongsToMany(TambahanBulanan::class, 'santri_tambahan_bulanans', 'santri_id', 'tambahan_bulanan_id')->withPivot(['jumlah'])->withTimestamps();
-    }
-
-    public function kategoriSantri()
-    {
-        return $this->belongsTo(KategoriSantri::class, 'kategori_santri_id', 'id_kategori_santri');
     }
 
     public function tagihanBulanan()

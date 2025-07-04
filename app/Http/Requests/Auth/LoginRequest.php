@@ -46,7 +46,6 @@ class LoginRequest extends FormRequest
 
         // Cari user berdasarkan email, nis
         $user = $this->findUser($credentials);
-
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             RateLimiter::hit($this->throttleKey());
 

@@ -34,43 +34,23 @@ use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 // Tambah di routes/web.php (temporary)
-Route::get('/test-santri-access', function () {
-    return [
-        'user' => auth()->user()->email,
-        'roles' => auth()->user()->getRoleNames(),
-        'can_access' => 'SUCCESS - Santri can access this route'
-    ];
-})->middleware(['auth', 'role:admin|santri']);
-
-Route::get('/test-admin-only', function () {
-    return [
-        'user' => auth()->user()->email,
-        'roles' => auth()->user()->getRoleNames(),
-        'can_access' => 'SUCCESS - Admin only route'
-    ];
-})->middleware(['auth', 'role:admin']);
-
-Route::get('/debug-browser', function () {
+Route::get('/debug-admin-santri/{santri}', function (App\Models\Santri $santri) {
     $user = auth()->user();
 
-    if (!$user) {
-        return ['error' => 'User not authenticated'];
-    }
-
     return [
-        'user_id' => $user->id_user,
-        'email' => $user->email,
-        'roles' => $user->getRoleNames()->toArray(),
-        'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
-        'specific_checks' => [
-            'dashboard.view' => $user->can('dashboard.view'),
-            'santri.view' => $user->can('santri.view'),
-            'tagihan-bulanan.view' => $user->can('tagihan-bulanan.view'),
-            'tagihan-terjadwal.view' => $user->can('tagihan-terjadwal.view'),
-        ],
-        'middleware_test' => 'If you see this, route middleware passed'
+        'login_status' => $user ? 'LOGGED IN' : 'NOT LOGGED IN',
+        'user_id' => $user?->id_user,
+        'user_email' => $user?->email,
+        'user_roles' => $user?->getRoleNames(),
+        'has_santri_edit_permission' => $user?->can('santri.edit'),
+        'has_admin_role' => $user?->hasRole('admin'),
+        'policy_update_check' => $user?->can('update', $santri),
+        'santri_info' => [
+            'id' => $santri->id_santri,
+            'name' => $santri->nama_santri
+        ]
     ];
-})->middleware(['auth', 'role:admin|santri']);
+})->middleware('auth');
 
 Route::get('/', function () {
     return view('auth.login');

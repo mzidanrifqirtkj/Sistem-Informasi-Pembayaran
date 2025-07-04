@@ -57,3 +57,4 @@ if (!function_exists('generate_receipt_number')) {
         return sprintf("KWT/%s/%s/%04d", $year, $month, $newNumber);
     }
 }
+
