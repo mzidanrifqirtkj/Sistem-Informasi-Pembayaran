@@ -336,12 +336,12 @@ class TagihanTerjadwalController extends Controller
             // Build query untuk BiayaSantri
             $biayaSantriQuery = BiayaSantri::with('daftarBiaya.kategoriBiaya');
 
-            if ($selectedKategoriStatus) {
-                // Filter berdasarkan status kategori
-                $biayaSantriQuery->whereHas('daftarBiaya.kategoriBiaya', function ($query) use ($selectedKategoriStatus) {
-                    $query->where('status', $selectedKategoriStatus);
-                });
-            }
+            // if ($selectedKategoriStatus) {
+            //     // Filter berdasarkan status kategori
+            //     $biayaSantriQuery->whereHas('daftarBiaya.kategoriBiaya', function ($query) use ($selectedKategoriStatus) {
+            //         $query->where('status', $selectedKategoriStatus);
+            //     });
+            // }
 
             if ($selectedJenisBiayaId) {
                 // Filter berdasarkan jenis biaya tertentu
