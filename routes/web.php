@@ -33,24 +33,17 @@ use App\Models\PenugasanUstadz;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
-// Tambah di routes/web.php (temporary)
-Route::get('/debug-admin-santri/{santri}', function (App\Models\Santri $santri) {
-    $user = auth()->user();
-
+Route::get('/test-edit-bypass/{id}', function ($id) {
+    $tagihan = \App\Models\TagihanBulanan::findOrFail($id);
     return [
-        'login_status' => $user ? 'LOGGED IN' : 'NOT LOGGED IN',
-        'user_id' => $user?->id_user,
-        'user_email' => $user?->email,
-        'user_roles' => $user?->getRoleNames(),
-        'has_santri_edit_permission' => $user?->can('santri.edit'),
-        'has_admin_role' => $user?->hasRole('admin'),
-        'policy_update_check' => $user?->can('update', $santri),
-        'santri_info' => [
-            'id' => $santri->id_santri,
-            'name' => $santri->nama_santri
-        ]
+        'tagihan_found' => true,
+        'tagihan_id' => $tagihan->id_tagihan_bulanan,
+        'santri_name' => $tagihan->santri->nama_santri ?? 'N/A',
+        'can_edit_permission' => auth()->user()->can('tagihan-bulanan.edit'),
+        'can_delete_permission' => auth()->user()->can('tagihan-bulanan.delete'),
     ];
 })->middleware('auth');
+
 
 Route::get('/', function () {
     return view('auth.login');
@@ -125,29 +118,70 @@ Route::middleware(['auth', 'role:admin|santri'])->group(function () {
 
     // Tagihan Bulanan
     Route::prefix('tagihan-bulanan')->name('tagihan_bulanan.')->group(function () {
-        Route::get('/', [TagihanBulananController::class, 'index'])->name('index');
-        Route::get('/create', [TagihanBulananController::class, 'create'])->name('create');
-        Route::post('/', [TagihanBulananController::class, 'store'])->name('store');
-        Route::get('/{id}', [TagihanBulananController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [TagihanBulananController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [TagihanBulananController::class, 'update'])->name('update');
-        Route::delete('/{id}', [TagihanBulananController::class, 'destroy'])->name('destroy');
+        // Main CRUD routes with permission middleware
+        Route::get('/', [TagihanBulananController::class, 'index'])
+            ->name('index')
+            ->middleware('permission:tagihan-bulanan.view');
+
+        Route::get('/create', [TagihanBulananController::class, 'create'])
+            ->name('create')
+            ->middleware('permission:tagihan-bulanan.create');
+
+        Route::post('/', [TagihanBulananController::class, 'store'])
+            ->name('store')
+            ->middleware('permission:tagihan-bulanan.create');
+
+        Route::get('/{id}', [TagihanBulananController::class, 'show'])
+            ->name('show')
+            ->middleware('permission:tagihan-bulanan.view');
+
+        Route::get('/{id}/edit', [TagihanBulananController::class, 'edit'])
+            ->name('edit')
+            ->middleware('permission:tagihan-bulanan.edit');
+
+        Route::put('/{id}', [TagihanBulananController::class, 'update'])
+            ->name('update')
+            ->middleware('permission:tagihan-bulanan.edit');
+
+        Route::delete('/{id}', [TagihanBulananController::class, 'destroy'])
+            ->name('destroy')
+            ->middleware('permission:tagihan-bulanan.delete');
 
         // Bulk operations
-        Route::get('/bulk/create', [TagihanBulananController::class, 'createBulkBulanan'])->name('createBulkBulanan');
-        Route::post('/bulk/generate', [TagihanBulananController::class, 'generateBulkBulanan'])->name('generateBulkBulanan');
+        Route::get('/bulk/create', [TagihanBulananController::class, 'createBulkBulanan'])
+            ->name('createBulkBulanan')
+            ->middleware('permission:tagihan-bulanan.create');
+
+        Route::post('/bulk/generate', [TagihanBulananController::class, 'generateBulkBulanan'])
+            ->name('generateBulkBulanan')
+            ->middleware('permission:tagihan-bulanan.create');
 
         // AJAX endpoints
-        Route::get('/ajax/santri-biaya-info', [TagihanBulananController::class, 'getSantriBiayaInfo'])->name('getSantriBiayaInfo');
-        Route::get('/ajax/santri-yearly-data', [TagihanBulananController::class, 'getSantriYearlyData'])->name('getSantriYearlyData');
-        Route::get('/ajax/available-months', [TagihanBulananController::class, 'getAvailableMonths'])->name('getAvailableMonths');
+        Route::get('/ajax/santri-biaya-info', [TagihanBulananController::class, 'getSantriBiayaInfo'])
+            ->name('getSantriBiayaInfo')
+            ->middleware('permission:tagihan-bulanan.view');
+
+        Route::get('/ajax/santri-yearly-data', [TagihanBulananController::class, 'getSantriYearlyData'])
+            ->name('getSantriYearlyData')
+            ->middleware('permission:tagihan-bulanan.view');
+
+        Route::get('/ajax/available-months', [TagihanBulananController::class, 'getAvailableMonths'])
+            ->name('getAvailableMonths')
+            ->middleware('permission:tagihan-bulanan.view');
 
         // Export
-        Route::get('/export/excel', [TagihanBulananController::class, 'export'])->name('export');
+        Route::get('/export/excel', [TagihanBulananController::class, 'export'])
+            ->name('export')
+            ->middleware('permission:tagihan-bulanan.export');
 
-        // Payment
-        Route::post('/{id}/payment', [TagihanBulananController::class, 'createPayment'])->name('createPayment');
-        Route::post('/payment/handle-overpayment', [TagihanBulananController::class, 'handleOverpayment'])->name('handleOverpayment');
+        // Payment operations
+        Route::post('/{id}/payment', [TagihanBulananController::class, 'createPayment'])
+            ->name('createPayment')
+            ->middleware('permission:tagihan-bulanan.edit');
+
+        Route::post('/payment/handle-overpayment', [TagihanBulananController::class, 'handleOverpayment'])
+            ->name('handleOverpayment')
+            ->middleware('permission:tagihan-bulanan.edit');
     });
 
     // Pembayaran

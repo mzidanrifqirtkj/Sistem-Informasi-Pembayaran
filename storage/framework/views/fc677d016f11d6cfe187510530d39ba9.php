@@ -175,34 +175,25 @@
 
                                 <!-- Actions -->
                                 <div class="btn-group w-100">
-                                    <?php if($tagihan->canEdit()): ?>
+                                    
+                                    <?php if(auth()->user()->can('tagihan-bulanan.edit')): ?>
                                         <a href="<?php echo e(route('tagihan_bulanan.edit', $tagihan->id_tagihan_bulanan)); ?>"
                                             class="btn btn-warning btn-sm">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                     <?php endif; ?>
 
-                                    <?php if($tagihan->canDelete()): ?>
+                                    
+                                    <?php if(auth()->user()->can('tagihan-bulanan.delete')): ?>
                                         <button type="button" class="btn btn-danger btn-sm"
                                             onclick="deleteTagihan(<?php echo e($tagihan->id_tagihan_bulanan); ?>, '<?php echo e($monthName); ?>')"
                                             data-bs-toggle="tooltip" title="Hapus Tagihan <?php echo e($monthName); ?>">
                                             <i class="fas fa-trash"></i>
                                         </button>
-                                    <?php else: ?>
-                                        <button type="button" class="btn btn-secondary btn-sm" disabled
-                                            data-bs-toggle="tooltip" title="Tidak bisa dihapus - sudah ada pembayaran">
-                                            <i class="fas fa-lock"></i>
-                                        </button>
                                     <?php endif; ?>
 
-                                    <!-- Add Payment Button -->
-                                    <?php if($tagihan->status !== 'lunas'): ?>
-                                        <button type="button" class="btn btn-success btn-sm"
-                                            onclick="addPayment(<?php echo e($tagihan->id_tagihan_bulanan); ?>, '<?php echo e($monthName); ?>')"
-                                            data-bs-toggle="tooltip" title="Tambah Pembayaran">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    <?php endif; ?>
+                                    
+                                    
                                 </div>
 
                                 <!-- Payment History -->
@@ -228,10 +219,13 @@
                             <?php else: ?>
                                 <!-- No Tagihan -->
                                 <p class="text-muted mb-3">Belum ada tagihan untuk bulan ini</p>
-                                <a href="<?php echo e(route('tagihan_bulanan.create', ['santri_id' => $santri->id_santri, 'bulan' => $monthKey, 'tahun' => $tahun])); ?>"
-                                    class="btn btn-primary btn-sm w-100">
-                                    <i class="fas fa-plus me-2"></i>Buat Tagihan
-                                </a>
+                                
+                                <?php if(auth()->user()->can('tagihan-bulanan.create')): ?>
+                                    <a href="<?php echo e(route('tagihan_bulanan.create', ['santri_id' => $santri->id_santri, 'bulan' => $monthKey, 'tahun' => $tahun])); ?>"
+                                        class="btn btn-primary btn-sm w-100">
+                                        <i class="fas fa-plus me-2"></i>Buat Tagihan
+                                    </a>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>

@@ -219,16 +219,62 @@ class TagihanBulanan extends Model
         return $this->status;
     }
 
+    // Tambahkan method ini ke Model TagihanBulanan
+
+    /**
+     * Check if tagihan can be edited
+     * Business Rule: Cannot edit if there are payments
+     */
     public function canEdit()
     {
-        // Tidak bisa edit jika sudah ada pembayaran
         return $this->pembayarans->count() === 0 &&
             $this->paymentAllocations->count() === 0;
     }
 
+    /**
+     * Check if tagihan can be deleted
+     * Business Rule: Cannot delete if there are payments
+     */
     public function canDelete()
     {
-        // Tidak bisa hapus jika sudah ada pembayaran
-        return $this->canEdit();
+        return $this->pembayarans->count() === 0 &&
+            $this->paymentAllocations->count() === 0;
     }
+
+    /**
+     * Get edit status with reason
+     */
+    public function getEditStatusAttribute()
+    {
+        if ($this->canEdit()) {
+            return [
+                'can_edit' => true,
+                'reason' => null
+            ];
+        }
+
+        return [
+            'can_edit' => false,
+            'reason' => 'Tagihan yang sudah memiliki pembayaran tidak dapat diedit'
+        ];
+    }
+
+    /**
+     * Get delete status with reason
+     */
+    public function getDeleteStatusAttribute()
+    {
+        if ($this->canDelete()) {
+            return [
+                'can_delete' => true,
+                'reason' => null
+            ];
+        }
+
+        return [
+            'can_delete' => false,
+            'reason' => 'Tagihan yang sudah memiliki pembayaran tidak dapat dihapus'
+        ];
+    }
+
 }

@@ -374,7 +374,9 @@ class TagihanBulananController extends Controller
      */
     public function edit($id)
     {
-        $this->authorize('update', $id);
+        if (!auth()->user()->can('tagihan-bulanan.edit')) {
+            abort(403);
+        } // ✅ Direct permission check
 
         $tagihan = TagihanBulanan::with('santri')->findOrFail($id);
 
@@ -451,9 +453,11 @@ class TagihanBulananController extends Controller
      */
     public function destroy($id)
     {
-        $this->authorize('delete', $id);
+        if (!auth()->user()->can('tagihan-bulanan.edit')) {
+            abort(403);
+        } // ✅ Direct permission check
 
-        $tagihan = TagihanBulanan::findOrFail($id);
+        $tagihan = TagihanBulanan::with('santri')->findOrFail($id);
 
         // Check access to santri
         $this->checkSantriAccess($tagihan->santri_id);

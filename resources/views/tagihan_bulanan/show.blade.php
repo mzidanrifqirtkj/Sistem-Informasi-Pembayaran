@@ -173,34 +173,31 @@
 
                                 <!-- Actions -->
                                 <div class="btn-group w-100">
-                                    @if ($tagihan->canEdit())
+                                    {{-- Edit Button --}}
+                                    @if (auth()->user()->can('tagihan-bulanan.edit'))
                                         <a href="{{ route('tagihan_bulanan.edit', $tagihan->id_tagihan_bulanan) }}"
                                             class="btn btn-warning btn-sm">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                     @endif
 
-                                    @if ($tagihan->canDelete())
+                                    {{-- Delete Button --}}
+                                    @if (auth()->user()->can('tagihan-bulanan.delete'))
                                         <button type="button" class="btn btn-danger btn-sm"
                                             onclick="deleteTagihan({{ $tagihan->id_tagihan_bulanan }}, '{{ $monthName }}')"
                                             data-bs-toggle="tooltip" title="Hapus Tagihan {{ $monthName }}">
                                             <i class="fas fa-trash"></i>
                                         </button>
-                                    @else
-                                        <button type="button" class="btn btn-secondary btn-sm" disabled
-                                            data-bs-toggle="tooltip" title="Tidak bisa dihapus - sudah ada pembayaran">
-                                            <i class="fas fa-lock"></i>
-                                        </button>
                                     @endif
 
-                                    <!-- Add Payment Button -->
-                                    @if ($tagihan->status !== 'lunas')
+                                    {{-- Add Payment Button --}}
+                                    {{-- @if (auth()->user()->can('tagihan-bulanan.edit') && $tagihan->status !== 'lunas')
                                         <button type="button" class="btn btn-success btn-sm"
                                             onclick="addPayment({{ $tagihan->id_tagihan_bulanan }}, '{{ $monthName }}')"
                                             data-bs-toggle="tooltip" title="Tambah Pembayaran">
                                             <i class="fas fa-plus"></i>
                                         </button>
-                                    @endif
+                                    @endif --}}
                                 </div>
 
                                 <!-- Payment History -->
@@ -225,10 +222,13 @@
                             @else
                                 <!-- No Tagihan -->
                                 <p class="text-muted mb-3">Belum ada tagihan untuk bulan ini</p>
-                                <a href="{{ route('tagihan_bulanan.create', ['santri_id' => $santri->id_santri, 'bulan' => $monthKey, 'tahun' => $tahun]) }}"
-                                    class="btn btn-primary btn-sm w-100">
-                                    <i class="fas fa-plus me-2"></i>Buat Tagihan
-                                </a>
+                                {{-- Create Button --}}
+                                @if (auth()->user()->can('tagihan-bulanan.create'))
+                                    <a href="{{ route('tagihan_bulanan.create', ['santri_id' => $santri->id_santri, 'bulan' => $monthKey, 'tahun' => $tahun]) }}"
+                                        class="btn btn-primary btn-sm w-100">
+                                        <i class="fas fa-plus me-2"></i>Buat Tagihan
+                                    </a>
+                                @endif
                             @endif
                         </div>
                     </div>
