@@ -29,9 +29,9 @@
                     <div class="col-md-4">
                         <select name="kategori" class="form-control select2">
                             <option value="">-- Semua Kategori --</option>
-                            @foreach (\App\Models\KategoriSantri::all() as $kategori)
-                                <option value="{{ $kategori->id_kategori_santri }}"
-                                    {{ request('kategori') == $kategori->id_kategori_santri ? 'selected' : '' }}>
+                            @foreach (\App\Models\KategoriBiaya::where('status', 'jalur')->get() as $kategori)
+                                <option value="{{ $kategori->id_kategori_biaya }}"
+                                    {{ request('kategori') == $kategori->id_kategori_biaya ? 'selected' : '' }}>
                                     {{ $kategori->nama_kategori }}
                                 </option>
                             @endforeach
@@ -67,32 +67,8 @@
                         <tbody>
                             @forelse($santris as $index => $santri)
                                 @php
-                                    // Calculate tunggakan
-                                    $tunggakanBulanan = $santri
-                                        ->tagihanBulanan()
-                                        ->whereIn('status', ['belum_lunas', 'dibayar_sebagian'])
-                                        ->sum(
-                                            \DB::raw('nominal - COALESCE((
-                                        SELECT SUM(nominal_pembayaran)
-                                        FROM pembayarans
-                                        WHERE tagihan_bulanan_id = tagihan_bulanans.id_tagihan_bulanan
-                                        AND is_void = false
-                                    ), 0)'),
-                                        );
-
-                                    $tunggakanTerjadwal = $santri
-                                        ->tagihanTerjadwal()
-                                        ->whereIn('status', ['belum_lunas', 'dibayar_sebagian'])
-                                        ->sum(
-                                            \DB::raw('nominal - COALESCE((
-                                        SELECT SUM(nominal_pembayaran)
-                                        FROM pembayarans
-                                        WHERE tagihan_terjadwal_id = tagihan_terjadwals.id_tagihan_terjadwal
-                                        AND is_void = false
-                                    ), 0)'),
-                                        );
-
-                                    $totalTunggakan = $tunggakanBulanan + $tunggakanTerjadwal;
+                                    // FIXED: Gunakan accessor baru yang sudah menghitung dengan benar
+                                    $totalTunggakan = $santri->total_tunggakan;
                                 @endphp
                                 <tr>
                                     <td>{{ $santris->firstItem() + $index }}</td>
@@ -102,7 +78,16 @@
                                             {{ $santri->nama_santri }}
                                         </a>
                                     </td>
-                                    <td>{{ $santri->kategoriSantri->nama_kategori }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">
+                                            {{ $santri->kategori_biaya_utama_name }}
+                                        </span>
+                                        @if ($santri->all_kategori_biaya->count() > 1)
+                                            <br><small class="text-muted">
+                                                + {{ $santri->all_kategori_biaya->count() - 1 }} kategori lain
+                                            </small>
+                                        @endif
+                                    </td>
                                     <td class="text-right">
                                         @if ($totalTunggakan > 0)
                                             <span class="text-danger font-weight-bold">

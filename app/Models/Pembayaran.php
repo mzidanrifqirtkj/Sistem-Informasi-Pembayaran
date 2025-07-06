@@ -15,7 +15,6 @@ class Pembayaran extends Model
         'tagihan_bulanan_id',
         'tagihan_terjadwal_id',
         'nominal_pembayaran',
-        'sisa_pembayaran', // ADD THIS
         'tanggal_pembayaran',
         'created_by_id',
         'payment_type', // Add this
@@ -32,7 +31,6 @@ class Pembayaran extends Model
         'is_void' => 'boolean',
         'voided_at' => 'datetime',
         'tanggal_pembayaran' => 'datetime', // tambahkan ini
-        'sisa_pembayaran' => 'decimal:2', // ADD THIS
     ];
 
     // Add relationship
@@ -237,32 +235,8 @@ class Pembayaran extends Model
         return [
             'total_received' => $this->nominal_pembayaran,
             'total_allocated' => $this->calculateTotalAllocated(),
-            'overpayment' => $this->sisa_pembayaran ?? 0,
             'allocations' => $this->getAllocationDetails()
         ];
-    }
-
-    // ADD: Calculate total allocated
-    public function calculateTotalAllocated()
-    {
-        if ($this->payment_type === 'allocated') {
-            return $this->paymentAllocations->sum('allocated_amount');
-        }
-
-        // Single payment - calculate actual allocation
-        if ($this->tagihan_bulanan_id && $this->tagihanBulanan) {
-            $sisaTagihan = max(0, $this->tagihanBulanan->nominal -
-                ($this->tagihanBulanan->total_pembayaran - $this->nominal_pembayaran));
-            return min($this->nominal_pembayaran, $sisaTagihan);
-        }
-
-        if ($this->tagihan_terjadwal_id && $this->tagihanTerjadwal) {
-            $sisaTagihan = max(0, $this->tagihanTerjadwal->nominal -
-                ($this->tagihanTerjadwal->total_pembayaran - $this->nominal_pembayaran));
-            return min($this->nominal_pembayaran, $sisaTagihan);
-        }
-
-        return $this->nominal_pembayaran - ($this->sisa_pembayaran ?? 0);
     }
 
     // ADD: Get allocation details

@@ -20,9 +20,6 @@ class PembayaranObserver
         $this->paymentAllocationService = $paymentAllocationService;
     }
 
-    /**
-     * Handle the Pembayaran "creating" event.
-     */
     public function creating(Pembayaran $pembayaran): bool
     {
         // Check for duplicate payment
@@ -43,17 +40,11 @@ class PembayaranObserver
                 'nominal' => $pembayaran->nominal_pembayaran,
                 'user' => auth()->user()->name ?? 'System'
             ]);
-
-            // In production, you might want to throw exception
-            // throw new \Exception('Pembayaran duplikat terdeteksi');
         }
 
         return true;
     }
 
-    /**
-     * Handle the Pembayaran "created" event.
-     */
     public function created(Pembayaran $pembayaran): void
     {
         DB::transaction(function () use ($pembayaran) {
@@ -71,14 +62,15 @@ class PembayaranObserver
                 if ($pembayaran->tagihan_terjadwal_id) {
                     $this->updateTagihanTerjadwalStatus($pembayaran);
                 } elseif ($pembayaran->tagihan_bulanan_id) {
-                    // Check if needs allocation
                     $this->paymentAllocationService->allocatePayment($pembayaran);
                 }
 
                 // Clear cache
                 $this->clearCache($pembayaran);
 
-                // Log success
+                // NEW: Clear santri tunggakan cache
+                $this->clearSantriTunggakanCache($pembayaran);
+
                 Log::info('Pembayaran created successfully', [
                     'id' => $pembayaran->id_pembayaran,
                     'type' => $pembayaran->tagihan_bulanan_id ? 'bulanan' : 'terjadwal',
@@ -97,9 +89,6 @@ class PembayaranObserver
         });
     }
 
-    /**
-     * Handle the Pembayaran "updated" event.
-     */
     public function updated(Pembayaran $pembayaran): void
     {
         DB::transaction(function () use ($pembayaran) {
@@ -117,7 +106,6 @@ class PembayaranObserver
                 if ($pembayaran->tagihan_terjadwal_id) {
                     $this->updateTagihanTerjadwalStatus($pembayaran);
                 } elseif ($pembayaran->tagihan_bulanan_id) {
-                    // For allocated payments, need to recalculate all affected tagihan
                     if ($pembayaran->is_allocated) {
                         $santriId = $pembayaran->tagihanBulanan->santri_id;
                         $this->paymentAllocationService->recalculateTagihanStatus($santriId);
@@ -128,6 +116,9 @@ class PembayaranObserver
 
                 // Clear cache
                 $this->clearCache($pembayaran);
+
+                // NEW: Clear santri tunggakan cache
+                $this->clearSantriTunggakanCache($pembayaran);
 
             } catch (\Exception $e) {
                 Log::error('Error in PembayaranObserver updated', [
@@ -140,9 +131,6 @@ class PembayaranObserver
         });
     }
 
-    /**
-     * Handle the Pembayaran "deleting" event.
-     */
     public function deleting(Pembayaran $pembayaran): bool
     {
         // Store related IDs for status update after deletion
@@ -152,9 +140,6 @@ class PembayaranObserver
         return true;
     }
 
-    /**
-     * Handle the Pembayaran "deleted" event.
-     */
     public function deleted(Pembayaran $pembayaran): void
     {
         DB::transaction(function () use ($pembayaran) {
@@ -175,7 +160,6 @@ class PembayaranObserver
                         $tagihan->updateStatus();
                     }
                 } else {
-                    // For allocated payments, recalculate all
                     if ($pembayaran->is_allocated) {
                         $allocations = $pembayaran->paymentAllocations;
                         foreach ($allocations as $allocation) {
@@ -194,6 +178,9 @@ class PembayaranObserver
                 // Clear cache
                 $this->clearCache($pembayaran);
 
+                // NEW: Clear santri tunggakan cache
+                $this->clearSantriTunggakanCache($pembayaran);
+
                 Log::info('Pembayaran deleted', [
                     'id' => $pembayaran->id_pembayaran,
                     'deleted_by' => auth()->user()->name ?? 'System'
@@ -208,9 +195,6 @@ class PembayaranObserver
         });
     }
 
-    /**
-     * Update TagihanTerjadwal status
-     */
     protected function updateTagihanTerjadwalStatus(Pembayaran $pembayaran): void
     {
         $tagihan = $pembayaran->tagihanTerjadwal;
@@ -219,9 +203,6 @@ class PembayaranObserver
         }
     }
 
-    /**
-     * Clear related caches
-     */
     protected function clearCache(Pembayaran $pembayaran): void
     {
         Cache::forget('dashboard_stats');
@@ -232,6 +213,219 @@ class PembayaranObserver
                 Cache::forget("santri_tagihan_{$tagihan->santri_id}");
                 Cache::forget("monthly_stats_{$tagihan->tahun}_{$tagihan->bulan}");
             }
+        }
+    }
+
+    // NEW: Clear santri tunggakan cache
+    protected function clearSantriTunggakanCache(Pembayaran $pembayaran): void
+    {
+        try {
+            // Get santri ID from various sources
+            $santriId = null;
+
+            // From direct tagihan relationship
+            if ($pembayaran->tagihan_bulanan_id && $pembayaran->tagihanBulanan) {
+                $santriId = $pembayaran->tagihanBulanan->santri_id;
+            } elseif ($pembayaran->tagihan_terjadwal_id && $pembayaran->tagihanTerjadwal) {
+                $santriId = $pembayaran->tagihanTerjadwal->santri_id;
+            }
+
+            // From payment allocations
+            if (!$santriId && $pembayaran->paymentAllocations) {
+                foreach ($pembayaran->paymentAllocations as $allocation) {
+                    if ($allocation->tagihanBulanan) {
+                        $santriId = $allocation->tagihanBulanan->santri_id;
+                        break;
+                    } elseif ($allocation->tagihanTerjadwal) {
+                        $santriId = $allocation->tagihanTerjadwal->santri_id;
+                        break;
+                    }
+                }
+            }
+
+            // Clear cache if santri ID found
+            if ($santriId) {
+                Cache::forget("santri_tunggakan_{$santriId}");
+
+                Log::debug('Cleared santri tunggakan cache', [
+                    'santri_id' => $santriId,
+                    'pembayaran_id' => $pembayaran->id_pembayaran
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::warning('Failed to clear santri tunggakan cache', [
+                'pembayaran_id' => $pembayaran->id_pembayaran,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+}
+
+// =================================
+// TagihanBulananObserver UPDATE
+// =================================
+
+namespace App\Observers;
+
+use App\Models\TagihanBulanan;
+use App\Models\AuditLog;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+
+class TagihanBulananObserver
+{
+    public function creating(TagihanBulanan $tagihanBulanan): void
+    {
+        $this->clearCache($tagihanBulanan);
+    }
+
+    public function created(TagihanBulanan $tagihanBulanan): void
+    {
+        AuditLog::logAction(
+            'tagihan_bulanans',
+            $tagihanBulanan->id_tagihan_bulanan,
+            'created',
+            null,
+            $tagihanBulanan->toArray()
+        );
+
+        Log::info('TagihanBulanan created', [
+            'id' => $tagihanBulanan->id_tagihan_bulanan,
+            'santri_id' => $tagihanBulanan->santri_id,
+            'bulan' => $tagihanBulanan->bulan,
+            'tahun' => $tagihanBulanan->tahun,
+            'nominal' => $tagihanBulanan->nominal,
+            'created_by' => auth()->user()->name ?? 'System',
+            'ip' => request()->ip()
+        ]);
+
+        $this->clearCache($tagihanBulanan);
+
+        // NEW: Clear santri tunggakan cache
+        $this->clearSantriTunggakanCache($tagihanBulanan->santri_id);
+    }
+
+    public function updating(TagihanBulanan $tagihanBulanan): void
+    {
+        $tagihanBulanan->oldValues = $tagihanBulanan->getOriginal();
+    }
+
+    public function updated(TagihanBulanan $tagihanBulanan): void
+    {
+        $changes = $tagihanBulanan->getChanges();
+        unset($changes['updated_at']);
+
+        if (!empty($changes)) {
+            AuditLog::logAction(
+                'tagihan_bulanans',
+                $tagihanBulanan->id_tagihan_bulanan,
+                'updated',
+                $tagihanBulanan->oldValues ?? [],
+                $tagihanBulanan->toArray()
+            );
+
+            Log::info('TagihanBulanan updated', [
+                'id' => $tagihanBulanan->id_tagihan_bulanan,
+                'changes' => $changes,
+                'updated_by' => auth()->user()->name ?? 'System',
+                'ip' => request()->ip()
+            ]);
+
+            if (isset($changes['status'])) {
+                Log::info('TagihanBulanan status changed', [
+                    'id' => $tagihanBulanan->id_tagihan_bulanan,
+                    'santri' => $tagihanBulanan->santri->nama_santri,
+                    'from' => $tagihanBulanan->oldValues['status'] ?? 'unknown',
+                    'to' => $tagihanBulanan->status,
+                    'bulan' => $tagihanBulanan->bulan,
+                    'tahun' => $tagihanBulanan->tahun
+                ]);
+            }
+        }
+
+        $this->clearCache($tagihanBulanan);
+
+        // NEW: Clear santri tunggakan cache
+        $this->clearSantriTunggakanCache($tagihanBulanan->santri_id);
+    }
+
+    public function deleting(TagihanBulanan $tagihanBulanan): bool
+    {
+        if (!$tagihanBulanan->canDelete()) {
+            Log::warning('Attempt to delete TagihanBulanan with payments', [
+                'id' => $tagihanBulanan->id_tagihan_bulanan,
+                'attempted_by' => auth()->user()->name ?? 'System'
+            ]);
+            return false;
+        }
+
+        return true;
+    }
+
+    public function deleted(TagihanBulanan $tagihanBulanan): void
+    {
+        AuditLog::logAction(
+            'tagihan_bulanans',
+            $tagihanBulanan->id_tagihan_bulanan,
+            'deleted',
+            $tagihanBulanan->toArray(),
+            null
+        );
+
+        Log::info('TagihanBulanan deleted', [
+            'id' => $tagihanBulanan->id_tagihan_bulanan,
+            'santri_id' => $tagihanBulanan->santri_id,
+            'bulan' => $tagihanBulanan->bulan,
+            'tahun' => $tagihanBulanan->tahun,
+            'deleted_by' => auth()->user()->name ?? 'System',
+            'ip' => request()->ip()
+        ]);
+
+        $this->clearCache($tagihanBulanan);
+
+        // NEW: Clear santri tunggakan cache
+        $this->clearSantriTunggakanCache($tagihanBulanan->santri_id);
+    }
+
+    public function restored(TagihanBulanan $tagihanBulanan): void
+    {
+        AuditLog::logAction(
+            'tagihan_bulanans',
+            $tagihanBulanan->id_tagihan_bulanan,
+            'restored',
+            null,
+            $tagihanBulanan->toArray()
+        );
+
+        $this->clearCache($tagihanBulanan);
+
+        // NEW: Clear santri tunggakan cache
+        $this->clearSantriTunggakanCache($tagihanBulanan->santri_id);
+    }
+
+    public function forceDeleted(TagihanBulanan $tagihanBulanan): void
+    {
+        Log::warning('TagihanBulanan permanently deleted', [
+            'id' => $tagihanBulanan->id_tagihan_bulanan,
+            'santri_id' => $tagihanBulanan->santri_id,
+            'deleted_by' => auth()->user()->name ?? 'System'
+        ]);
+    }
+
+    protected function clearCache(TagihanBulanan $tagihanBulanan): void
+    {
+        Cache::forget('dashboard_stats');
+        Cache::forget("dashboard_stats_{$tagihanBulanan->tahun}");
+        Cache::forget("santri_tagihan_{$tagihanBulanan->santri_id}");
+        Cache::forget("monthly_stats_{$tagihanBulanan->tahun}_{$tagihanBulanan->bulan}");
+    }
+
+    // NEW: Clear santri tunggakan cache
+    protected function clearSantriTunggakanCache($santriId): void
+    {
+        if ($santriId) {
+            Cache::forget("santri_tunggakan_{$santriId}");
         }
     }
 }

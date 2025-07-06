@@ -3,13 +3,10 @@
 
 @section('css_inline')
     <style>
-        /* Fix z-index conflict between SweetAlert2 and Bootstrap Modal */
         .swal2-container {
             z-index: 10000 !important;
-            /* Higher than Bootstrap modal (1050) */
         }
 
-        /* Ensure modal backdrop doesn't interfere */
         .modal-backdrop {
             z-index: 1040 !important;
         }
@@ -18,7 +15,6 @@
             z-index: 1050 !important;
         }
 
-        /* Fix untuk multiple backdrop */
         .modal-backdrop+.modal-backdrop {
             opacity: 0;
             display: none;
@@ -26,12 +22,12 @@
 
         .modal-backdrop.show {
             opacity: 0 !important;
-            /* Transparan sepenuhnya */
             pointer-events: none !important;
             background-color: transparent !important;
         }
     </style>
 @endsection
+
 @section('content')
     @php
         $user = auth()->user();
@@ -95,7 +91,20 @@
                     <div class="card-body">
                         <h6>Total Hari Ini</h6>
                         <h4>Rp
-                            {{ number_format($user->hasRole('santri') ? \App\Models\Pembayaran::getTodayTotalForSantri($user->santri->id_santri) : \App\Models\Pembayaran::getTodayTotal(), 0, ',', '.') }}
+                            @php
+                                try {
+                                    echo number_format(
+                                        $user->hasRole('santri') && $user->santri
+                                            ? \App\Models\Pembayaran::getTodayTotalForSantri($user->santri->id_santri)
+                                            : \App\Models\Pembayaran::getTodayTotal(),
+                                        0,
+                                        ',',
+                                        '.',
+                                    );
+                                } catch (\Exception $e) {
+                                    echo '0';
+                                }
+                            @endphp
                         </h4>
                     </div>
                 </div>
@@ -105,7 +114,20 @@
                     <div class="card-body">
                         <h6>Total Bulan Ini</h6>
                         <h4>Rp
-                            {{ number_format($user->hasRole('santri') ? \App\Models\Pembayaran::getMonthTotalForSantri($user->santri->id_santri) : \App\Models\Pembayaran::getMonthTotal(), 0, ',', '.') }}
+                            @php
+                                try {
+                                    echo number_format(
+                                        $user->hasRole('santri') && $user->santri
+                                            ? \App\Models\Pembayaran::getMonthTotalForSantri($user->santri->id_santri)
+                                            : \App\Models\Pembayaran::getMonthTotal(),
+                                        0,
+                                        ',',
+                                        '.',
+                                    );
+                                } catch (\Exception $e) {
+                                    echo '0';
+                                }
+                            @endphp
                         </h4>
                     </div>
                 </div>
@@ -115,7 +137,20 @@
                     <div class="card-body">
                         <h6>Total Tahun Ini</h6>
                         <h4>Rp
-                            {{ number_format($user->hasRole('santri') ? \App\Models\Pembayaran::getYearTotalForSantri($user->santri->id_santri) : \App\Models\Pembayaran::getYearTotal(), 0, ',', '.') }}
+                            @php
+                                try {
+                                    echo number_format(
+                                        $user->hasRole('santri') && $user->santri
+                                            ? \App\Models\Pembayaran::getYearTotalForSantri($user->santri->id_santri)
+                                            : \App\Models\Pembayaran::getYearTotal(),
+                                        0,
+                                        ',',
+                                        '.',
+                                    );
+                                } catch (\Exception $e) {
+                                    echo '0';
+                                }
+                            @endphp
                         </h4>
                     </div>
                 </div>
@@ -124,7 +159,17 @@
                 <div class="card bg-warning text-white">
                     <div class="card-body">
                         <h6>Transaksi Hari Ini</h6>
-                        <h4>{{ \App\Models\Pembayaran::whereDate('tanggal_pembayaran', today())->count() }}</h4>
+                        <h4>
+                            @php
+                                try {
+                                    echo \App\Models\Pembayaran::whereDate('tanggal_pembayaran', today())
+                                        ->where('is_void', false)
+                                        ->count();
+                                } catch (\Exception $e) {
+                                    echo '0';
+                                }
+                            @endphp
+                        </h4>
                     </div>
                 </div>
             </div>
@@ -153,22 +198,71 @@
                                 <tr class="{{ $pembayaran->is_void ? 'table-danger' : '' }}">
                                     <td>{{ $pembayarans->firstItem() + $index }}</td>
                                     <td>
-                                        <strong>{{ $pembayaran->receipt_number }}</strong>
+                                        <strong>{{ $pembayaran->receipt_number ?? '-' }}</strong>
                                     </td>
-                                    <td>{{ $pembayaran->tanggal_pembayaran->format('d/m/Y') }}</td>
-                                    <td>{{ $pembayaran->santri_nis }}</td>
-                                    <td>{{ $pembayaran->santri_name }}</td>
+                                    <td>{{ $pembayaran->tanggal_pembayaran ? $pembayaran->tanggal_pembayaran->format('d/m/Y') : '-' }}
+                                    </td>
                                     <td>
-                                        {{ $pembayaran->payment_description }}
-                                        @if ($pembayaran->payment_note)
-                                            <br><small class="text-muted">{{ $pembayaran->payment_note }}</small>
-                                        @endif
+                                        @php
+                                            try {
+                                                echo $pembayaran->santri_nis;
+                                            } catch (\Exception $e) {
+                                                echo '-';
+                                            }
+                                        @endphp
+                                    </td>
+                                    <td>
+                                        @php
+                                            try {
+                                                echo $pembayaran->santri_name;
+                                            } catch (\Exception $e) {
+                                                echo 'Tidak Diketahui';
+                                            }
+                                        @endphp
+                                    </td>
+                                    <td>
+                                        @php
+                                            try {
+                                                echo $pembayaran->payment_description;
+                                                if ($pembayaran->payment_note) {
+                                                    echo '<br><small class="text-muted">' .
+                                                        e($pembayaran->payment_note) .
+                                                        '</small>';
+                                                }
+                                            } catch (\Exception $e) {
+                                                echo 'Pembayaran';
+                                            }
+                                        @endphp
                                     </td>
                                     <td class="text-right">
-                                        <strong>{{ $pembayaran->formatted_nominal }}</strong>
+                                        <strong>
+                                            @php
+                                                try {
+                                                    echo $pembayaran->formatted_nominal;
+                                                } catch (\Exception $e) {
+                                                    echo 'Rp ' .
+                                                        number_format(
+                                                            $pembayaran->nominal_pembayaran ?? 0,
+                                                            0,
+                                                            ',',
+                                                            '.',
+                                                        );
+                                                }
+                                            @endphp
+                                        </strong>
                                     </td>
                                     <td class="text-center">
-                                        {!! $pembayaran->status_badge !!}
+                                        @php
+                                            try {
+                                                echo $pembayaran->status_badge;
+                                            } catch (\Exception $e) {
+                                                if ($pembayaran->is_void) {
+                                                    echo '<span class="badge badge-danger">Void</span>';
+                                                } else {
+                                                    echo '<span class="badge badge-success">Success</span>';
+                                                }
+                                            }
+                                        @endphp
                                     </td>
                                     <td class="text-center">
                                         <a href="{{ route('pembayaran.receipt', $pembayaran->id_pembayaran) }}"
@@ -176,8 +270,17 @@
                                             <i class="fas fa-print"></i>
                                         </a>
 
-                                        @can('pembayaran-void')
-                                            @if ($pembayaran->can_void)
+                                        {{-- FIXED: Use correct permission check --}}
+                                        @can('pembayaran.void')
+                                            @php
+                                                $canVoid = false;
+                                                try {
+                                                    $canVoid = $pembayaran->can_void;
+                                                } catch (\Exception $e) {
+                                                    $canVoid = false;
+                                                }
+                                            @endphp
+                                            @if ($canVoid)
                                                 <button onclick="showVoidModal({{ $pembayaran->id_pembayaran }})"
                                                     class="btn btn-sm btn-danger" title="Void Pembayaran">
                                                     <i class="fas fa-ban"></i> Void
@@ -275,14 +378,15 @@
     <script>
         function showVoidModal(id) {
             const form = document.getElementById('voidForm');
-            form.action = `{{ url('pembayaran/void') }}/${id}`;
+            // FIXED: Use correct route format
+            form.action = `{{ route('pembayaran.void.process', '') }}/${id}`;
             form.querySelector('textarea[name="void_reason"]').value = '';
             $('#voidModal').modal('show');
         }
 
         function showVoidInfo(id) {
-            // Get void info via AJAX
-            $.get(`{{ url('pembayaran/void') }}/${id}/info`, function(data) {
+            // FIXED: Use correct route for void info
+            $.get(`{{ route('pembayaran.void.info', '') }}/${id}`, function(data) {
                 let content = `
             <table class="table table-sm">
                 <tr>
@@ -295,13 +399,14 @@
                 </tr>
                 <tr>
                     <td>Alasan</td>
-                    <td>: ${data.void_reason}</td>
+                    <td>: ${data.void_reason || 'Tidak ada alasan'}</td>
                 </tr>
             </table>
         `;
                 $('#voidInfoContent').html(content);
                 $('#voidInfoModal').modal('show');
-            }).fail(function() {
+            }).fail(function(xhr) {
+                console.error('Error loading void info:', xhr);
                 alert('Gagal memuat informasi void');
             });
         }
@@ -331,16 +436,20 @@
                 success: function(response) {
                     $('#voidModal').modal('hide');
 
-                    // Show success message
                     if (response.success) {
-                        // Reload page untuk refresh data
+                        // Show success message and reload
+                        alert(response.message || 'Pembayaran berhasil di-void');
                         location.reload();
+                    } else {
+                        alert(response.message || 'Terjadi kesalahan');
                     }
                 },
                 error: function(xhr) {
                     let message = 'Terjadi kesalahan';
                     if (xhr.responseJSON && xhr.responseJSON.message) {
                         message = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        message = Object.values(xhr.responseJSON.errors).flat().join('\n');
                     }
                     alert(message);
                 },

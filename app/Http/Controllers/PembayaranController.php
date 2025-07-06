@@ -25,6 +25,8 @@ class PembayaranController extends Controller
         $this->validationService = $validationService;
     }
 
+    // Ganti method index() di PembayaranController
+
     public function index(Request $request)
     {
         $this->authorize('viewAny', Pembayaran::class);
@@ -44,11 +46,23 @@ class PembayaranController extends Controller
             });
         }
 
+        // PERBAIKAN: Ganti filter kategori menggunakan relasi yang benar
         if ($request->has('kategori') && $request->kategori != '') {
-            $query->where('kategori_santri_id', $request->kategori);
+            $query->whereHas('biayaSantris.daftarBiaya.kategoriBiaya', function ($q) use ($request) {
+                $q->where('id_kategori_biaya', $request->kategori);
+            });
         }
 
-        $santris = $query->orderBy('nama_santri')->paginate(20);
+        // PERBAIKAN: Tambah eager loading untuk relasi kategori
+        $santris = $query->with([
+            'biayaSantris.daftarBiaya.kategoriBiaya',
+            'tagihanBulanan' => function ($q) {
+                $q->whereIn('status', ['belum_lunas', 'dibayar_sebagian']);
+            },
+            'tagihanTerjadwal' => function ($q) {
+                $q->whereIn('status', ['belum_lunas', 'dibayar_sebagian']);
+            }
+        ])->orderBy('nama_santri')->paginate(20);
 
         return view('pembayaran.index', compact('santris'));
     }

@@ -58,7 +58,13 @@
                                 <strong>Nama:</strong> {{ $santri->nama_santri }}
                             </div>
                             <div class="col-md-3">
-                                <strong>Kategori:</strong> {{ $santri->kategoriSantri->nama_kategori }}
+                                {{-- PERBAIKAN: Ganti dari kategoriSantri ke sistem kategori yang benar --}}
+                                <strong>Kategori:</strong>
+                                @if (isset($santri->kategori_biaya_utama_name))
+                                    {{ $santri->kategori_biaya_utama_name }}
+                                @else
+                                    {{ $santri->biayaSantris->first()?->daftarBiaya?->kategoriBiaya?->nama_kategori ?? 'Tanpa Kategori' }}
+                                @endif
                             </div>
                             <div class="col-md-3">
                                 <strong>Total Tunggakan:</strong>

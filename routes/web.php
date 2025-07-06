@@ -234,7 +234,7 @@ Route::middleware(['auth', 'role:admin|santri'])->group(function () {
                     'voided_at' => $pembayaran->voided_at->format('d/m/Y H:i:s'),
                     'void_reason' => $pembayaran->void_reason
                 ]);
-            })->name('pembayaran.void.info')->middleware('permission:pembayaran.list');
+            })->name('info')->middleware('permission:pembayaran.list');
         });
 
     // Bulk payment routes - admin only

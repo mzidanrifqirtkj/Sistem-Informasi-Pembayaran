@@ -2,127 +2,127 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Pembayaran;
-use App\Services\PaymentService;
-use App\Services\PaymentValidationService;
-use App\Http\Requests\VoidPaymentRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PembayaranVoidController extends Controller
 {
-    protected $paymentService;
-    protected $validationService;
-
-    public function __construct(
-        PaymentService $paymentService,
-        PaymentValidationService $validationService
-    ) {
-        $this->paymentService = $paymentService;
-        $this->validationService = $validationService;
-
-        // FIX: Comment atau hapus line ini yang menyebabkan error
-        // $this->middleware('role:administrator'); // HAPUS LINE INI
-    }
-
     /**
-     * Show void confirmation form
+     * Show void confirmation page
      */
     public function show($id)
     {
-        $pembayaran = Pembayaran::with([
-            'tagihanBulanan.santri',
-            'tagihanTerjadwal.santri',
-            'paymentAllocations.tagihanBulanan.santri',
-            'paymentAllocations.tagihanTerjadwal.santri',
-            'createdBy'
-        ])->findOrFail($id);
+        $this->authorize('pembayaran.void');
 
-        try {
-            // Validate void request
-            $this->validationService->validateVoidRequest($pembayaran);
+        $pembayaran = Pembayaran::with(['tagihanBulanan.santri', 'tagihanTerjadwal.santri', 'createdBy'])
+            ->findOrFail($id);
 
-            return view('pembayaran.void-confirm', compact('pembayaran'));
-
-        } catch (\Exception $e) {
-            return redirect()
-                ->route('pembayaran.history')
-                ->with('error', $e->getMessage());
+        if (!$pembayaran->can_void) {
+            return redirect()->back()->with('error', 'Pembayaran tidak dapat di-void (sudah lebih dari 24 jam atau sudah void)');
         }
+
+        return view('pembayaran.void-confirmation', compact('pembayaran'));
+    }
+
+    /**
+     * Get void modal content
+     */
+    public function voidModal($id)
+    {
+        $this->authorize('pembayaran.void');
+
+        $pembayaran = Pembayaran::findOrFail($id);
+
+        if (!$pembayaran->can_void) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pembayaran tidak dapat di-void'
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $pembayaran->id_pembayaran,
+                'receipt_number' => $pembayaran->receipt_number,
+                'nominal' => $pembayaran->formatted_nominal,
+                'santri_name' => $pembayaran->santri_name,
+                'tanggal' => $pembayaran->tanggal_pembayaran->format('d/m/Y')
+            ]
+        ]);
     }
 
     /**
      * Process void pembayaran
      */
-    public function void(VoidPaymentRequest $request, $id)
+    public function void(Request $request, $id)
     {
-        try {
-            DB::beginTransaction();
+        $this->authorize('pembayaran.void');
 
+        $request->validate([
+            'void_reason' => 'required|string|max:500'
+        ], [
+            'void_reason.required' => 'Alasan void harus diisi',
+            'void_reason.max' => 'Alasan void maksimal 500 karakter'
+        ]);
+
+        DB::beginTransaction();
+
+        try {
             $pembayaran = Pembayaran::findOrFail($id);
 
-            // Validate
-            $this->validationService->validateVoidRequest($pembayaran);
+            // Double check if can void
+            if (!$pembayaran->can_void) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pembayaran tidak dapat di-void (sudah lebih dari 24 jam atau sudah void)'
+                ], 422);
+            }
 
-            // Process void
-            $this->paymentService->voidPayment($pembayaran, $request->void_reason);
+            // Store santri ID for cache clearing
+            $santriId = null;
+            if ($pembayaran->tagihanBulanan && $pembayaran->tagihanBulanan->santri) {
+                $santriId = $pembayaran->tagihanBulanan->santri_id;
+            } elseif ($pembayaran->tagihanTerjadwal && $pembayaran->tagihanTerjadwal->santri) {
+                $santriId = $pembayaran->tagihanTerjadwal->santri_id;
+            }
+
+            // Void the payment using model method
+            $pembayaran->void($request->void_reason, auth()->id());
+
+            // Clear santri tunggakan cache if santri found
+            if ($santriId) {
+                \Cache::forget("santri_tunggakan_{$santriId}");
+            }
 
             DB::commit();
 
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Pembayaran berhasil di-void'
-                ]);
-            }
+            Log::info('Pembayaran void successful', [
+                'pembayaran_id' => $id,
+                'voided_by' => auth()->user()->name,
+                'reason' => $request->void_reason
+            ]);
 
-            return redirect()
-                ->route('pembayaran.history')
-                ->with('success', 'Pembayaran berhasil di-void');
+            return response()->json([
+                'success' => true,
+                'message' => 'Pembayaran berhasil di-void'
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
 
-            Log::error('Void payment error: ' . $e->getMessage());
-
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage()
-                ], 422);
-            }
-
-            return redirect()
-                ->back()
-                ->with('error', $e->getMessage());
-        }
-    }
-
-    /**
-     * Get void reason modal
-     */
-    public function voidModal($id)
-    {
-        $pembayaran = Pembayaran::with([
-            'tagihanBulanan.santri',
-            'tagihanTerjadwal.santri'
-        ])->findOrFail($id);
-
-        try {
-            $this->validationService->validateVoidRequest($pembayaran);
-
-            return response()->json([
-                'success' => true,
-                'html' => view('pembayaran.void-modal', compact('pembayaran'))->render()
+            Log::error('Error voiding payment', [
+                'pembayaran_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
-        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
-            ], 422);
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

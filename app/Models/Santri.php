@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Santri extends Model
 {
@@ -12,6 +13,7 @@ class Santri extends Model
     protected $table = 'santris';
     protected $primaryKey = 'id_santri';
     public $timestamps = false;
+
     protected $fillable = [
         'nama_santri',
         'nis',
@@ -60,12 +62,7 @@ class Santri extends Model
         'status_changed_at' => 'date'
     ];
 
-    // Verifikasi password untuk Santri berdasarkan user
-    public function verifyPassword($password)
-    {
-        return $this->user->password === bcrypt($password);
-    }
-
+    // Existing relationships...
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id_user');
@@ -86,12 +83,10 @@ class Santri extends Model
         return $this->hasMany(TagihanBulanan::class, 'santri_id', 'id_santri');
     }
 
-
     public function tagihanTerjadwal()
     {
         return $this->hasMany(TagihanTerjadwal::class, 'santri_id', 'id_santri');
     }
-
 
     public function absensi()
     {
@@ -123,16 +118,19 @@ class Santri extends Model
         return $this->hasManyThrough(
             KategoriBiaya::class,
             DaftarBiaya::class,
-            'id_daftar_biaya',       // Foreign key di DaftarBiaya yang terkait dengan BiayaSantri
-            'id_kategori_biaya',     // Foreign key di KategoriBiaya
-            'id_santri',             // Local key di Santri
-            'daftar_biaya_id'        // Foreign key di BiayaSantri yang mengacu ke DaftarBiaya
+            'id_daftar_biaya',
+            'id_kategori_biaya',
+            'id_santri',
+            'daftar_biaya_id'
         )->where('kategori_biayas.status', 'jalur');
     }
 
-    /**
-     * Get kelas aktif santri melalui riwayat kelas
-     */
+    public function riwayatKelas()
+    {
+        return $this->hasMany(RiwayatKelas::class, 'santri_id', 'id_santri');
+    }
+
+    // Existing accessors...
     public function getKelasAktifAttribute()
     {
         $riwayatTerbaru = $this->riwayatKelas()
@@ -143,23 +141,113 @@ class Santri extends Model
         return $riwayatTerbaru?->mapelKelas?->kelas;
     }
 
-    /**
-     * Get nama kelas aktif
-     */
     public function getNamaKelasAktifAttribute()
     {
         return $this->kelasAktif?->nama_kelas ?? 'Tanpa Kelas';
     }
 
-    /**
-     * Relationship ke riwayat kelas
-     */
-    public function riwayatKelas()
+    public function getKategoriBiayaUtamaAttribute()
     {
-        return $this->hasMany(RiwayatKelas::class, 'santri_id', 'id_santri');
+        $kategoriUtama = $this->biayaSantris()
+            ->with('daftarBiaya.kategoriBiaya')
+            ->whereHas('daftarBiaya.kategoriBiaya', function ($q) {
+                $q->where('status', 'jalur');
+            })
+            ->first()?->daftarBiaya?->kategoriBiaya;
+
+        return $kategoriUtama;
     }
 
-    // Tambahkan Scopes
+    public function getKategoriBiayaUtamaNameAttribute()
+    {
+        return $this->kategori_biaya_utama?->nama_kategori ?? 'Tanpa Kategori';
+    }
+
+    public function getAllKategoriBiayaAttribute()
+    {
+        return $this->biayaSantris()
+            ->with('daftarBiaya.kategoriBiaya')
+            ->get()
+            ->pluck('daftarBiaya.kategoriBiaya')
+            ->filter()
+            ->unique('id_kategori_biaya');
+    }
+
+    public function getAllKategoriBiayaNameAttribute()
+    {
+        return $this->all_kategori_biaya
+            ->pluck('nama_kategori')
+            ->implode(', ') ?: 'Tanpa Kategori';
+    }
+
+    // NEW: Total Tunggakan dengan Cache
+    public function getTotalTunggakanAttribute()
+    {
+        $cacheKey = "santri_tunggakan_{$this->id_santri}";
+
+        return Cache::remember($cacheKey, 300, function () {
+            try {
+                // Load relasi jika belum ada
+                if (!$this->relationLoaded('tagihanBulanan')) {
+                    $this->load([
+                        'tagihanBulanan' => function ($q) {
+                            $q->whereIn('status', ['belum_lunas', 'dibayar_sebagian'])
+                                ->with([
+                                    'pembayarans' => function ($q) {
+                                        $q->where('is_void', false); },
+                                    'paymentAllocations' => function ($q) {
+                                        $q->whereHas('pembayaran', function ($q2) {
+                                            $q2->where('is_void', false);
+                                        });
+                                    }
+                                ]);
+                        }
+                    ]);
+                }
+
+                if (!$this->relationLoaded('tagihanTerjadwal')) {
+                    $this->load([
+                        'tagihanTerjadwal' => function ($q) {
+                            $q->whereIn('status', ['belum_lunas', 'dibayar_sebagian'])
+                                ->with([
+                                    'pembayarans' => function ($q) {
+                                        $q->where('is_void', false); },
+                                    'paymentAllocations' => function ($q) {
+                                        $q->whereHas('pembayaran', function ($q2) {
+                                            $q2->where('is_void', false);
+                                        });
+                                    }
+                                ]);
+                        }
+                    ]);
+                }
+
+                // Gunakan accessor yang sudah benar di model TagihanBulanan & TagihanTerjadwal
+                $tunggakanBulanan = $this->tagihanBulanan->sum('sisa_tagihan');
+                $tunggakanTerjadwal = $this->tagihanTerjadwal->sum('sisa_tagihan');
+
+                return $tunggakanBulanan + $tunggakanTerjadwal;
+
+            } catch (\Exception $e) {
+                \Log::error('Error calculating total tunggakan for santri', [
+                    'santri_id' => $this->id_santri,
+                    'error' => $e->getMessage()
+                ]);
+
+                // Fail safe: return 0
+                return 0;
+            }
+        });
+    }
+
+    // NEW: Clear cache method
+    public function clearTunggakanCache()
+    {
+        $cacheKey = "santri_tunggakan_{$this->id_santri}";
+        Cache::forget($cacheKey);
+    }
+
+    // Existing scopes...
     public function scopeAktif($query)
     {
         return $query->where('status', 'aktif');
@@ -170,7 +258,7 @@ class Santri extends Model
         return $query->where('status', 'non_aktif');
     }
 
-    // Tambahkan Accessors
+    // Existing accessors...
     public function getIsAktifAttribute()
     {
         return $this->status === 'aktif';
@@ -183,7 +271,7 @@ class Santri extends Model
             : '<span class="badge badge-danger">Non Aktif</span>';
     }
 
-    // Tambahkan Methods
+    // Existing methods...
     public function deactivate($reason = null, $notes = null)
     {
         $this->update([
@@ -204,8 +292,20 @@ class Santri extends Model
         ]);
     }
 
-    // public function absensiMataPelajaran()
-    // {
-    //     return $this->hasMany(AbsensiSetiapMapel::class);
-    // }
+    public function kategoriBiayaList()
+    {
+        return $this->hasManyThrough(
+            \App\Models\KategoriBiaya::class,
+            \App\Models\BiayaSantri::class,
+            'santri_id',
+            'id_kategori_biaya',
+            'id_santri',
+            'kategori_biaya_id'
+        );
+    }
+
+    public function verifyPassword($password)
+    {
+        return $this->user->password === bcrypt($password);
+    }
 }
